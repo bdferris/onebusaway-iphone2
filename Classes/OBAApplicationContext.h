@@ -19,8 +19,6 @@
 #import "OBAModelService.h"
 #import "OBADataSourceConfig.h"
 #import "OBALocationManager.h"
-#import "OBAActivityListeners.h"
-#import "OBANavigationTarget.h"
 #import "OBAReferencesV2.h"
 
 #import "IASKAppSettingsViewController.h"
@@ -61,7 +59,6 @@
 
 @property (nonatomic,readonly) BOOL active;
 
-- (void) navigateToTarget:(OBANavigationTarget*)navigationTarget;
 - (void) refreshSettings;
 
 @end
