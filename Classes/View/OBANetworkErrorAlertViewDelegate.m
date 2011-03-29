@@ -20,7 +20,7 @@
 @implementation OBANetworkErrorAlertViewDelegate
 
 - (id) initWithContext:(OBAApplicationContext*)context {
-	if( self = [super init] ) {
+	if( (self = [super init]) ) {
 		_context = [context retain];
 	}
 	return self;
@@ -32,8 +32,7 @@
 }
 
 - (void)alertView:(UIAlertView *)alertView didDismissWithButtonIndex:(NSInteger)buttonIndex {
-	if( buttonIndex == 0 )
-		[_context navigateToTarget:[OBANavigationTarget target:OBANavigationTargetTypeContactUs]];
+
 }
 
 @end

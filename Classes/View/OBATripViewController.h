@@ -15,16 +15,18 @@
  */
 
 #import "OBAApplicationContext.h"
-#import "OBASearchController.h"
 
 
-@class OBASearchResultsMapViewController;
+@interface OBATripViewController : UIViewController <MKMapViewDelegate> {
 
-@interface OBASearchResultsListViewController : UITableViewController {
-	OBAApplicationContext * _appContext;
-	OBASearchResult * _result;
 }
 
-- (id) initWithContext:(OBAApplicationContext*)appContext searchControllerResult:(OBASearchResult*)result;
+@property (nonatomic,retain) IBOutlet OBAApplicationContext * appContext;
+@property (nonatomic,retain) IBOutlet MKMapView * mapView;
+@property (nonatomic,retain) IBOutlet UIBarButtonItem * currentLocationButton;
+@property (nonatomic,retain) IBOutlet UIBarButtonItem * editButton;
+
+-(IBAction) onCrossHairsButton:(id)sender;
+-(IBAction) onEditButton:(id)sender;
 
 @end
