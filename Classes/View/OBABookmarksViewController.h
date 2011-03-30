@@ -17,14 +17,24 @@
 #import "OBAApplicationContext.h"
 #import "OBANavigationTargetAware.h"
 
-@interface OBABookmarksViewController : UITableViewController <OBANavigationTargetAware> {
+@protocol OBABookmarksViewControllerDelegate <NSObject>
+
+- (void) currentLocationBookmarkSelected;
+
+@end
+
+
+@interface OBABookmarksViewController : UITableViewController {
 	OBAApplicationContext * _appContext;	
 	NSArray * _bookmarks;
 	UIBarButtonItem * _customEditButtonItem;
 }
 
+- (id) initWithApplicationContext:(OBAApplicationContext*)appContext;
+
 @property (nonatomic,retain) IBOutlet OBAApplicationContext * appContext;
 @property (nonatomic,retain) IBOutlet UIBarButtonItem * customEditButtonItem;
+@property (nonatomic,retain) IBOutlet id<OBABookmarksViewControllerDelegate> delegate;
 
 - (IBAction) onEditButton:(id)sender;
 

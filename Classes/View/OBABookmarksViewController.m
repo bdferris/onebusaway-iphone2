@@ -34,6 +34,15 @@
 
 @synthesize appContext = _appContext;
 @synthesize customEditButtonItem = _customEditButtonItem;
+@synthesize delegate;
+
+- (id) initWithApplicationContext:(OBAApplicationContext*)appContext { 
+    self = [super initWithStyle:UITableViewStylePlain];
+	if (self) {
+		_appContext = [appContext retain];
+	}
+	return self;
+}
 
 - (void)dealloc {
 	[_appContext release];
@@ -41,10 +50,14 @@
     [super dealloc];
 }
 
+- (void) viewDidLoad {
+    [super viewDidLoad];
+    self.navigationItem.title = @"Bookmarks";
+}
+
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
-	
-	// We reload the table here in case we are coming back from the user editing the label for a bookmark
+	// We reload the table here in case we are coming back from the user editing the label for bookmark
 	[self refreshBookmarks];
 	[self.tableView reloadData];
 }
@@ -59,25 +72,24 @@
 // Customize the number of rows in the table view.
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {	
 	int count = [_bookmarks count];
-	if( count == 0 )
-		count = 1;
-	return count;
+	return count + 1;
 }
 
 
 // Customize the appearance of table view cells.
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
 	
-	if( [_bookmarks count] == 0 ) {
-		UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView];
-		cell.textLabel.text = @"No bookmarks set";
+    if( indexPath.row == 0 ) {
+		UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView cellId:@"CurrentLocationTableViewCell"];
+		cell.textLabel.text = @"Current Location";
+        cell.textLabel.textColor = [UIColor blueColor];
 		cell.textLabel.textAlignment = UITextAlignmentCenter;
 		cell.accessoryType = UITableViewCellAccessoryNone;		
 		cell.selectionStyle = UITableViewCellSelectionStyleNone;
 		return cell;
 	}
 	else {
-		OBABookmarkV2 * bookmark = [_bookmarks objectAtIndex:(indexPath.row)];
+		OBABookmarkV2 * bookmark = [_bookmarks objectAtIndex:(indexPath.row - 1)];
 		UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView];
 		cell.textLabel.text = bookmark.name;
 		cell.textLabel.textAlignment = UITextAlignmentLeft;		
@@ -90,6 +102,11 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
 	
+    if( indexPath.row == 0 ) {
+        [self.delegate currentLocationBookmarkSelected];
+        [self.navigationController popViewControllerAnimated:TRUE];
+    }
+    
 	if( [_bookmarks count] == 0 )
 		return;
 	
@@ -157,12 +174,6 @@ forRowAtIndexPath:(NSIndexPath *)indexPath  {
 		_customEditButtonItem.title = @"Edit";
 		_customEditButtonItem.style = UIBarButtonItemStyleBordered;
 	}
-}
-
-#pragma mark OBANavigationTargetAware
-
-- (OBANavigationTarget*) navigationTarget {
-	return [OBANavigationTarget target:OBANavigationTargetTypeBookmarks];
 }
 
 @end

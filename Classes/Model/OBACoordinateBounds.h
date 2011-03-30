@@ -36,5 +36,6 @@
 - (void) addLat:(double)lat lon:(double)lon;
 - (void) addCoordinate:(CLLocationCoordinate2D)coordinate;
 - (void) addLocation:(CLLocation*)location;
+- (void) addLocations:(NSArray*)locations;
 
 @end

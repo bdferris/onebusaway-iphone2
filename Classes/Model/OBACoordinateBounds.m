@@ -22,7 +22,8 @@
 @synthesize empty = _empty;
 
 - (id) init {
-	if( self = [super init] ) {
+    self = [super init];
+	if( self ) {
 		_empty = TRUE;
 	}
 	return self;
@@ -52,6 +53,11 @@
 		span.longitudeDelta = _maxLongitude - _minLongitude;
 	}
 	return span;
+}
+
+- (void) addLocations:(NSArray*)locations {
+    for( CLLocation * location in locations)
+        [self addLocation:location];
 }
 
 - (void) addLocation:(CLLocation*)location {

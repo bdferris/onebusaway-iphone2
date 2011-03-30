@@ -5,6 +5,14 @@
 #import "OBASphericalGeometryLibrary.h"
 
 
+
+@interface OBATripController (Private)
+
+- (NSArray*) overlaysForItinerary:(OBAItineraryV2*)itinerary bounds:(OBACoordinateBounds*)bounds;
+
+@end
+
+
 @implementation OBATripController
 
 @synthesize modelService;
@@ -19,37 +27,37 @@
     [self.modelService planTripFrom:from.coordinate to:to.coordinate time:time arriveBy:FALSE options:nil delegate:self context:nil];
 }
 
-- (NSArray*) overlays {
-    NSMutableArray * list = [NSMutableArray array];
-    if( _currentItinerary ) {
-        for( OBALegV2 * leg in _currentItinerary.legs ) {
-            if( leg.transitLeg ) {
-                OBATransitLegV2 * transitLeg = leg.transitLeg;
-                if( transitLeg.path ) {
-                    MKPolyline * polyline = [OBASphericalGeometryLibrary decodePolylineStringAsMKPolyline:transitLeg.path];
-                    OBATripPolyline * tripPolyline = [OBATripPolyline tripPolyline:polyline type:OBATripPolylineTypeTransitLeg];                    
-                    [list addObject:tripPolyline];
-                }
-            }
-            if ([leg.streetLegs count] > 0 ) {
-                NSMutableArray * allPoints = [NSMutableArray array];
-                for( OBAStreetLegV2 * streetLeg in leg.streetLegs ) {
-                    if( streetLeg.path ) {
-                        NSArray * points = [OBASphericalGeometryLibrary decodePolylineString:streetLeg.path];
-                        [allPoints addObjectsFromArray:points];
-                    }
-                }
-                if( [allPoints count] > 0 ) {
-                    MKPolyline * polyline = [OBASphericalGeometryLibrary createMKPolylineFromLocations:allPoints];
-                    OBATripPolyline * tripPolyline = [OBATripPolyline tripPolyline:polyline type:OBATripPolylineTypeStreetLeg]; 
-                    [list addObject:tripPolyline];
-                }
-            }
-        }
-
-    }
-    return list;
+- (OBATripState*) tripState {
+    OBACoordinateBounds * bounds = [OBACoordinateBounds bounds];
+    if( ! _currentItinerary )
+        return nil;
+    OBATripState * state = [[[OBATripState alloc] init] autorelease];
+    state.itinerary = _currentItinerary;
+    state.overlays = [self overlaysForItinerary:_currentItinerary bounds:bounds];
+    state.preferredRegion = bounds.region;
+    return state;
 }
+
+- (BOOL) hasPreviousState {
+    return FALSE;
+}
+
+- (BOOL) hasNextState {
+    return FALSE;
+}
+
+- (void) moveToPrevState {
+    
+}
+
+- (void) moveToNextState {
+    
+}
+
+- (void) moveToCurrentState {
+    
+}
+
 
 #pragma mark OBAModelServiceDelegate
 
@@ -73,6 +81,46 @@
 
 - (void)request:(id<OBAModelServiceRequest>)request withProgress:(float)progress context:(id)context {
     
+}
+
+@end
+
+
+
+@implementation OBATripController (Private)
+
+- (NSArray*) overlaysForItinerary:(OBAItineraryV2*)itinerary bounds:(OBACoordinateBounds*)bounds {
+    
+    NSMutableArray * list = [NSMutableArray array];
+    for( OBALegV2 * leg in itinerary.legs ) {
+        if( leg.transitLeg ) {
+            OBATransitLegV2 * transitLeg = leg.transitLeg;
+            if( transitLeg.path ) {
+                NSArray * points = [OBASphericalGeometryLibrary decodePolylineString:transitLeg.path];
+                [bounds addLocations:points];
+                MKPolyline * polyline = [OBASphericalGeometryLibrary createMKPolylineFromLocations:points];
+                OBATripPolyline * tripPolyline = [OBATripPolyline tripPolyline:polyline type:OBATripPolylineTypeTransitLeg];                    
+                [list addObject:tripPolyline];
+            }
+        }
+        if ([leg.streetLegs count] > 0 ) {
+            NSMutableArray * allPoints = [NSMutableArray array];
+            for( OBAStreetLegV2 * streetLeg in leg.streetLegs ) {
+                if( streetLeg.path ) {
+                    NSArray * points = [OBASphericalGeometryLibrary decodePolylineString:streetLeg.path];
+                    [bounds addLocations:points];
+                    [allPoints addObjectsFromArray:points];
+                }
+            }
+            if( [allPoints count] > 0 ) {
+                MKPolyline * polyline = [OBASphericalGeometryLibrary createMKPolylineFromLocations:allPoints];
+                OBATripPolyline * tripPolyline = [OBATripPolyline tripPolyline:polyline type:OBATripPolylineTypeStreetLeg]; 
+                [list addObject:tripPolyline];
+            }
+        }
+    }
+    
+    return list;
 }
 
 @end

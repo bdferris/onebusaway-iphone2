@@ -1,6 +1,7 @@
 #import "OBAModelService.h"
 #import "OBAPlace.h"
 #import "OBAItinerariesV2.h"
+#import "OBATripState.h"
 
 
 @protocol OBATripControllerDelegate <NSObject>
@@ -17,6 +18,14 @@
 
 - (void) planTripFrom:(OBAPlace*)fromPlace to:(OBAPlace*)toPlace;
 
-@property (nonatomic,readonly) NSArray * overlays;
+@property (nonatomic,readonly) OBATripState * tripState;
+
+@property (nonatomic,readonly) BOOL hasPreviousState;
+@property (nonatomic,readonly) BOOL hasNextState;
+
+- (void) moveToPrevState;
+- (void) moveToNextState;
+- (void) moveToCurrentState;
+
 
 @end

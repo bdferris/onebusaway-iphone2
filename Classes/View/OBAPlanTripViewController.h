@@ -1,10 +1,18 @@
 #import "OBAApplicationContext.h"
 #import "OBATripController.h"
 #import "OBAPlace.h"
+#import "OBABookmarksViewController.h"
+#import "OBAPickerTextField.h"
 
 
-@interface OBAPlanTripViewController : UIViewController <OBAModelServiceDelegate,OBAModelServiceDelegate>{
+typedef enum {
+    OBAPlanTripViewControllerContextStartLabel,
+    OBAPlanTripViewControllerContextEndLabel
+} OBAPlanTripViewControllerContext;
 
+
+@interface OBAPlanTripViewController : UIViewController <OBAModelServiceDelegate,OBAModelServiceDelegate,OBABookmarksViewControllerDelegate> {
+    OBAPlanTripViewControllerContext _currentContext;
 }
 
 + (OBAPlanTripViewController*) viewControllerWithApplicationContext:(OBAApplicationContext*)appContext;
@@ -15,10 +23,13 @@
 @property (nonatomic,retain) OBAPlace * placeEnd;
 
 
-@property (nonatomic,retain) IBOutlet UITextField * startTextField;
-@property (nonatomic,retain) IBOutlet UITextField * endTextField;
+@property (nonatomic,retain) IBOutlet OBAPickerTextField * startTextField;
+@property (nonatomic,retain) IBOutlet OBAPickerTextField * endTextField;
 @property (nonatomic,retain) IBOutlet UITableView * searchResults;
 
 -(IBAction) onGoButton:(id)sender;
+
+-(IBAction) onStartTextFieldBookmarkButton:(id)sender;
+-(IBAction) onEndTextFieldBookmarkButton:(id)sender;
 
 @end

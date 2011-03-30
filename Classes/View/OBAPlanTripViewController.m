@@ -64,20 +64,30 @@ static const NSString * kContextPlanTrip = @"kContextPlanTrip";
     endLabel.textColor = [UIColor grayColor];
     endLabel.textAlignment = UITextAlignmentRight;
     
-    UIButton * bookmarkButton = [UIButton buttonWithType:UIButtonTypeCustom];
     UIImage * bookmarkImage = [UIImage imageNamed:@"BookmarkButton.png"];
-    [bookmarkButton setFrame:CGRectMake(0, 0, bookmarkImage.size.width, bookmarkImage.size.height)];
-    [bookmarkButton setImage:bookmarkImage forState:UIControlStateNormal];
+    
+    UIButton * startBookmarkButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    [startBookmarkButton setFrame:CGRectMake(0, 0, bookmarkImage.size.width, bookmarkImage.size.height)];
+    [startBookmarkButton setImage:bookmarkImage forState:UIControlStateNormal];
+    [startBookmarkButton addTarget:self action:@selector(onStartTextFieldBookmarkButton:) forControlEvents:UIControlEventTouchUpInside];
+    
+    UIButton * endBookmarkButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    [endBookmarkButton setFrame:CGRectMake(0, 0, bookmarkImage.size.width, bookmarkImage.size.height)];
+    [endBookmarkButton setImage:bookmarkImage forState:UIControlStateNormal];
+    [endBookmarkButton addTarget:self action:@selector(onEndTextFieldBookmarkButton:) forControlEvents:UIControlEventTouchUpInside];
+
     
     UITextField * startTF = self.startTextField;
     UITextField * endTF = self.endTextField;
     
     startTF.leftView = startLabel;
     startTF.leftViewMode = UITextFieldViewModeAlways;
+    startTF.rightView = startBookmarkButton;
+    startTF.rightViewMode = UITextFieldViewModeUnlessEditing;
     
     endTF.leftView = endLabel;
     endTF.leftViewMode = UITextFieldViewModeAlways;
-    endTF.rightView = bookmarkButton;
+    endTF.rightView = endBookmarkButton;
     endTF.rightViewMode = UITextFieldViewModeUnlessEditing;
     
     [endLabel release];
@@ -100,6 +110,22 @@ static const NSString * kContextPlanTrip = @"kContextPlanTrip";
 
 -(IBAction) onGoButton:(id)sender {
     [self ensurePlacesAreSet];
+}
+
+-(IBAction) onStartTextFieldBookmarkButton:(id)sender {
+    OBABookmarksViewController * vc = [[OBABookmarksViewController alloc] initWithApplicationContext:self.appContext];
+    vc.delegate = self;
+    _currentContext = OBAPlanTripViewControllerContextStartLabel;
+    [self.navigationController pushViewController:vc animated:TRUE];
+    [vc release];
+}
+
+-(IBAction) onEndTextFieldBookmarkButton:(id)sender {
+    OBABookmarksViewController * vc = [[OBABookmarksViewController alloc] initWithApplicationContext:self.appContext];
+    vc.delegate = self;
+    _currentContext = OBAPlanTripViewControllerContextEndLabel;
+    [self.navigationController pushViewController:vc animated:TRUE];
+    [vc release];
 }
      
 #pragma mark OBAModelServiceDelegate
@@ -125,21 +151,6 @@ static const NSString * kContextPlanTrip = @"kContextPlanTrip";
             
         }    
     }
-    else if( context == kContextPlanTrip ) {
-        OBAEntryWithReferencesV2 * entry = obj;
-        OBAItinerariesV2 * itineraries = entry.entry;
-        for( OBAItineraryV2 * itinerary in itineraries.itineraries ) {
-            NSLog(@"Itinerary: %@",[itinerary.startTime description]);
-            for( OBALegV2 * leg in itinerary.legs ) {
-                NSLog(@"  Leg: %@",[leg.startTime description]);
-                if( leg.transitLeg ) {
-                    OBATransitLegV2 * transitLeg = leg.transitLeg;
-                    OBATripV2 * trip = transitLeg.trip;
-                    NSLog(@"    TransitLeg: %@",[OBAPresentation getRouteShortNameForTrip:trip]);
-                }
-            }
-        }
-    }
 }
 
 - (void)requestDidFinish:(id<OBAModelServiceRequest>)request withCode:(NSInteger)code context:(id)context {
@@ -159,6 +170,17 @@ static const NSString * kContextPlanTrip = @"kContextPlanTrip";
 - (void)request:(id<OBAModelServiceRequest>)request withProgress:(float)progress context:(id)context {
 
 }
+
+
+
+#pragma mark OBABookmarksViewControllerDelegate
+
+- (void) currentLocationBookmarkSelected {
+    OBAPickerTextField * field = (_currentContext == OBAPlanTripViewControllerContextStartLabel) ? self.startTextField : self.endTextField;
+    field.text = @"Current Location";
+    field.fixed = TRUE;
+}
+
 
 @end
 

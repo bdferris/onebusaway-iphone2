@@ -19,6 +19,17 @@
 #import "OBATripPolyline.h"
 
 
+@interface OBATripViewController (Private)
+
+-(UILabel*) getItineraryTripDepartureLabel:(OBATripState*)state;
+-(NSString*) getItineraryTripDepartureLabelText:(OBATripState*)state;
+-(UILabel*) getItineraryTripArrivalLabel:(OBATripState*)state;
+-(NSString*) getItineraryTripArrivalLabelText:(OBATripState*)state;
+-(void) showInfoOverlay:(BOOL)show clear:(BOOL)clear;
+
+@end
+
+
 @implementation OBATripViewController
 
 @synthesize appContext;
@@ -30,6 +41,13 @@
 @synthesize rightButton;
 
 -(void) dealloc {
+    
+    [_infoOverlay release];
+    _infoOverlay = nil;
+    
+    [_timeFormatter release];
+    _timeFormatter = nil;
+    
 	self.appContext = nil;
     self.mapView = nil;
     self.currentLocationButton = nil;
@@ -46,6 +64,17 @@
 
     self.tripController = self.appContext.tripController;
     self.tripController.delegate = self;
+    
+    CGRect bounds = self.view.bounds;
+    
+    _infoOverlay = [[UIView alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(bounds), 64)];
+    _infoOverlay.backgroundColor = [UIColor colorWithWhite:0.25 alpha:0.8];
+    _infoOverlayVisible = FALSE;
+    
+    _timeFormatter = [[NSDateFormatter alloc] init];
+    [_timeFormatter setDateStyle:NSDateFormatterNoStyle];
+    [_timeFormatter setTimeStyle:NSDateFormatterShortStyle];
+
 }
 
 - (void)viewDidUnload {
@@ -59,6 +88,33 @@
 - (void)viewWillDisappear:(BOOL)animated {
 	[super viewWillDisappear:animated];
 }
+
+
+
+#pragma mark OBATripViewController
+
+-(IBAction) onEditButton:(id)sender {
+    OBAPlanTripViewController * vc = [OBAPlanTripViewController viewControllerWithApplicationContext:self.appContext];
+    [self.navigationController pushViewController:vc animated:TRUE];
+}
+
+-(IBAction) onLeftButton:(id)sender {
+    [self.tripController moveToPrevState];
+}
+
+-(IBAction) onCrossHairsButton:(id)sender {
+    [self.tripController moveToCurrentState];
+}
+
+-(IBAction) onRightButton:(id)sender {
+    [self.tripController moveToNextState];
+}
+
+-(IBAction) onBookmakrButton:(id)sender {
+    
+}
+
+
 
 #pragma mark MKMapViewDelegate Methods
 
@@ -102,34 +158,130 @@
 
 }
 
+
+
 #pragma mark OBATripControllerDelegate
 
 -(void) refreshTrip {
+    
     MKMapView * mv = self.mapView;
     [mv removeOverlays:mv.overlays];
-    [mv addOverlays:[self.tripController overlays]];
-}
-
--(IBAction) onCrossHairsButton:(id)sender {
     
-}
-
--(IBAction) onEditButton:(id)sender {
-    OBAPlanTripViewController * vc = [OBAPlanTripViewController viewControllerWithApplicationContext:self.appContext];
-    [self.navigationController pushViewController:vc animated:TRUE];
-}
-
--(IBAction) onLeftButton:(id)sender {
+    OBATripController * tc = self.tripController;
     
-}
-
--(IBAction) onRightButton:(id)sender {
+    self.leftButton.enabled = tc.hasPreviousState;
+    self.rightButton.enabled = tc.hasNextState;
     
-}
-
--(IBAction) onBookmakrButton:(id)sender {
+    OBATripState * state = tc.tripState;
     
+    if( state ) {        
+        [mv addOverlays:state.overlays];
+        [mv setRegion:state.preferredRegion animated:TRUE];
+        [self showInfoOverlay:TRUE clear:TRUE];
+        switch(state.type) {
+            case OBATripStateTypeCompleteItinerary: {
+
+                UILabel * departureLabel = [self getItineraryTripDepartureLabel:state];
+                UILabel * arrivalLabel = [self getItineraryTripArrivalLabel:state];
+
+                [departureLabel setOrigin:CGPointMake(10, 10)];
+                [arrivalLabel setOrigin:CGPointMake(10, CGRectGetMaxY(departureLabel.bounds) + 10)];
+                
+                [_infoOverlay addSubview:departureLabel];
+                [_infoOverlay addSubview:arrivalLabel];
+                break;
+            }
+        }
+    }
 }
 
 @end
+
+
+
+
+@implementation OBATripViewController (Private)
+
+-(UILabel*) getItineraryTripDepartureLabel:(OBATripState*)state {
+    UILabel * label = [[[UILabel alloc] init] autorelease];
+    label.text = [self getItineraryTripDepartureLabelText:state];
+    label.font = [UIFont boldSystemFontOfSize:16];
+    label.backgroundColor = [UIColor clearColor];
+    label.shadowColor     = [UIColor colorWithWhite:0.0 alpha:0.5];
+    label.textColor       = [UIColor whiteColor];
+    [label sizeToFit];
+    return label;
+}
+
+-(NSString*) getItineraryTripDepartureLabelText:(OBATripState*)state {
+    OBAItineraryV2 * itinerary = state.itinerary;
+    NSDate * startTime = itinerary.startTime;
+    NSTimeInterval interval = [startTime timeIntervalSinceNow];
+    NSInteger mins = interval / 60;
+    if( -1 <= mins && mins <= 1 ) {
+        return @"Depart now!";
+    }
+    else if( 1 < mins && mins <= 50 ) {
+        return [NSString stringWithFormat:@"Depart in %d minutes", mins];
+    }
+    else if( 50 < mins ) {
+        return [NSString stringWithFormat:@"Depart at %@",[_timeFormatter stringFromDate:startTime]];
+    }
+    else if( -50 <= mins && mins < -1 ) {
+        return [NSString stringWithFormat:@"Departed %d minutes ago", (-mins)];
+    }
+    else {
+        return [NSString stringWithFormat:@"Departed at %@",[_timeFormatter stringFromDate:startTime]];
+    }
+}
+
+-(UILabel*) getItineraryTripArrivalLabel:(OBATripState*)state {
+    UILabel * label = [[[UILabel alloc] init] autorelease];
+    label.text = [self getItineraryTripArrivalLabelText:state];
+    label.font = [UIFont systemFontOfSize:16];
+    label.backgroundColor = [UIColor clearColor];
+    label.shadowColor     = [UIColor colorWithWhite:0.0 alpha:0.5];
+    label.textColor       = [UIColor whiteColor];
+    [label sizeToFit];
+    return label;
+}
+
+-(NSString*) getItineraryTripArrivalLabelText:(OBATripState*)state {
+    OBAItineraryV2 * itinerary = state.itinerary;
+    NSDate * endTime = itinerary.endTime;
+    NSTimeInterval interval = [endTime timeIntervalSinceNow];
+    NSInteger mins = interval / 60;
+    if( -1 <= mins && mins <= 1 ) {
+        return @"Arrives now!";
+    }
+    else if( 1 < mins && mins <= 50 ) {
+        return [NSString stringWithFormat:@"Arrives in %d minutes", mins];
+    }
+    else if( 50 < mins ) {
+        return [NSString stringWithFormat:@"Arrives at %@",[_timeFormatter stringFromDate:endTime]];
+    }
+    else if( -50 <= mins && mins < -1 ) {
+        return [NSString stringWithFormat:@"Arrived %d minutes ago", (-mins)];
+    }
+    else {
+        return [NSString stringWithFormat:@"Arrived at %@",[_timeFormatter stringFromDate:endTime]];
+    }
+}
+
+-(void) showInfoOverlay:(BOOL)show clear:(BOOL)clear{
+    if( show != _infoOverlayVisible ) {
+        _infoOverlayVisible = show;
+        if( _infoOverlayVisible )
+            [self.view addSubview:_infoOverlay];
+        else
+            [_infoOverlay removeFromSuperview];
+    }
+    if( clear ) {
+        for( UIView * view in _infoOverlay.subviews )
+            [view removeFromSuperview];
+    }
+}
+
+@end
+
 

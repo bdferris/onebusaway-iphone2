@@ -19,7 +19,9 @@
 
 
 @interface OBATripViewController : UIViewController <MKMapViewDelegate,OBATripControllerDelegate> {
-
+    UIView * _infoOverlay;
+    BOOL _infoOverlayVisible;
+    NSDateFormatter * _timeFormatter;
 }
 
 @property (nonatomic,retain) IBOutlet OBAApplicationContext * appContext;

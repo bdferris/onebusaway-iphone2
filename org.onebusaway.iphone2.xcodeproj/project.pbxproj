@@ -127,6 +127,8 @@
 		D647A3C4134231B00045A7CB /* OBAPlanTripViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = D647A3C3134231B00045A7CB /* OBAPlanTripViewController.xib */; };
 		D647A3C71342320D0045A7CB /* OBAPlacemark.m in Sources */ = {isa = PBXBuildFile; fileRef = D647A3C61342320D0045A7CB /* OBAPlacemark.m */; };
 		D647A3CB134233620045A7CB /* OBAPlace.m in Sources */ = {isa = PBXBuildFile; fileRef = D647A3CA134233620045A7CB /* OBAPlace.m */; };
+		D647F3801343822500A4CE84 /* OBATripState.m in Sources */ = {isa = PBXBuildFile; fileRef = D647F37F1343822500A4CE84 /* OBATripState.m */; };
+		D647F3841343B1DB00A4CE84 /* OBAPickerTextField.m in Sources */ = {isa = PBXBuildFile; fileRef = D647F3831343B1DB00A4CE84 /* OBAPickerTextField.m */; };
 		D648A3CD0FECBAD9002D9D49 /* OBAGenericAnnotation.m in Sources */ = {isa = PBXBuildFile; fileRef = D648A3CC0FECBAD9002D9D49 /* OBAGenericAnnotation.m */; };
 		D64953C41214A1E90040572D /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = D64953C31214A1E80040572D /* Icon.png */; };
 		D64953CA1214A3890040572D /* Icon-72.png in Resources */ = {isa = PBXBuildFile; fileRef = D64953C91214A3890040572D /* Icon-72.png */; };
@@ -584,6 +586,10 @@
 		D647A3C81342324D0045A7CB /* org_onebusaway_iphone2_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = org_onebusaway_iphone2_Prefix.pch; sourceTree = "<group>"; };
 		D647A3C9134233620045A7CB /* OBAPlace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBAPlace.h; path = Model/OBAPlace.h; sourceTree = "<group>"; };
 		D647A3CA134233620045A7CB /* OBAPlace.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBAPlace.m; path = Model/OBAPlace.m; sourceTree = "<group>"; };
+		D647F37E1343822500A4CE84 /* OBATripState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBATripState.h; path = Model/OBATripState.h; sourceTree = "<group>"; };
+		D647F37F1343822500A4CE84 /* OBATripState.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBATripState.m; path = Model/OBATripState.m; sourceTree = "<group>"; };
+		D647F3821343B1DB00A4CE84 /* OBAPickerTextField.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBAPickerTextField.h; path = View/OBAPickerTextField.h; sourceTree = "<group>"; };
+		D647F3831343B1DB00A4CE84 /* OBAPickerTextField.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBAPickerTextField.m; path = View/OBAPickerTextField.m; sourceTree = "<group>"; };
 		D648A3CB0FECBAD9002D9D49 /* OBAGenericAnnotation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBAGenericAnnotation.h; path = Model/OBAGenericAnnotation.h; sourceTree = "<group>"; };
 		D648A3CC0FECBAD9002D9D49 /* OBAGenericAnnotation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBAGenericAnnotation.m; path = Model/OBAGenericAnnotation.m; sourceTree = "<group>"; };
 		D64953C31214A1E80040572D /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Icon.png; path = Resources/Icon.png; sourceTree = "<group>"; };
@@ -1354,6 +1360,15 @@
 			name = Vehicles;
 			sourceTree = "<group>";
 		};
+		D647F3811343B1A800A4CE84 /* View */ = {
+			isa = PBXGroup;
+			children = (
+				D647F3821343B1DB00A4CE84 /* OBAPickerTextField.h */,
+				D647F3831343B1DB00A4CE84 /* OBAPickerTextField.m */,
+			);
+			name = View;
+			sourceTree = "<group>";
+		};
 		D64953CD1214A3A00040572D /* Application Icon */ = {
 			isa = PBXGroup;
 			children = (
@@ -1450,6 +1465,8 @@
 				D647A3CA134233620045A7CB /* OBAPlace.m */,
 				D65D426C134309CE00F940B1 /* OBATripPolyline.h */,
 				D65D426D134309CE00F940B1 /* OBATripPolyline.m */,
+				D647F37E1343822500A4CE84 /* OBATripState.h */,
+				D647F37F1343822500A4CE84 /* OBATripState.m */,
 			);
 			name = Model;
 			sourceTree = "<group>";
@@ -1650,6 +1667,7 @@
 			children = (
 				D6F0F9861341243D00AAA7EE /* Model */,
 				D6F0F95D1341243D00AAA7EE /* Control */,
+				D647F3811343B1A800A4CE84 /* View */,
 			);
 			path = Classes;
 			sourceTree = "<group>";
@@ -2350,6 +2368,8 @@
 				D65D425C134274C500F940B1 /* OBASetDatePropertyJsonDigesterRule.m in Sources */,
 				D65D426A1342FB7D00F940B1 /* OBATripController.m in Sources */,
 				D65D426E134309CE00F940B1 /* OBATripPolyline.m in Sources */,
+				D647F3801343822500A4CE84 /* OBATripState.m in Sources */,
+				D647F3841343B1DB00A4CE84 /* OBAPickerTextField.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
