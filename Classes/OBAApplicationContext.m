@@ -29,16 +29,16 @@
 
 #import "OBAStopIconFactory.h"
 
+#import "OBATripController.h"
+
 #import "OBAUserPreferencesMigration.h"
 #import "IASKAppSettingsViewController.h"
 
 
-static NSString * kOBAHiddenPreferenceSavedNavigationTargets = @"OBASavedNavigationTargets";
 static NSString * kOBAHiddenPreferenceApplicationLastActiveTimestamp = @"OBAApplicationLastActiveTimestamp";
 static NSString * kOBAHiddenPreferenceUserId = @"OBAApplicationUserId";
 static NSString * kOBAHiddenPreferenceTabOrder = @"OBATabOrder";
 
-static NSString * kOBAPreferenceShowOnStartup = @"oba_show_on_start_preference";
 static NSString * kOBADefaultApiServerName = @"api.onebusaway.org";
 
 static const double kMaxTimeSinceApplicationTerminationToRestoreState = 15 * 60;
@@ -54,11 +54,8 @@ static const NSUInteger kTagSettingsView = 3;
 - (void) saveState;
 
 - (void) restoreState;
-- (void) restoreTabOrder:(NSUserDefaults*)userDefaults;
 - (BOOL) shouldRestoreStateToDefault:(NSUserDefaults*)userDefaults;
 - (void) restoreStateToDefault:(NSUserDefaults*)userDefaults;
-
-- (NSInteger) getViewControllerIndexForTag:(NSUInteger)tag;
 
 - (NSString *)userIdFromDefaults:(NSUserDefaults*)userDefaults;
 
@@ -78,16 +75,21 @@ static const NSUInteger kTagSettingsView = 3;
 @synthesize modelDao = _modelDao;
 @synthesize modelService = _modelService;
 
+@synthesize tripController = _tripController;
+
 @synthesize stopIconFactory = _stopIconFactory;
 
 @synthesize window = _window;
-@synthesize tabBarController = _tabBarController;
+@synthesize navController = _navController;
 
 @synthesize active = _active;
 
 
 - (id) init {
-	if( self = [super init] ) {
+    
+    self = [super init];
+    
+	if( self ) {
 		
 		_active = FALSE;
 		
@@ -109,6 +111,9 @@ static const NSUInteger kTagSettingsView = 3;
 		_modelService.locationManager = _locationManager;
 		
 		_stopIconFactory = [[OBAStopIconFactory alloc] init];
+        
+        _tripController = [[OBATripController alloc] init];
+        _tripController.modelService = _modelService;
 		
 		[self refreshSettings];
 	}
@@ -122,11 +127,13 @@ static const NSUInteger kTagSettingsView = 3;
 	
 	[_locationManager release];
 	[_activityListeners release];
+    
+    [_tripController release];
 	
 	[_stopIconFactory release];
 	
 	[_window release];
-	[_tabBarController release];
+	[_navController release];
 	
 	[super dealloc];
 }
@@ -165,15 +172,17 @@ static const NSUInteger kTagSettingsView = 3;
 - (void)applicationDidFinishLaunching:(UIApplication *)application {	
 	
 	[self migrateUserPreferences];
-	
+
+	/*
 	_tabBarController.delegate = self;
 	
 	// Register a settings callback
 	UINavigationController * navController = [_tabBarController.viewControllers objectAtIndex:kTagSettingsView];
 	IASKAppSettingsViewController * vc = [navController.viewControllers objectAtIndex:0];
 	vc.delegate = self;
-	
-	UIView * rootView = [_tabBarController view];
+     */
+    
+	UIView * rootView = [_navController view];
 	[_window addSubview:rootView];
 	[_window makeKeyAndVisible];
 	
@@ -266,69 +275,23 @@ static const NSUInteger kTagSettingsView = 3;
 
 - (void) saveState {
 	
-	UINavigationController * navController = (UINavigationController*) _tabBarController.selectedViewController;
-	
-	NSMutableArray * targets = [[NSMutableArray alloc] init];
-	
-	for( id source in [navController viewControllers] ) {
-		if( ! [source conformsToProtocol:@protocol(OBANavigationTargetAware)] )
-			break;
-		id<OBANavigationTargetAware> targetSource = (id<OBANavigationTargetAware>) source;
-		OBANavigationTarget * target = targetSource.navigationTarget;
-		if( ! target )
-			break;
-		[targets addObject:target];
-	}
-	
 	NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
-	
-    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:targets];
-	[userDefaults setObject:data forKey:kOBAHiddenPreferenceSavedNavigationTargets];
 	
 	NSDate * date = [NSDate date];
     NSData * dateData = [NSKeyedArchiver archivedDataWithRootObject:date];
 	[userDefaults setObject:dateData forKey:kOBAHiddenPreferenceApplicationLastActiveTimestamp];
 	
-	[targets release];
-	
 	[userDefaults synchronize];
 }
 
 - (void) restoreState {
-	
+    
 	NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
-	
-	[self restoreTabOrder:userDefaults];
 	
 	if( [self shouldRestoreStateToDefault:userDefaults] ) {
 		[self restoreStateToDefault:userDefaults];
 		return;
 	}
-
-	// If we had no default state, just use a reasonable default
-	_tabBarController.selectedIndex = 0;
-}
-
-- (void) restoreTabOrder:(NSUserDefaults*)userDefaults {
-	/**
-	 * Restore tab order if necessary
-	 */
-	NSArray *initialViewControllers = [NSArray arrayWithArray:self.tabBarController.viewControllers];
-    NSArray *tabBarOrder = [userDefaults objectForKey:kOBAHiddenPreferenceTabOrder];
-	
-    if (tabBarOrder) {
-        NSMutableArray *newViewControllers = [NSMutableArray arrayWithCapacity:initialViewControllers.count];
-        for (NSNumber *tabBarNumber in tabBarOrder) {
-            NSUInteger tabBarIndex = [tabBarNumber unsignedIntegerValue];
-            [newViewControllers addObject:[initialViewControllers objectAtIndex:tabBarIndex]];
-        }
-        self.tabBarController.viewControllers = newViewControllers;
-    }	
-	
-	/**
-	 * For now, we don't allow the customization of tab order
-	 */
-	_tabBarController.customizableViewControllers = [NSArray array];
 }
 
 - (BOOL) shouldRestoreStateToDefault:(NSUserDefaults*)userDefaults {
@@ -349,23 +312,7 @@ static const NSUInteger kTagSettingsView = 3;
 }
 
 - (void) restoreStateToDefault:(NSUserDefaults*)userDefaults {
-	NSInteger showOnStartup = [userDefaults integerForKey:kOBAPreferenceShowOnStartup];
-	if( 0 <= showOnStartup && showOnStartup < 4 )
-		_tabBarController.selectedIndex = showOnStartup;
-}
-
-- (NSInteger) getViewControllerIndexForTag:(NSUInteger)tag {
-	
-	NSArray * controllers = _tabBarController.viewControllers;
-	NSUInteger count = [controllers count];
-	
-	for( NSUInteger i=0; i<count; i++ ) {
-		UINavigationController * nc = [controllers objectAtIndex:i];
-		if( nc.tabBarItem.tag == tag )
-			return i;
-	}
-	
-	return -1;	
+    
 }
 
 - (NSString *)userIdFromDefaults:(NSUserDefaults*)userDefaults {

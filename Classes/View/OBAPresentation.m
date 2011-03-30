@@ -37,6 +37,12 @@ static const float kStopForRouteAnnotationMinScaleDistance = 8000;
 	return @"Headed somewhere...";
 }
 
++ (NSString*) getRouteShortNameForTrip:(OBATripV2*)trip {
+    if( trip.routeShortName )
+        return trip.routeShortName;
+    return [self getRouteShortNameForRoute:trip.route];
+}
+
 + (NSString*) getRouteShortNameForRoute:(OBARouteV2*)route {
 	NSString * name = route.shortName;
 	if( name )

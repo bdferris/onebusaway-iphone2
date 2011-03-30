@@ -133,10 +133,21 @@
 		D64953CC1214A3950040572D /* Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D64953CB1214A3950040572D /* Icon@2x.png */; };
 		D64C6F700FDF0FCD00F0C218 /* OBAProgressIndicatorView.xib in Resources */ = {isa = PBXBuildFile; fileRef = D64C6F6F0FDF0FCC00F0C218 /* OBAProgressIndicatorView.xib */; };
 		D651BB2811C9D5DE001BE733 /* iTunesArtwork in Resources */ = {isa = PBXBuildFile; fileRef = D651BB2711C9D5DE001BE733 /* iTunesArtwork */; };
-		D656D6B00FD4522C00ADE4D5 /* OBARecentStopsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D656D6AF0FD4522C00ADE4D5 /* OBARecentStopsViewController.m */; };
 		D656D76C0FD4690300ADE4D5 /* OBASearchViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D656D76B0FD4690300ADE4D5 /* OBASearchViewController.m */; };
 		D6575AEC0FEE13CF00D6D987 /* Entitlements.plist in Resources */ = {isa = PBXBuildFile; fileRef = D6575AEB0FEE13CF00D6D987 /* Entitlements.plist */; };
 		D65B9F1B0FDD7BBF006A9568 /* OBANavigationTarget.m in Sources */ = {isa = PBXBuildFile; fileRef = D65B9F1A0FDD7BBF006A9568 /* OBANavigationTarget.m */; };
+		D65D424D1342699800F940B1 /* OBAItinerariesV2.m in Sources */ = {isa = PBXBuildFile; fileRef = D65D424C1342699800F940B1 /* OBAItinerariesV2.m */; };
+		D65D425013426D3900F940B1 /* OBAItineraryV2.m in Sources */ = {isa = PBXBuildFile; fileRef = D65D424F13426D3800F940B1 /* OBAItineraryV2.m */; };
+		D65D425313426DB100F940B1 /* OBALegV2.m in Sources */ = {isa = PBXBuildFile; fileRef = D65D425213426DB100F940B1 /* OBALegV2.m */; };
+		D65D425613426F4B00F940B1 /* OBATransitLegV2.m in Sources */ = {isa = PBXBuildFile; fileRef = D65D425513426F4B00F940B1 /* OBATransitLegV2.m */; };
+		D65D425913426F6F00F940B1 /* OBAStreetLegV2.m in Sources */ = {isa = PBXBuildFile; fileRef = D65D425813426F6F00F940B1 /* OBAStreetLegV2.m */; };
+		D65D425C134274C500F940B1 /* OBASetDatePropertyJsonDigesterRule.m in Sources */ = {isa = PBXBuildFile; fileRef = D65D425B134274C500F940B1 /* OBASetDatePropertyJsonDigesterRule.m */; };
+		D65D425E1342F1F900F940B1 /* LeftArrow.png in Resources */ = {isa = PBXBuildFile; fileRef = D65D425D1342F1F900F940B1 /* LeftArrow.png */; };
+		D65D42621342F32400F940B1 /* LeftArrow@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D65D425F1342F32400F940B1 /* LeftArrow@2x.png */; };
+		D65D42631342F32400F940B1 /* RightArrow.png in Resources */ = {isa = PBXBuildFile; fileRef = D65D42601342F32400F940B1 /* RightArrow.png */; };
+		D65D42641342F32400F940B1 /* RightArrow@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D65D42611342F32400F940B1 /* RightArrow@2x.png */; };
+		D65D426A1342FB7D00F940B1 /* OBATripController.m in Sources */ = {isa = PBXBuildFile; fileRef = D65D42691342FB7D00F940B1 /* OBATripController.m */; };
+		D65D426E134309CE00F940B1 /* OBATripPolyline.m in Sources */ = {isa = PBXBuildFile; fileRef = D65D426D134309CE00F940B1 /* OBATripPolyline.m */; };
 		D6631B34104DC1BB001C7C90 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D6631B33104DC1BB001C7C90 /* SystemConfiguration.framework */; };
 		D6686A6E0FD9ABD40097F034 /* OBAProgressIndicatorView.m in Sources */ = {isa = PBXBuildFile; fileRef = D6686A6D0FD9ABD40097F034 /* OBAProgressIndicatorView.m */; };
 		D67002EC0F7CADF50004F420 /* OBATextFieldTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = D67002EB0F7CADF50004F420 /* OBATextFieldTableViewCell.m */; };
@@ -580,14 +591,32 @@
 		D64953CB1214A3950040572D /* Icon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Icon@2x.png"; path = "Resources/Icon@2x.png"; sourceTree = "<group>"; };
 		D64C6F6F0FDF0FCC00F0C218 /* OBAProgressIndicatorView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = OBAProgressIndicatorView.xib; path = Resources/OBAProgressIndicatorView.xib; sourceTree = "<group>"; };
 		D651BB2711C9D5DE001BE733 /* iTunesArtwork */ = {isa = PBXFileReference; lastKnownFileType = file; name = iTunesArtwork; path = Resources/iTunesArtwork; sourceTree = "<group>"; };
-		D656D6AE0FD4522C00ADE4D5 /* OBARecentStopsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBARecentStopsViewController.h; path = View/OBARecentStopsViewController.h; sourceTree = "<group>"; };
-		D656D6AF0FD4522C00ADE4D5 /* OBARecentStopsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBARecentStopsViewController.m; path = View/OBARecentStopsViewController.m; sourceTree = "<group>"; };
 		D656D76A0FD4690300ADE4D5 /* OBASearchViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBASearchViewController.h; path = View/OBASearchViewController.h; sourceTree = "<group>"; };
 		D656D76B0FD4690300ADE4D5 /* OBASearchViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBASearchViewController.m; path = View/OBASearchViewController.m; sourceTree = "<group>"; };
 		D6575AEB0FEE13CF00D6D987 /* Entitlements.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Entitlements.plist; sourceTree = "<group>"; };
 		D65B9F190FDD7BBF006A9568 /* OBANavigationTarget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OBANavigationTarget.h; sourceTree = "<group>"; };
 		D65B9F1A0FDD7BBF006A9568 /* OBANavigationTarget.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OBANavigationTarget.m; sourceTree = "<group>"; };
 		D65BA1CF0FDDC74D006A9568 /* OBANavigationTargetAware.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OBANavigationTargetAware.h; sourceTree = "<group>"; };
+		D65D424B1342699800F940B1 /* OBAItinerariesV2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OBAItinerariesV2.h; sourceTree = "<group>"; };
+		D65D424C1342699800F940B1 /* OBAItinerariesV2.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OBAItinerariesV2.m; sourceTree = "<group>"; };
+		D65D424E13426D3800F940B1 /* OBAItineraryV2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OBAItineraryV2.h; sourceTree = "<group>"; };
+		D65D424F13426D3800F940B1 /* OBAItineraryV2.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OBAItineraryV2.m; sourceTree = "<group>"; };
+		D65D425113426DB000F940B1 /* OBALegV2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OBALegV2.h; sourceTree = "<group>"; };
+		D65D425213426DB100F940B1 /* OBALegV2.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OBALegV2.m; sourceTree = "<group>"; };
+		D65D425413426F4B00F940B1 /* OBATransitLegV2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OBATransitLegV2.h; sourceTree = "<group>"; };
+		D65D425513426F4B00F940B1 /* OBATransitLegV2.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OBATransitLegV2.m; sourceTree = "<group>"; };
+		D65D425713426F6F00F940B1 /* OBAStreetLegV2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OBAStreetLegV2.h; sourceTree = "<group>"; };
+		D65D425813426F6F00F940B1 /* OBAStreetLegV2.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OBAStreetLegV2.m; sourceTree = "<group>"; };
+		D65D425A134274C500F940B1 /* OBASetDatePropertyJsonDigesterRule.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OBASetDatePropertyJsonDigesterRule.h; sourceTree = "<group>"; };
+		D65D425B134274C500F940B1 /* OBASetDatePropertyJsonDigesterRule.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OBASetDatePropertyJsonDigesterRule.m; sourceTree = "<group>"; };
+		D65D425D1342F1F900F940B1 /* LeftArrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = LeftArrow.png; sourceTree = "<group>"; };
+		D65D425F1342F32400F940B1 /* LeftArrow@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "LeftArrow@2x.png"; sourceTree = "<group>"; };
+		D65D42601342F32400F940B1 /* RightArrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = RightArrow.png; sourceTree = "<group>"; };
+		D65D42611342F32400F940B1 /* RightArrow@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "RightArrow@2x.png"; sourceTree = "<group>"; };
+		D65D42681342FB7D00F940B1 /* OBATripController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBATripController.h; path = Control/OBATripController.h; sourceTree = "<group>"; };
+		D65D42691342FB7D00F940B1 /* OBATripController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBATripController.m; path = Control/OBATripController.m; sourceTree = "<group>"; };
+		D65D426C134309CE00F940B1 /* OBATripPolyline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBATripPolyline.h; path = Model/OBATripPolyline.h; sourceTree = "<group>"; };
+		D65D426D134309CE00F940B1 /* OBATripPolyline.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBATripPolyline.m; path = Model/OBATripPolyline.m; sourceTree = "<group>"; };
 		D6631B33104DC1BB001C7C90 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		D6686A6C0FD9ABD40097F034 /* OBAProgressIndicatorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBAProgressIndicatorView.h; path = View/OBAProgressIndicatorView.h; sourceTree = "<group>"; };
 		D6686A6D0FD9ABD40097F034 /* OBAProgressIndicatorView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBAProgressIndicatorView.m; path = View/OBAProgressIndicatorView.m; sourceTree = "<group>"; };
@@ -1419,6 +1448,8 @@
 				D6789DA20FE06A8400696FE6 /* Annotations */,
 				D647A3C9134233620045A7CB /* OBAPlace.h */,
 				D647A3CA134233620045A7CB /* OBAPlace.m */,
+				D65D426C134309CE00F940B1 /* OBATripPolyline.h */,
+				D65D426D134309CE00F940B1 /* OBATripPolyline.m */,
 			);
 			name = Model;
 			sourceTree = "<group>";
@@ -1438,8 +1469,6 @@
 				D656D76B0FD4690300ADE4D5 /* OBASearchViewController.m */,
 				D68CDC330FCB53F000EE6BDF /* OBABookmarksViewController.h */,
 				D68CDC340FCB53F000EE6BDF /* OBABookmarksViewController.m */,
-				D656D6AE0FD4522C00ADE4D5 /* OBARecentStopsViewController.h */,
-				D656D6AF0FD4522C00ADE4D5 /* OBARecentStopsViewController.m */,
 				D48EC06F120A9FFC00E529FC /* OBASearchResultsMapFilterToolbar.h */,
 				D48EC070120A9FFC00E529FC /* OBASearchResultsMapFilterToolbar.m */,
 				D63C82B510D62D1700B297C4 /* OBAContactUsViewController.h */,
@@ -1468,6 +1497,8 @@
 				D68CDD0F0FCBB07D00EE6BDF /* OBAActivityListeners.m */,
 				D696ECEE1207992E00514C2B /* OBAUserPreferencesMigration.h */,
 				D696ECEF1207992E00514C2B /* OBAUserPreferencesMigration.m */,
+				D65D42681342FB7D00F940B1 /* OBATripController.h */,
+				D65D42691342FB7D00F940B1 /* OBATripController.m */,
 			);
 			name = Control;
 			sourceTree = "<group>";
@@ -1681,6 +1712,8 @@
 				D6F0F97D1341243D00AAA7EE /* OBASelectorJsonDigesterRule.m */,
 				D6F0F97E1341243D00AAA7EE /* OBASetCoordinatePropertyJsonDigesterRule.h */,
 				D6F0F97F1341243D00AAA7EE /* OBASetCoordinatePropertyJsonDigesterRule.m */,
+				D65D425A134274C500F940B1 /* OBASetDatePropertyJsonDigesterRule.h */,
+				D65D425B134274C500F940B1 /* OBASetDatePropertyJsonDigesterRule.m */,
 				D6F0F9801341243D00AAA7EE /* OBASetLocationPropertyJsonDigesterRule.h */,
 				D6F0F9811341243D00AAA7EE /* OBASetLocationPropertyJsonDigesterRule.m */,
 				D6F0F9821341243D00AAA7EE /* OBASetNextOBAJsonDigesterRule.h */,
@@ -1758,6 +1791,16 @@
 				D6F0F9BB1341243D00AAA7EE /* OBATripV2.m */,
 				D6F0F9BC1341243D00AAA7EE /* OBAVehicleStatusV2.h */,
 				D6F0F9BD1341243D00AAA7EE /* OBAVehicleStatusV2.m */,
+				D65D424B1342699800F940B1 /* OBAItinerariesV2.h */,
+				D65D424C1342699800F940B1 /* OBAItinerariesV2.m */,
+				D65D424E13426D3800F940B1 /* OBAItineraryV2.h */,
+				D65D424F13426D3800F940B1 /* OBAItineraryV2.m */,
+				D65D425113426DB000F940B1 /* OBALegV2.h */,
+				D65D425213426DB100F940B1 /* OBALegV2.m */,
+				D65D425413426F4B00F940B1 /* OBATransitLegV2.h */,
+				D65D425513426F4B00F940B1 /* OBATransitLegV2.m */,
+				D65D425713426F6F00F940B1 /* OBAStreetLegV2.h */,
+				D65D425813426F6F00F940B1 /* OBAStreetLegV2.m */,
 			);
 			path = V2;
 			sourceTree = "<group>";
@@ -1794,10 +1837,14 @@
 				D6F0FA051341261900AAA7EE /* CrossHairs@2x.png */,
 				D6F0FA071341261900AAA7EE /* Gear.png */,
 				D6F0FA081341261900AAA7EE /* Gear@2x.png */,
+				D65D425D1342F1F900F940B1 /* LeftArrow.png */,
+				D65D425F1342F32400F940B1 /* LeftArrow@2x.png */,
 				D6F0FA0A1341261900AAA7EE /* Lightbulb.png */,
 				D6F0FA0B1341261900AAA7EE /* Lightbulb@2x.png */,
 				D6F0FA0D1341261900AAA7EE /* MagnifyingGlass.png */,
 				D6F0FA0E1341261900AAA7EE /* MagnifyingGlass@2x.png */,
+				D65D42601342F32400F940B1 /* RightArrow.png */,
+				D65D42611342F32400F940B1 /* RightArrow@2x.png */,
 				D6F0FA101341261900AAA7EE /* SegmentedControl-CrossHairs.png */,
 				D6F0FA111341261900AAA7EE /* SegmentedControl-CrossHairs@2x.png */,
 				D6F0FA131341261900AAA7EE /* SegmentedControl-Region.png */,
@@ -2102,6 +2149,10 @@
 				D6F0FADC1341261900AAA7EE /* RailStopIconW.png in Resources */,
 				D6F0FADD1341261900AAA7EE /* RailStopIconW@2x.png in Resources */,
 				D647A3C4134231B00045A7CB /* OBAPlanTripViewController.xib in Resources */,
+				D65D425E1342F1F900F940B1 /* LeftArrow.png in Resources */,
+				D65D42621342F32400F940B1 /* LeftArrow@2x.png in Resources */,
+				D65D42631342F32400F940B1 /* RightArrow.png in Resources */,
+				D65D42641342F32400F940B1 /* RightArrow@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2129,7 +2180,6 @@
 				D616A12C0FC5153100631BCE /* OBAApplicationContext.m in Sources */,
 				D68CDC350FCB53F000EE6BDF /* OBABookmarksViewController.m in Sources */,
 				D68CDD100FCBB07D00EE6BDF /* OBAActivityListeners.m in Sources */,
-				D656D6B00FD4522C00ADE4D5 /* OBARecentStopsViewController.m in Sources */,
 				D656D76C0FD4690300ADE4D5 /* OBASearchViewController.m in Sources */,
 				D6686A6E0FD9ABD40097F034 /* OBAProgressIndicatorView.m in Sources */,
 				D65B9F1B0FDD7BBF006A9568 /* OBANavigationTarget.m in Sources */,
@@ -2292,6 +2342,14 @@
 				D647A3C2134231900045A7CB /* OBATripViewController.m in Sources */,
 				D647A3C71342320D0045A7CB /* OBAPlacemark.m in Sources */,
 				D647A3CB134233620045A7CB /* OBAPlace.m in Sources */,
+				D65D424D1342699800F940B1 /* OBAItinerariesV2.m in Sources */,
+				D65D425013426D3900F940B1 /* OBAItineraryV2.m in Sources */,
+				D65D425313426DB100F940B1 /* OBALegV2.m in Sources */,
+				D65D425613426F4B00F940B1 /* OBATransitLegV2.m in Sources */,
+				D65D425913426F6F00F940B1 /* OBAStreetLegV2.m in Sources */,
+				D65D425C134274C500F940B1 /* OBASetDatePropertyJsonDigesterRule.m in Sources */,
+				D65D426A1342FB7D00F940B1 /* OBATripController.m in Sources */,
+				D65D426E134309CE00F940B1 /* OBATripPolyline.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

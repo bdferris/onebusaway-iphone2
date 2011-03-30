@@ -15,18 +15,26 @@
  */
 
 #import "OBAApplicationContext.h"
+#import "OBATripController.h"
 
 
-@interface OBATripViewController : UIViewController <MKMapViewDelegate> {
+@interface OBATripViewController : UIViewController <MKMapViewDelegate,OBATripControllerDelegate> {
 
 }
 
 @property (nonatomic,retain) IBOutlet OBAApplicationContext * appContext;
+@property (nonatomic,retain) OBATripController * tripController;
+
 @property (nonatomic,retain) IBOutlet MKMapView * mapView;
 @property (nonatomic,retain) IBOutlet UIBarButtonItem * currentLocationButton;
 @property (nonatomic,retain) IBOutlet UIBarButtonItem * editButton;
+@property (nonatomic,retain) IBOutlet UIBarButtonItem * leftButton;
+@property (nonatomic,retain) IBOutlet UIBarButtonItem * rightButton;
 
 -(IBAction) onCrossHairsButton:(id)sender;
 -(IBAction) onEditButton:(id)sender;
+-(IBAction) onLeftButton:(id)sender;
+-(IBAction) onRightButton:(id)sender;
+-(IBAction) onBookmakrButton:(id)sender;
 
 @end

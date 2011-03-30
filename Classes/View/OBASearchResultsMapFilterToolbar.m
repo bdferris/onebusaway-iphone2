@@ -171,8 +171,9 @@
     self.alpha = 1.0;
     
     // place the toolbar right on top of the tab bar
-    UITabBar* tabbar = [self.appContext tabBarController].tabBar;
-    const CGFloat tabbarHeight = tabbar.frame.size.height;
+    UINavigationController * navController = [self.appContext navController];
+    UIToolbar * toolbar = navController.toolbar;
+    const CGFloat tabbarHeight = toolbar.frame.size.height;
 
     [self sizeToFit];
     const CGFloat toolbarHeight = self.frame.size.height;

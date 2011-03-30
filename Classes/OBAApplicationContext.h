@@ -19,6 +19,7 @@
 #import "OBAModelService.h"
 #import "OBADataSourceConfig.h"
 #import "OBALocationManager.h"
+#import "OBATripController.h"
 #import "OBAReferencesV2.h"
 
 #import "IASKAppSettingsViewController.h"
@@ -35,22 +36,26 @@
 	OBAModelDAO * _modelDao;
 	OBAModelService * _modelService;
 	
+    OBATripController * _tripController;
+    
 	OBALocationManager * _locationManager;
 	OBAActivityListeners * _activityListeners;
 
 	OBAStopIconFactory * _stopIconFactory;
 	
 	UIWindow * _window;
-	UITabBarController * _tabBarController;
+	UINavigationController * _navController;
 	
 }
 
 @property (nonatomic, retain) IBOutlet UIWindow *window;
-@property (nonatomic, retain) IBOutlet UITabBarController * tabBarController;
+@property (nonatomic, retain) IBOutlet UINavigationController * navController;
 
 @property (nonatomic,readonly) OBAReferencesV2 * references;
 @property (nonatomic,readonly) OBAModelDAO * modelDao;
 @property (nonatomic,readonly) OBAModelService * modelService;
+
+@property (nonatomic,readonly) OBATripController * tripController;
 
 @property (nonatomic,readonly) OBAStopIconFactory * stopIconFactory;
 

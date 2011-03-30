@@ -13,6 +13,8 @@
 
 + (NSString*) getTripHeadsignForTrip:(OBATripV2*)trip;
 
++ (NSString*) getRouteShortNameForTrip:(OBATripV2*)trip;
+
 + (NSString*) getRouteShortNameForRoute:(OBARouteV2*)route;
 
 + (NSString*) getRouteLongNameForRoute:(OBARouteV2*)route;

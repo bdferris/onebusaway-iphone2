@@ -16,25 +16,36 @@
 
 #import "OBATripViewController.h"
 #import "OBAPlanTripViewController.h"
+#import "OBATripPolyline.h"
 
 
 @implementation OBATripViewController
 
 @synthesize appContext;
+@synthesize tripController;
 @synthesize mapView;
 @synthesize currentLocationButton;
 @synthesize editButton;
+@synthesize leftButton;
+@synthesize rightButton;
 
 -(void) dealloc {
 	self.appContext = nil;
     self.mapView = nil;
     self.currentLocationButton = nil;
     self.editButton = nil;
+    self.leftButton = nil;
+    self.rightButton = nil;
     [super dealloc];
 }
 
 - (void) viewDidLoad {
 	[super viewDidLoad];
+    self.leftButton.enabled = FALSE;
+    self.rightButton.enabled = FALSE;
+
+    self.tripController = self.appContext.tripController;
+    self.tripController.delegate = self;
 }
 
 - (void)viewDidUnload {
@@ -68,7 +79,35 @@
 }
 
 - (MKOverlayView *)mapView:(MKMapView *)mapView viewForOverlay:(id )overlay {
-    return nil;
+
+    if( [overlay isKindOfClass:[MKPolyline class]] ) {
+        MKPolylineView * pv = [[MKPolylineView alloc] initWithPolyline:(MKPolyline*)overlay];
+        pv.fillColor = [UIColor blackColor];
+        pv.strokeColor = [UIColor blackColor];
+        pv.lineWidth = 5;
+        return pv;
+	}
+    else if( [overlay isKindOfClass:[OBATripPolyline class]] ) {
+        OBATripPolyline * tp = overlay;
+        MKPolylineView * pv = [[MKPolylineView alloc] initWithPolyline:tp.polyline];
+        UIColor * color = ( tp.polylineType == OBATripPolylineTypeTransitLeg ) ? [UIColor blueColor] : [UIColor blackColor];
+        pv.fillColor = color;
+        pv.strokeColor = color;
+        pv.alpha = 0.75;
+        pv.lineWidth = 5;
+        return pv;
+	}
+	
+	return nil;	
+
+}
+
+#pragma mark OBATripControllerDelegate
+
+-(void) refreshTrip {
+    MKMapView * mv = self.mapView;
+    [mv removeOverlays:mv.overlays];
+    [mv addOverlays:[self.tripController overlays]];
 }
 
 -(IBAction) onCrossHairsButton:(id)sender {
@@ -80,6 +119,17 @@
     [self.navigationController pushViewController:vc animated:TRUE];
 }
 
+-(IBAction) onLeftButton:(id)sender {
+    
+}
+
+-(IBAction) onRightButton:(id)sender {
+    
+}
+
+-(IBAction) onBookmakrButton:(id)sender {
+    
+}
 
 @end
 
