@@ -103,7 +103,8 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
 	
     if( indexPath.row == 0 ) {
-        [self.delegate currentLocationBookmarkSelected];
+        OBAPlace * place = [OBAPlace placeWithCurrentLocation];
+        [self.delegate placeBookmarkSelected:place];
         [self.navigationController popViewControllerAnimated:TRUE];
     }
     

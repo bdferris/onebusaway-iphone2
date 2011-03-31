@@ -16,6 +16,9 @@
 
 #import "OBATripViewController.h"
 #import "OBAPlanTripViewController.h"
+#import "OBAPlaceAnnotationViewController.h"
+
+#import "OBAPlaceAnnotation.h"
 #import "OBATripPolyline.h"
 
 
@@ -95,6 +98,7 @@
 
 -(IBAction) onEditButton:(id)sender {
     OBAPlanTripViewController * vc = [OBAPlanTripViewController viewControllerWithApplicationContext:self.appContext];
+    [vc setPlaceFrom:self.tripController.placeFrom placeTo:self.tripController.placeTo];
     [self.navigationController pushViewController:vc animated:TRUE];
 }
 
@@ -127,11 +131,26 @@
 }
 
 - (MKAnnotationView *)mapView:(MKMapView *)mapView viewForAnnotation:(id<MKAnnotation>)annotation {    
-	return nil;
+	if( [annotation isKindOfClass:[OBAPlaceAnnotation class]] ) {
+		MKPinAnnotationView * view = [mapView dequeueReusableAnnotationViewWithIdentifier:@"OBAPlaceAnnotation"];
+		if( view == nil ) {
+			view = [[[MKPinAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:@"OBAPlaceAnnotation"] autorelease];
+		}
+		view.canShowCallout = TRUE;
+		view.rightCalloutAccessoryView = [UIButton buttonWithType:UIButtonTypeDetailDisclosure];
+        view.pinColor = MKPinAnnotationColorGreen;
+		return view;                                     
+    }
 }
 
 - (void) mapView:(MKMapView *)mapView annotationView:(MKAnnotationView *)view calloutAccessoryControlTapped:(UIControl *)control {
-	
+	id<MKAnnotation> annotation = view.annotation;
+    if ([annotation isKindOfClass:[OBAPlaceAnnotation class]]) {
+        OBAPlaceAnnotation * placeAnnotation = (OBAPlaceAnnotation*) annotation;
+        OBAPlaceAnnotationViewController * vc = [[OBAPlaceAnnotationViewController alloc] initWithAppContext:self.appContext place:placeAnnotation.place];
+        [self.navigationController pushViewController:vc animated:TRUE];
+        [vc release];
+    }
 }
 
 - (MKOverlayView *)mapView:(MKMapView *)mapView viewForOverlay:(id )overlay {
@@ -166,17 +185,23 @@
     
     MKMapView * mv = self.mapView;
     [mv removeOverlays:mv.overlays];
+    [mv removeAnnotations:mv.annotations];
     
     OBATripController * tc = self.tripController;
     
     self.leftButton.enabled = tc.hasPreviousState;
     self.rightButton.enabled = tc.hasNextState;
     
+    OBAPlaceAnnotation * placeToAnnotation = [[OBAPlaceAnnotation alloc] initWithPlace:tc.placeTo];
+    [mv addAnnotation:placeToAnnotation];
+    [placeToAnnotation release];
+    
     OBATripState * state = tc.tripState;
     
     if( state ) {        
         [mv addOverlays:state.overlays];
         [mv setRegion:state.preferredRegion animated:TRUE];
+        
         [self showInfoOverlay:TRUE clear:TRUE];
         switch(state.type) {
             case OBATripStateTypeCompleteItinerary: {
@@ -189,6 +214,7 @@
                 
                 [_infoOverlay addSubview:departureLabel];
                 [_infoOverlay addSubview:arrivalLabel];
+                
                 break;
             }
         }
@@ -219,19 +245,19 @@
     NSTimeInterval interval = [startTime timeIntervalSinceNow];
     NSInteger mins = interval / 60;
     if( -1 <= mins && mins <= 1 ) {
-        return @"Depart now!";
+        return @"Start walking now!";
     }
     else if( 1 < mins && mins <= 50 ) {
-        return [NSString stringWithFormat:@"Depart in %d minutes", mins];
+        return [NSString stringWithFormat:@"Start walking in %d minutes", mins];
     }
     else if( 50 < mins ) {
-        return [NSString stringWithFormat:@"Depart at %@",[_timeFormatter stringFromDate:startTime]];
+        return [NSString stringWithFormat:@"Start walking at %@",[_timeFormatter stringFromDate:startTime]];
     }
     else if( -50 <= mins && mins < -1 ) {
-        return [NSString stringWithFormat:@"Departed %d minutes ago", (-mins)];
+        return [NSString stringWithFormat:@"Should have started walking %d minutes ago", (-mins)];
     }
     else {
-        return [NSString stringWithFormat:@"Departed at %@",[_timeFormatter stringFromDate:startTime]];
+        return [NSString stringWithFormat:@"Should have started walking at %@",[_timeFormatter stringFromDate:startTime]];
     }
 }
 

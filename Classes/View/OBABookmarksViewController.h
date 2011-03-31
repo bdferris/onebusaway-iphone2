@@ -16,10 +16,12 @@
 
 #import "OBAApplicationContext.h"
 #import "OBANavigationTargetAware.h"
+#import "OBAPlace.h"
+
 
 @protocol OBABookmarksViewControllerDelegate <NSObject>
 
-- (void) currentLocationBookmarkSelected;
+- (void) placeBookmarkSelected:(OBAPlace*)place;
 
 @end
 

@@ -2,7 +2,8 @@
 #import "OBATripController.h"
 #import "OBAPlace.h"
 #import "OBABookmarksViewController.h"
-#import "OBAPickerTextField.h"
+#import "Three20UI/Three20UI.h"
+
 
 
 typedef enum {
@@ -11,8 +12,10 @@ typedef enum {
 } OBAPlanTripViewControllerContext;
 
 
-@interface OBAPlanTripViewController : UIViewController <OBAModelServiceDelegate,OBAModelServiceDelegate,OBABookmarksViewControllerDelegate> {
+@interface OBAPlanTripViewController : UIViewController <OBAModelServiceDelegate,OBAModelServiceDelegate,OBABookmarksViewControllerDelegate,UITextFieldDelegate> {
     OBAPlanTripViewControllerContext _currentContext;
+    TTPickerTextField * _startTextField;
+    TTPickerTextField * _endTextField;
 }
 
 + (OBAPlanTripViewController*) viewControllerWithApplicationContext:(OBAApplicationContext*)appContext;
@@ -22,10 +25,7 @@ typedef enum {
 @property (nonatomic,retain) OBAPlace * placeStart;
 @property (nonatomic,retain) OBAPlace * placeEnd;
 
-
-@property (nonatomic,retain) IBOutlet OBAPickerTextField * startTextField;
-@property (nonatomic,retain) IBOutlet OBAPickerTextField * endTextField;
-@property (nonatomic,retain) IBOutlet UITableView * searchResults;
+- (void) setPlaceFrom:(OBAPlace*)placeFrom placeTo:(OBAPlace*)placeTo;
 
 -(IBAction) onGoButton:(id)sender;
 

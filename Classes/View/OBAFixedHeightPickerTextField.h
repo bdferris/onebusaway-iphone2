@@ -1,0 +1,5 @@
+@interface OBAFixedHeightPickerTextField : TTPickerTextField {
+    
+}
+
+@end

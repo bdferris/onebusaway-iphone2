@@ -1,22 +1,30 @@
 #import "OBAPlanTripViewController.h"
 #import "OBAItinerariesV2.h"
 #import "OBAPresentation.h"
+#import "OBAPlaceDataSource.h"
+#import "OBAFixedHeightPickerTextField.h"
+
 
 
 static const NSString * kContextPlaceStart = @"kContextPlaceStart";
 static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
-static const NSString * kContextPlanTrip = @"kContextPlanTrip";
 
 
 @interface OBAPlanTripViewController (Private)
 
 - (BOOL) ensurePlacesAreSet;
-- (UITextField*) getTextFieldForContext:(id)context;
-- (void) setPlace:(OBAPlace*)place forContext:(id)context;
+- (OBAPlace*) ensurePlaceIsSet:(OBAPlace*)place textField:(TTPickerTextField*)textField;
+- (BOOL) ensurePlaceLocationIsSet:(OBAPlace*)place context:(id)context;
+
+- (TTPickerTextField*) getTextFieldForContext:(id)context;
+- (OBAPlace*) getPlaceForContext:(id)context;
+
 - (void) showLocationNotFound:(NSString*)locationName;
 - (void) showLocationLookupError:(NSString*)locationName;
 
 @end
+
+
 
 @implementation OBAPlanTripViewController
 
@@ -24,9 +32,6 @@ static const NSString * kContextPlanTrip = @"kContextPlanTrip";
 @synthesize placeStart;
 @synthesize placeEnd;
 @synthesize tripController;
-@synthesize startTextField;
-@synthesize endTextField;
-@synthesize searchResults;
 
 + (OBAPlanTripViewController*) viewControllerWithApplicationContext:(OBAApplicationContext*)appContext {
     NSArray* wired = [[NSBundle mainBundle] loadNibNamed:@"OBAPlanTripViewController" owner:nil options:nil];
@@ -38,13 +43,34 @@ static const NSString * kContextPlanTrip = @"kContextPlanTrip";
 
 - (void)dealloc
 {
+    [_startTextField release];
+    [_endTextField release];
+    
     self.appContext = nil;
     self.placeStart = nil;
     self.placeEnd = nil;
-    self.startTextField = nil;
-    self.endTextField = nil;
-    self.searchResults = nil;
     [super dealloc];
+}
+
+- (void) setPlaceFrom:(OBAPlace*)placeFrom placeTo:(OBAPlace*)placeTo {
+    if( placeFrom ) {
+        if( placeFrom.useCurrentLocation ) {
+            TTTableItem *item = [TTTableTextItem itemWithText:@"Current Location" URL:nil];
+            item.userInfo = placeFrom;
+            [_startTextField addCellWithObject:item];
+        } else {
+            _startTextField.text = placeFrom.name;
+        }
+    }
+    if( placeTo ) {
+        if( placeTo.useCurrentLocation ) {
+            TTTableItem *item = [TTTableTextItem itemWithText:@"Current Location" URL:nil];
+            item.userInfo = placeTo;
+            [_endTextField addCellWithObject:item];
+        } else {
+            _endTextField.text = placeTo.name;
+        }
+    }
 }
 
 #pragma mark - View lifecycle
@@ -52,14 +78,12 @@ static const NSString * kContextPlanTrip = @"kContextPlanTrip";
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    // Do any additional setup after loading the view from its nib.
-    
-    UILabel * startLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 45, 12)];
+    UILabel * startLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 45, 20)];
     startLabel.text = @"Start:";
     startLabel.textColor = [UIColor grayColor];
     startLabel.textAlignment = UITextAlignmentRight;
     
-    UILabel * endLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 45, 12)];
+    UILabel * endLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 45, 20)];
     endLabel.text = @"End:";
     endLabel.textColor = [UIColor grayColor];
     endLabel.textAlignment = UITextAlignmentRight;
@@ -76,27 +100,37 @@ static const NSString * kContextPlanTrip = @"kContextPlanTrip";
     [endBookmarkButton setImage:bookmarkImage forState:UIControlStateNormal];
     [endBookmarkButton addTarget:self action:@selector(onEndTextFieldBookmarkButton:) forControlEvents:UIControlEventTouchUpInside];
 
+    _startTextField = [[OBAFixedHeightPickerTextField alloc] initWithFrame:CGRectMake(10, 10, CGRectGetWidth(self.view.bounds) - 20, 40)];
+    _startTextField.dataSource = [[[OBAPlaceDataSource alloc] init] autorelease];;
+    _startTextField.searchesAutomatically = TRUE;
+    _startTextField.borderStyle = UITextBorderStyleRoundedRect;
+    _startTextField.leftView = startLabel;
+    _startTextField.leftViewMode = UITextFieldViewModeAlways;
+    _startTextField.rightView = startBookmarkButton;
+    _startTextField.rightViewMode = UITextFieldViewModeUnlessEditing;
+    _startTextField.autocorrectionType = UITextAutocorrectionTypeNo;
+    _startTextField.autocapitalizationType = UITextAutocapitalizationTypeNone;
+    _startTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
     
-    UITextField * startTF = self.startTextField;
-    UITextField * endTF = self.endTextField;
-    
-    startTF.leftView = startLabel;
-    startTF.leftViewMode = UITextFieldViewModeAlways;
-    startTF.rightView = startBookmarkButton;
-    startTF.rightViewMode = UITextFieldViewModeUnlessEditing;
-    
-    endTF.leftView = endLabel;
-    endTF.leftViewMode = UITextFieldViewModeAlways;
-    endTF.rightView = endBookmarkButton;
-    endTF.rightViewMode = UITextFieldViewModeUnlessEditing;
+    _endTextField = [[OBAFixedHeightPickerTextField alloc] initWithFrame:CGRectMake(10, 60, CGRectGetWidth(self.view.bounds) - 20, 40)];
+    _endTextField.dataSource = [[[OBAPlaceDataSource alloc] init] autorelease];;
+    _endTextField.searchesAutomatically = TRUE;
+    _endTextField.borderStyle = UITextBorderStyleRoundedRect;
+    _endTextField.leftView = endLabel;
+    _endTextField.leftViewMode = UITextFieldViewModeAlways;
+    _endTextField.rightView = endBookmarkButton;
+    _endTextField.rightViewMode = UITextFieldViewModeUnlessEditing;
+    _endTextField.autocorrectionType = UITextAutocorrectionTypeNo;
+    _endTextField.autocapitalizationType = UITextAutocapitalizationTypeNone;
+    _endTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
+
+    [self.view addSubview:_startTextField];
+    [self.view addSubview:_endTextField];
     
     [endLabel release];
     [startLabel release];
     
-    self.placeStart = nil;
-    self.placeEnd = nil;
-    
-    self.hidesBottomBarWhenPushed = TRUE;
+    self.hidesBottomBarWhenPushed = TRUE;  
 }
 
 - (void)viewDidUnload {
@@ -137,14 +171,13 @@ static const NSString * kContextPlanTrip = @"kContextPlanTrip";
         NSArray * placemarks = obj;
         
         if( [placemarks count] == 0 ) {
-            UITextField * textField = [self getTextFieldForContext:context];
+            TTPickerTextField * textField = [self getTextFieldForContext:context];
             [self showLocationNotFound:textField.text];
         }
         else if( [placemarks count] == 1 ) {
             OBAPlacemark * placemark = [placemarks objectAtIndex:0];
-            OBAPlace * place = [[OBAPlace alloc] initWithName:placemark.address coordinate:placemark.coordinate];
-            [self setPlace:place forContext:context];
-            [place release];
+            OBAPlace * place = [self getPlaceForContext:context];
+            place.location = [[[CLLocation alloc] initWithLatitude:placemark.coordinate.latitude longitude:placemark.coordinate.longitude] autorelease];
             [self ensurePlacesAreSet];
         }
         else {
@@ -155,14 +188,14 @@ static const NSString * kContextPlanTrip = @"kContextPlanTrip";
 
 - (void)requestDidFinish:(id<OBAModelServiceRequest>)request withCode:(NSInteger)code context:(id)context {
     if( context == kContextPlaceStart || context == kContextPlaceEnd ) {
-        UITextField * textField = [self getTextFieldForContext:context];
+        TTPickerTextField * textField = [self getTextFieldForContext:context];
         [self showLocationLookupError:textField.text];
     }
 }
 
 - (void)requestDidFail:(id<OBAModelServiceRequest>)request withError:(NSError *)error context:(id)context {
     if( context == kContextPlaceStart || context == kContextPlaceEnd ) {
-        UITextField * textField = [self getTextFieldForContext:context];
+        TTPickerTextField * textField = [self getTextFieldForContext:context];
         [self showLocationLookupError:textField.text];
     }
 }
@@ -175,10 +208,14 @@ static const NSString * kContextPlanTrip = @"kContextPlanTrip";
 
 #pragma mark OBABookmarksViewControllerDelegate
 
-- (void) currentLocationBookmarkSelected {
-    OBAPickerTextField * field = (_currentContext == OBAPlanTripViewControllerContextStartLabel) ? self.startTextField : self.endTextField;
-    field.text = @"Current Location";
-    field.fixed = TRUE;
+- (void) placeBookmarkSelected:(OBAPlace*)place {
+
+    TTPickerTextField * field = (_currentContext == OBAPlanTripViewControllerContextStartLabel) ? _startTextField : _endTextField;
+    [field removeAllCells];
+    
+    TTTableItem *item = [TTTableTextItem itemWithText:place.name URL:nil];
+    item.userInfo = place;
+    [field addCellWithObject:item];
 }
 
 
@@ -188,43 +225,83 @@ static const NSString * kContextPlanTrip = @"kContextPlanTrip";
 
 - (BOOL) ensurePlacesAreSet {
 
-    OBAApplicationContext * context = self.appContext;
-    OBAModelService * modelService = context.modelService;
     
-    if( ! self.placeStart ) {
-        UITextField * startTF = self.startTextField;
-        [modelService placemarksForAddress:startTF.text withDelegate:self withContext:kContextPlaceStart];
-        return FALSE;
-    }
+    self.placeStart = [self ensurePlaceIsSet:self.placeStart textField:_startTextField];
 
-    if( ! self.placeEnd ) {
-        UITextField * endTF = self.endTextField;
-        [modelService placemarksForAddress:endTF.text withDelegate:self withContext:kContextPlaceEnd];
+    if( ! self.placeStart )
         return FALSE;
-    }
+    
+    if( ! [self ensurePlaceLocationIsSet:self.placeStart context:kContextPlaceStart] )
+        return FALSE;
+        
+    self.placeEnd = [self ensurePlaceIsSet:self.placeEnd textField:_endTextField];    
+    
+    if( ! self.placeEnd )
+        return FALSE;
+    
+    if( ! [self ensurePlaceLocationIsSet:self.placeEnd context:kContextPlaceEnd] )
+        return FALSE;
     
     [self.tripController planTripFrom:self.placeStart to:self.placeEnd];
     
     return TRUE;
 }
 
-- (UITextField*) getTextFieldForContext:(id)context {
+- (OBAPlace*) ensurePlaceIsSet:(OBAPlace*)place textField:(TTPickerTextField*)textField {
+
+    if( ! place ) {
+        NSArray * cells = [textField cells];
+        if( [cells count] > 0 ) {
+            TTTableItem * item = [cells objectAtIndex:0];
+            place = item.userInfo;
+        }
+    }
+    
+    if( ! place ) {
+        NSString * text = textField.text;
+        if( [text length] > 0 ) {
+            place = [OBAPlace placeWithName:text];
+        }
+    }
+    
+    return place;
+}
+
+- (BOOL) ensurePlaceLocationIsSet:(OBAPlace*)place context:(id)context {
+
+    if( place.useCurrentLocation ) {                
+        OBALocationManager * locationManager = self.appContext.locationManager;
+        place.location = locationManager.currentLocation;
+        return TRUE;
+    }
+    
+    if (! place.location) {
+        OBAModelService * modelService = self.appContext.modelService;
+        [modelService placemarksForAddress:place.name withDelegate:self withContext:context];
+        return FALSE;
+    }
+    
+    return TRUE;
+}
+
+- (TTPickerTextField*) getTextFieldForContext:(id)context {
     if( context == kContextPlaceStart ) {
-        return self.startTextField;
+        return _startTextField;
     }
     else if( context == kContextPlaceEnd ) {
-        return self.endTextField;
+        return _endTextField;
     }
     return nil;
 }
 
-- (void) setPlace:(OBAPlace*)place forContext:(id)context {
+- (OBAPlace*) getPlaceForContext:(id)context {
     if( context == kContextPlaceStart ) {
-        self.placeStart = place;
+        return self.placeStart;
     }
     else if( context == kContextPlaceEnd ) {
-        self.placeEnd = place;
+        return self.placeEnd;
     }
+    return nil;
 }
 
 - (void) showLocationNotFound:(NSString*)locationName {
