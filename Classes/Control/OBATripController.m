@@ -8,7 +8,15 @@
 
 @interface OBATripController (Private)
 
-- (NSArray*) overlaysForItinerary:(OBAItineraryV2*)itinerary bounds:(OBACoordinateBounds*)bounds;
+- (void) refreshTripState;
+- (void) applyItinerary:(OBAItineraryV2*)itinerary;
+- (OBATripState*) computeSummaryState;
+- (OBATripState*) createTripState;
+- (MKCoordinateRegion) computeRegionForItinerary;
+- (MKCoordinateRegion) computeRegionForLeg:(OBALegV2*)leg;
+- (MKCoordinateRegion) computeRegionForStartOfLeg:(OBALegV2*)leg;
+- (MKCoordinateRegion) computeRegionForEndOfLeg:(OBALegV2*)leg;
+- (void) computeBounds:(OBACoordinateBounds*)bounds forLeg:(OBALegV2*)leg;
 
 @end
 
@@ -18,7 +26,26 @@
 @synthesize modelService;
 @synthesize delegate;
 
+@synthesize placeFrom = _placeFrom;
+@synthesize placeTo = _placeTo;
+
+- (id) init {
+    self = [super init];
+    if (self) {
+        _currentStates = [[NSMutableArray alloc] init];
+    }
+    return self;
+}
+
+- (void) dealloc {
+    [_currentStates release];
+    [super dealloc];
+}
+
 - (void) planTripFrom:(OBAPlace*)fromPlace to:(OBAPlace*)toPlace {
+    
+    _placeFrom = [NSObject releaseOld:_placeFrom retainNew:fromPlace];
+    _placeTo = [NSObject releaseOld:_placeTo retainNew:toPlace];
 
     CLLocation * from = fromPlace.location;
     CLLocation * to = toPlace.location;    
@@ -28,34 +55,38 @@
 }
 
 - (OBATripState*) tripState {
-    OBACoordinateBounds * bounds = [OBACoordinateBounds bounds];
-    if( ! _currentItinerary )
-        return nil;
-    OBATripState * state = [[[OBATripState alloc] init] autorelease];
-    state.itinerary = _currentItinerary;
-    state.overlays = [self overlaysForItinerary:_currentItinerary bounds:bounds];
-    state.preferredRegion = bounds.region;
-    return state;
+    if( [_currentStates count] > 0 )
+        return [_currentStates objectAtIndex:_currentStateIndex];
+    return nil;
 }
 
 - (BOOL) hasPreviousState {
-    return FALSE;
+    return _currentStateIndex > 0 && [_currentStates count] > 0;
 }
 
 - (BOOL) hasNextState {
-    return FALSE;
+    return _currentStateIndex < [_currentStates count] - 1;
 }
 
 - (void) moveToPrevState {
-    
+    if( [self hasPreviousState] ) {
+        _currentStateIndex--;
+        [self refreshTripState];
+    }
 }
 
 - (void) moveToNextState {
-    
+    if( [self hasNextState] ) {
+        _currentStateIndex++;
+        [self refreshTripState];
+    }
 }
 
 - (void) moveToCurrentState {
-    
+    if( [_currentStates count] > 1) {
+        _currentStateIndex = 1;
+        [self refreshTripState];
+    }
 }
 
 
@@ -66,8 +97,7 @@
     OBAEntryWithReferencesV2 * entry = obj;
     OBAItinerariesV2 * itineraries = entry.entry;
     if ([itineraries.itineraries count] > 0 ) {
-        _currentItinerary = [[itineraries.itineraries objectAtIndex:0] retain];
-        [self.delegate refreshTrip];
+        [self applyItinerary:[[itineraries.itineraries objectAtIndex:0] retain]];
     }
 }
 
@@ -89,38 +119,171 @@
 
 @implementation OBATripController (Private)
 
-- (NSArray*) overlaysForItinerary:(OBAItineraryV2*)itinerary bounds:(OBACoordinateBounds*)bounds {
+- (void) refreshTripState {
+    [self.delegate refreshTripState:[_currentStates objectAtIndex:_currentStateIndex]];
+}
+
+- (void) applyItinerary:(OBAItineraryV2*)itinerary {
+
+    _currentItinerary = [NSObject releaseOld:_currentItinerary retainNew:itinerary];
+    _currentStateIndex = 0;
     
-    NSMutableArray * list = [NSMutableArray array];
-    for( OBALegV2 * leg in itinerary.legs ) {
-        if( leg.transitLeg ) {
-            OBATransitLegV2 * transitLeg = leg.transitLeg;
-            if( transitLeg.path ) {
-                NSArray * points = [OBASphericalGeometryLibrary decodePolylineString:transitLeg.path];
-                [bounds addLocations:points];
-                MKPolyline * polyline = [OBASphericalGeometryLibrary createMKPolylineFromLocations:points];
-                OBATripPolyline * tripPolyline = [OBATripPolyline tripPolyline:polyline type:OBATripPolylineTypeTransitLeg];                    
-                [list addObject:tripPolyline];
-            }
-        }
-        if ([leg.streetLegs count] > 0 ) {
-            NSMutableArray * allPoints = [NSMutableArray array];
-            for( OBAStreetLegV2 * streetLeg in leg.streetLegs ) {
-                if( streetLeg.path ) {
-                    NSArray * points = [OBASphericalGeometryLibrary decodePolylineString:streetLeg.path];
-                    [bounds addLocations:points];
-                    [allPoints addObjectsFromArray:points];
+    [_currentStates removeAllObjects];
+    [_currentStates addObject:[self computeSummaryState]];
+    
+    NSArray * legs = _currentItinerary.legs;
+    NSUInteger n = [legs count];
+    
+    for( NSUInteger index = 0; index < n; index ++ ) {
+
+        OBALegV2 * leg = [legs objectAtIndex:index];
+        OBALegV2 * nextLeg = nil;
+        if( index + 1 < n )
+            nextLeg = [legs objectAtIndex:(index+1)];
+
+        if( [leg.mode isEqualToString:@"walk"] ) {
+            
+            OBATripState * state = [self createTripState];
+            
+            if( index == 0 )
+                state.startTime = _currentItinerary.startTime;
+            
+            if( nextLeg && nextLeg.transitLeg ) {
+                OBATransitLegV2 * transitLeg = nextLeg.transitLeg;
+                if( transitLeg.fromStopId ) {
+                    state.walkToStop = transitLeg.fromStop;
+                    state.departure = transitLeg;
                 }
             }
-            if( [allPoints count] > 0 ) {
-                MKPolyline * polyline = [OBASphericalGeometryLibrary createMKPolylineFromLocations:allPoints];
-                OBATripPolyline * tripPolyline = [OBATripPolyline tripPolyline:polyline type:OBATripPolylineTypeStreetLeg]; 
-                [list addObject:tripPolyline];
+            
+            if( ! state.walkToStop ) {
+                state.walkToPlace = self.placeTo;
+            }
+            
+            state.region = [self computeRegionForLeg:leg];
+            
+            [_currentStates addObject:state];            
+        }
+        else if ( [leg.mode isEqualToString:@"transit"] ) {
+            
+            OBATransitLegV2 * transitLeg = leg.transitLeg;
+            if( transitLeg.fromStopId ) {
+                OBATripState * departureState = [self createTripState];
+                departureState.departure = leg.transitLeg;
+                departureState.region = [self computeRegionForStartOfLeg:leg];
+                [_currentStates addObject:departureState];
+            }
+            else {
+                OBATripState * continuesAsState = [self createTripState];
+                continuesAsState.continuesAs = leg.transitLeg;
+                continuesAsState.region = [self computeRegionForStartOfLeg:leg];
+                [_currentStates addObject:continuesAsState];
+            }
+            
+            OBATripState * rideState = [self createTripState];
+            rideState.ride = leg.transitLeg;
+            rideState.region = [self computeRegionForLeg:leg];
+            [_currentStates addObject:rideState];
+            
+            if( transitLeg.toStopId ) {
+                OBATripState * arrivalState = [self createTripState];
+                arrivalState.arrival = leg.transitLeg;
+                arrivalState.region = [self computeRegionForEndOfLeg:leg];
+                [_currentStates addObject:arrivalState];
             }
         }
     }
     
-    return list;
+    [self refreshTripState];
+}
+
+- (OBATripState*) computeSummaryState {
+    OBATripState * state = [self createTripState];
+    state.showTripSummary = TRUE;
+    state.startTime = _currentItinerary.startTime;
+    state.region = [self computeRegionForItinerary];
+    return state;
+}
+
+- (OBATripState*) createTripState {
+    OBATripState * state = [[[OBATripState alloc] init] autorelease];
+    state.placeFrom = self.placeFrom;
+    state.placeTo = self.placeTo;
+    state.itinerary = _currentItinerary;
+    return state;
+}
+                                
+- (MKCoordinateRegion) computeRegionForLeg:(OBALegV2*)leg {
+    OBACoordinateBounds * bounds = [OBACoordinateBounds bounds];
+    [self computeBounds:bounds forLeg:leg];
+    return bounds.region;
+}
+
+- (MKCoordinateRegion) computeRegionForStartOfLeg:(OBALegV2*)leg {
+    OBACoordinateBounds * bounds = [OBACoordinateBounds bounds];
+    if( leg.transitLeg ) {
+        OBATransitLegV2 * transitLeg = leg.transitLeg;
+        OBAStopV2 * stop = transitLeg.fromStop;
+        if( stop ) {
+            [bounds addLat:stop.lat lon:stop.lon];
+        }
+        if( transitLeg.path ) {
+            NSArray * points = [OBASphericalGeometryLibrary decodePolylineString:transitLeg.path];
+            if ([points count] > 0)
+                [bounds addLocation:[points objectAtIndex:0]];
+        }        
+    }
+    if( [bounds empty] )
+        return [self computeRegionForItinerary];
+    return bounds.region;
+}
+
+- (MKCoordinateRegion) computeRegionForEndOfLeg:(OBALegV2*)leg {
+    OBACoordinateBounds * bounds = [OBACoordinateBounds bounds];
+    if( leg.transitLeg ) {
+        OBATransitLegV2 * transitLeg = leg.transitLeg;
+        OBAStopV2 * stop = transitLeg.toStop;
+        if( stop ) {
+            [bounds addLat:stop.lat lon:stop.lon];
+        }
+        if( transitLeg.path ) {
+            NSArray * points = [OBASphericalGeometryLibrary decodePolylineString:transitLeg.path];
+            if ([points count] > 0)
+                [bounds addLocation:[points objectAtIndex:([points count])-1]];
+        }        
+    }
+    if( [bounds empty] )
+        return [self computeRegionForItinerary];
+    return bounds.region;
+}
+         
+- (MKCoordinateRegion) computeRegionForItinerary {
+    OBACoordinateBounds * bounds = [OBACoordinateBounds bounds];
+    for( OBALegV2 * leg in _currentItinerary.legs )
+        [self computeBounds:bounds forLeg:leg];
+    [bounds addLocation:self.placeFrom.location];
+    [bounds addLocation:self.placeTo.location];
+    return bounds.region;
+
+}
+
+- (void) computeBounds:(OBACoordinateBounds*)bounds forLeg:(OBALegV2*)leg {
+    
+    if( leg.transitLeg ) {
+        OBATransitLegV2 * transitLeg = leg.transitLeg;
+        if( transitLeg.path ) {
+            NSArray * points = [OBASphericalGeometryLibrary decodePolylineString:transitLeg.path];
+            [bounds addLocations:points];
+        }
+    }
+    if ([leg.streetLegs count] > 0 ) {
+        for( OBAStreetLegV2 * streetLeg in leg.streetLegs ) {
+            if( streetLeg.path ) {
+                NSArray * points = [OBASphericalGeometryLibrary decodePolylineString:streetLeg.path];
+                [bounds addLocations:points];
+            }
+        }
+    }
 }
 
 @end

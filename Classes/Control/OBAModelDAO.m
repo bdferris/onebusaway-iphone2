@@ -34,7 +34,8 @@ const static int kMaxEntriesInMostRecentList = 10;
 @implementation OBAModelDAO
 
 - (id) init {
-	if( self = [super init] ) {
+    self = [super init];
+	if( self ) {
 		_preferencesDao = [[OBAModelDAOUserPreferencesImpl alloc] init];
 		_bookmarks = [[NSMutableArray alloc] initWithArray:[_preferencesDao readBookmarks]];
 		_mostRecentStops = [[NSMutableArray alloc] initWithArray:[_preferencesDao readMostRecentStops]];
@@ -107,28 +108,19 @@ const static int kMaxEntriesInMostRecentList = 10;
 	[existingEvent release];
 }
 
-
-- (OBABookmarkV2*) createTransientBookmark:(OBAStopV2*)stop {
-	OBABookmarkV2 * bookmark = [[[OBABookmarkV2 alloc] init] autorelease];
-	NSString * bookmarkName = stop.name;
-	if( stop.direction )
-		bookmarkName = [NSString stringWithFormat:@"%@ [%@]",stop.name,stop.direction];
-	bookmark.name = bookmarkName;
-	bookmark.stopIds = [NSArray arrayWithObject:stop.stopId];
-	return bookmark;
-}
-
-- (void) addNewBookmark:(OBABookmarkV2*)bookmark error:(NSError**)error {
+- (void) addNewBookmark:(OBAPlace*)bookmark error:(NSError**)error {
+    bookmark.isBookmark = TRUE;
 	[_bookmarks addObject:bookmark];
 	[_preferencesDao writeBookmarks:_bookmarks];
 }
 
-- (void) saveExistingBookmark:(OBABookmarkV2*)bookmark error:(NSError**)error {
+- (void) saveExistingBookmark:(OBAPlace*)bookmark error:(NSError**)error {
+    bookmark.isBookmark = TRUE;
 	[_preferencesDao writeBookmarks:_bookmarks];
 }
 
 - (void) moveBookmark:(NSInteger)startIndex to:(NSInteger)endIndex error:(NSError**)error {
-	OBABookmarkV2 * bm = [_bookmarks objectAtIndex:startIndex];
+	OBAPlace * bm = [_bookmarks objectAtIndex:startIndex];
 	[bm retain];
 	[_bookmarks removeObjectAtIndex:startIndex];
 	[_bookmarks insertObject:bm atIndex:endIndex];
@@ -136,7 +128,7 @@ const static int kMaxEntriesInMostRecentList = 10;
 	[bm release];
 }
 
-- (void) removeBookmark:(OBABookmarkV2*) bookmark error:(NSError**)error {
+- (void) removeBookmark:(OBAPlace*) bookmark error:(NSError**)error {
 	[_bookmarks removeObject:bookmark];
 	[_preferencesDao writeBookmarks:_bookmarks];
 }
@@ -151,22 +143,6 @@ const static int kMaxEntriesInMostRecentList = 10;
 - (void) setStopPreferences:(OBAStopPreferencesV2*)preferences forStopWithId:(NSString*)stopId {
 	[_stopPreferences setObject:preferences forKey:stopId];
 	[_preferencesDao writeStopPreferences:_stopPreferences];
-}
-
-#pragma mark OBAActivityListener
-
-- (void) placemark:(OBAPlacemark*)placemark {
-	CLLocationCoordinate2D coordinate = placemark.coordinate;
-	[self saveMostRecentLocationLat:coordinate.latitude lon:coordinate.longitude];
-}
-
-- (void) viewedArrivalsAndDeparturesForStop:(OBAStopV2*)stop {
-	OBAStopAccessEventV2 * event = [[OBAStopAccessEventV2 alloc] init];
-	event.stopIds = [NSArray arrayWithObject:stop.stopId];
-	event.title = stop.title;
-	event.subtitle = stop.subtitle;
-	[self addStopAccessEvent:event];
-	[event release];
 }
 
 - (BOOL) hideFutureLocationWarnings {

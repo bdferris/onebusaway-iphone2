@@ -1,9 +1,10 @@
 #import "OBAPlaceAnnotationViewController.h"
-#import "OBAUITableViewCell.h"
+#import "OBAEditBookmarkViewController.h"
 
 
 typedef enum {
     OBAPlaceAnnotationViewControllerSectionTitle,
+    OBAPlaceAnnotationViewControllerSectionActions,
     OBAPlaceAnnotationViewControllerSectionNone
 } OBAPlaceAnnotationViewControllerSection;
 
@@ -12,6 +13,7 @@ typedef enum {
 
 - (OBAPlaceAnnotationViewControllerSection) sectionForIndex:(NSInteger)sectionIndex;
 - (UITableViewCell *) titleCellForRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView;
+- (UITableViewCell *) actionCellForRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView;
 
 @end
 
@@ -24,6 +26,8 @@ typedef enum {
     if (self) {
         _appContext = [appContext retain];
         _place = [place retain];
+        
+        self.navigationItem.title = @"Place";
         
     }
     return self;
@@ -94,7 +98,7 @@ typedef enum {
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
     // Return the number of sections.
-    return 1;
+    return 2;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
@@ -102,6 +106,8 @@ typedef enum {
     OBAPlaceAnnotationViewControllerSection sectionType = [self sectionForIndex:section];
     switch (sectionType) {
         case OBAPlaceAnnotationViewControllerSectionTitle:
+            return 1;
+        case OBAPlaceAnnotationViewControllerSectionActions:
             return 1;
         default:
             return 0;
@@ -114,73 +120,33 @@ typedef enum {
     switch (sectionType) {
         case OBAPlaceAnnotationViewControllerSectionTitle:
             return [self titleCellForRowAtIndexPath:indexPath tableView:tableView];
+        case OBAPlaceAnnotationViewControllerSectionActions:
+            return [self actionCellForRowAtIndexPath:indexPath tableView:tableView];
         default:
             return nil;
     }
-
-    static NSString *CellIdentifier = @"Cell";
-    
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-    if (cell == nil) {
-        cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier] autorelease];
-    }
-    
-    // Configure the cell...
-    
-    return cell;
 }
-
-/*
-// Override to support conditional editing of the table view.
-- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    // Return NO if you do not want the specified item to be editable.
-    return YES;
-}
-*/
-
-/*
-// Override to support editing the table view.
-- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    if (editingStyle == UITableViewCellEditingStyleDelete) {
-        // Delete the row from the data source
-        [tableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] withRowAnimation:UITableViewRowAnimationFade];
-    }   
-    else if (editingStyle == UITableViewCellEditingStyleInsert) {
-        // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-    }   
-}
-*/
-
-/*
-// Override to support rearranging the table view.
-- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath
-{
-}
-*/
-
-/*
-// Override to support conditional rearranging of the table view.
-- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    // Return NO if you do not want the item to be re-orderable.
-    return YES;
-}
-*/
 
 #pragma mark - Table view delegate
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    // Navigation logic may go here. Create and push another view controller.
-    /*
-     <#DetailViewController#> *detailViewController = [[<#DetailViewController#> alloc] initWithNibName:@"<#Nib name#>" bundle:nil];
-     // ...
-     // Pass the selected object to the new view controller.
-     [self.navigationController pushViewController:detailViewController animated:YES];
-     [detailViewController release];
-     */
+    OBAPlaceAnnotationViewControllerSection sectionType = [self sectionForIndex:indexPath.section];
+    switch (sectionType) {
+        case OBAPlaceAnnotationViewControllerSectionActions: {
+            if( indexPath.row == 0 ) {
+                OBAPlace * place = [OBAPlace placeWithPlace:_place];
+                OBAEditBookmarkViewController * vc = [[OBAEditBookmarkViewController alloc] initWithApplicationContext:_appContext bookmark:place editType:OBABookmarkEditNew];
+                [self.navigationController pushViewController:vc animated:TRUE];
+                [vc release];
+            }
+            break;
+        }
+        default:
+            break;
+    }
+
+    
 }
 
 @end
@@ -192,12 +158,23 @@ typedef enum {
     switch(sectionIndex) {
         case 0:
             return OBAPlaceAnnotationViewControllerSectionTitle;
+        case 1:
+            return OBAPlaceAnnotationViewControllerSectionActions;
     }
     return OBAPlaceAnnotationViewControllerSectionNone;
 }
 
 - (UITableViewCell *) titleCellForRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView {
-    
+    UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView cellId:@"TitleCell"];
+    cell.textLabel.text = _place.name;
+    return cell;
+}
+
+- (UITableViewCell *) actionCellForRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView {
+    UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView cellId:@"ActionCell"];    
+    cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+    cell.textLabel.text = @"Add Bookmark";
+    return cell;
 }
 
 @end

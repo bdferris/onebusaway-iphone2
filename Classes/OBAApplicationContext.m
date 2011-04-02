@@ -31,7 +31,6 @@
 
 #import "OBATripController.h"
 
-#import "OBAUserPreferencesMigration.h"
 #import "IASKAppSettingsViewController.h"
 
 
@@ -59,8 +58,6 @@ static const NSUInteger kTagSettingsView = 3;
 
 - (NSString *)userIdFromDefaults:(NSUserDefaults*)userDefaults;
 
-- (void) migrateUserPreferences;
-
 - (NSString *)applicationDocumentsDirectory;
 
 @end
@@ -70,7 +67,6 @@ static const NSUInteger kTagSettingsView = 3;
 
 @synthesize references = _references;
 @synthesize locationManager = _locationManager;
-@synthesize activityListeners = _activityListeners;
 
 @synthesize modelDao = _modelDao;
 @synthesize modelService = _modelService;
@@ -94,11 +90,8 @@ static const NSUInteger kTagSettingsView = 3;
 		_active = FALSE;
 		
 		_references = [[OBAReferencesV2 alloc] init];
-		_activityListeners = [[OBAActivityListeners alloc] init];
 		_modelDao = [[OBAModelDAO alloc] init];
 		_locationManager = [[OBALocationManager alloc] initWithModelDao:_modelDao];		
-		
-		[_activityListeners addListener:_modelDao];
 		
 		_modelService = [[OBAModelService alloc] init];
 		_modelService.references = _references;
@@ -126,7 +119,6 @@ static const NSUInteger kTagSettingsView = 3;
 	[_references release];
 	
 	[_locationManager release];
-	[_activityListeners release];
     
     [_tripController release];
 	
@@ -171,8 +163,6 @@ static const NSUInteger kTagSettingsView = 3;
 
 - (void)applicationDidFinishLaunching:(UIApplication *)application {	
 	
-	[self migrateUserPreferences];
-
 	/*
 	_tabBarController.delegate = self;
 	
@@ -335,13 +325,6 @@ static const NSUInteger kTagSettingsView = 3;
 	return userId;
 }
 
-- (void) migrateUserPreferences {
-	
-	OBAUserPreferencesMigration * migration = [[OBAUserPreferencesMigration alloc] init];
-	
-	NSString * path = [[self applicationDocumentsDirectory] stringByAppendingPathComponent: @"OneBusAway.sqlite"];
-	[migration migrateCoreDataPath:path toDao:_modelDao];
-}
 
 #pragma mark Application's documents directory
 

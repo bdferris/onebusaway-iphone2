@@ -39,7 +39,6 @@
     OBATripController * _tripController;
     
 	OBALocationManager * _locationManager;
-	OBAActivityListeners * _activityListeners;
 
 	OBAStopIconFactory * _stopIconFactory;
 	
@@ -60,7 +59,6 @@
 @property (nonatomic,readonly) OBAStopIconFactory * stopIconFactory;
 
 @property (nonatomic,readonly) OBALocationManager * locationManager;
-@property (nonatomic,readonly) OBAActivityListeners * activityListeners;
 
 @property (nonatomic,readonly) BOOL active;
 

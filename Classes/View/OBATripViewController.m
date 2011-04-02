@@ -17,6 +17,8 @@
 #import "OBATripViewController.h"
 #import "OBAPlanTripViewController.h"
 #import "OBAPlaceAnnotationViewController.h"
+#import "OBAMoreViewController.h"
+#import "OBASphericalGeometryLibrary.h"
 
 #import "OBAPlaceAnnotation.h"
 #import "OBATripPolyline.h"
@@ -24,12 +26,9 @@
 
 @interface OBATripViewController (Private)
 
--(UILabel*) getItineraryTripDepartureLabel:(OBATripState*)state;
--(NSString*) getItineraryTripDepartureLabelText:(OBATripState*)state;
--(UILabel*) getItineraryTripArrivalLabel:(OBATripState*)state;
--(NSString*) getItineraryTripArrivalLabelText:(OBATripState*)state;
--(void) showInfoOverlay:(BOOL)show clear:(BOOL)clear;
-
+- (NSArray*) annotationsForTripState:(OBATripState*)state;
+- (NSArray*) overlaysForItinerary:(OBAItineraryV2*)itinerary;
+    
 @end
 
 
@@ -37,6 +36,7 @@
 
 @synthesize appContext;
 @synthesize tripController;
+@synthesize tableView;
 @synthesize mapView;
 @synthesize currentLocationButton;
 @synthesize editButton;
@@ -45,11 +45,8 @@
 
 -(void) dealloc {
     
-    [_infoOverlay release];
-    _infoOverlay = nil;
-    
-    [_timeFormatter release];
-    _timeFormatter = nil;
+    _tripStateTableViewCellFactory = [NSObject releaseOld:_tripStateTableViewCellFactory retainNew:nil];
+    _currentItinerary = [NSObject releaseOld:_currentItinerary retainNew:nil];
     
 	self.appContext = nil;
     self.mapView = nil;
@@ -68,16 +65,8 @@
     self.tripController = self.appContext.tripController;
     self.tripController.delegate = self;
     
-    CGRect bounds = self.view.bounds;
-    
-    _infoOverlay = [[UIView alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(bounds), 64)];
-    _infoOverlay.backgroundColor = [UIColor colorWithWhite:0.25 alpha:0.8];
-    _infoOverlayVisible = FALSE;
-    
-    _timeFormatter = [[NSDateFormatter alloc] init];
-    [_timeFormatter setDateStyle:NSDateFormatterNoStyle];
-    [_timeFormatter setTimeStyle:NSDateFormatterShortStyle];
-
+    _tripStateTableViewCellFactory = [[OBATripStateTableViewCellFactory alloc] initWithAppContext:self.appContext navigationController:self.navigationController tableView:self.tableView];
+    _currentItinerary = nil;
 }
 
 - (void)viewDidUnload {
@@ -115,24 +104,42 @@
 }
 
 -(IBAction) onBookmakrButton:(id)sender {
-    
+    OBABookmarksViewController * vc = [[OBABookmarksViewController alloc] initWithApplicationContext:self.appContext];
+    vc.delegate = self;
+    [self.navigationController pushViewController:vc animated:TRUE];
+    [vc release];
+}
+
+-(IBAction) onSettingsButton:(id)sender {
+    OBAMoreViewController * vc = [[OBAMoreViewController alloc] initWithAppContext:self.appContext];
+    [self.navigationController pushViewController:vc animated:TRUE];
+    [vc release];
 }
 
 
+#pragma mark UITableViewDataSource Methods
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    OBATripController * tc = self.tripController;
+    OBATripState * state = [tc tripState];
+    return [_tripStateTableViewCellFactory getNumberOfRowsForTripState:state];
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    return [_tripStateTableViewCellFactory getCellForState:self.tripController.tripState indexPath:indexPath];
+}
+
+#pragma mark UITableViewDelegate Methods
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    [_tripStateTableViewCellFactory didSelectRowForState:self.tripController.tripState indexPath:indexPath];
+}
 
 #pragma mark MKMapViewDelegate Methods
 
-- (void)mapView:(MKMapView *)mapView regionWillChangeAnimated:(BOOL)animated {
-
-}
-
-- (void)mapView:(MKMapView *)mapView regionDidChangeAnimated:(BOOL)animated {
-
-}
-
-- (MKAnnotationView *)mapView:(MKMapView *)mapView viewForAnnotation:(id<MKAnnotation>)annotation {    
+- (MKAnnotationView *)mapView:(MKMapView *)mv viewForAnnotation:(id<MKAnnotation>)annotation {    
 	if( [annotation isKindOfClass:[OBAPlaceAnnotation class]] ) {
-		MKPinAnnotationView * view = [mapView dequeueReusableAnnotationViewWithIdentifier:@"OBAPlaceAnnotation"];
+		MKPinAnnotationView * view = (MKPinAnnotationView*)[mv dequeueReusableAnnotationViewWithIdentifier:@"OBAPlaceAnnotation"];
 		if( view == nil ) {
 			view = [[[MKPinAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:@"OBAPlaceAnnotation"] autorelease];
 		}
@@ -141,6 +148,23 @@
         view.pinColor = MKPinAnnotationColorGreen;
 		return view;                                     
     }
+    else if( [annotation isKindOfClass:[OBAStopV2 class]] ) {
+        OBAStopV2 * stop = (OBAStopV2*)annotation;
+        static NSString * viewId = @"StopView";
+        
+		MKAnnotationView * view = [mapView dequeueReusableAnnotationViewWithIdentifier:viewId];
+        if( view == nil ) {
+            view = [[[MKAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:viewId] autorelease];
+        }
+        view.canShowCallout = TRUE;
+        view.rightCalloutAccessoryView = [UIButton buttonWithType:UIButtonTypeDetailDisclosure];
+        
+        OBAStopIconFactory * stopIconFactory = self.appContext.stopIconFactory;
+        view.image = [stopIconFactory getIconForStop:stop];
+        return view;
+
+    }
+    return nil;
 }
 
 - (void) mapView:(MKMapView *)mapView annotationView:(MKAnnotationView *)view calloutAccessoryControlTapped:(UIControl *)control {
@@ -153,7 +177,7 @@
     }
 }
 
-- (MKOverlayView *)mapView:(MKMapView *)mapView viewForOverlay:(id )overlay {
+- (MKOverlayView *)mapView:(MKMapView *)mapView viewForOverlay:(id)overlay {
 
     if( [overlay isKindOfClass:[MKPolyline class]] ) {
         MKPolylineView * pv = [[MKPolylineView alloc] initWithPolyline:(MKPolyline*)overlay];
@@ -181,44 +205,54 @@
 
 #pragma mark OBATripControllerDelegate
 
--(void) refreshTrip {
+-(void) refreshTripState:(OBATripState*)state {
+    
+    // Make sure our view controller is visible
+    [self.navigationController popToRootViewController];
+    
+    // Reload the trip summary table
+    [self.tableView reloadData];
+    
+    CGRect tableFrame = self.tableView.frame;
+    tableFrame.size.height = [_tripStateTableViewCellFactory getNumberOfRowsForTripState:self.tripController.tripState] * 44;
+    
+    CGRect mapFrame = self.mapView.frame;
+    double maxY = CGRectGetMaxY(mapFrame);
+    mapFrame.origin.y = CGRectGetMaxY(tableFrame);
+    mapFrame.size.height = maxY - mapFrame.origin.y;
+
+    [UIView animateWithDuration:0.25 animations:^{
+        self.tableView.frame = tableFrame;
+        self.mapView.frame = mapFrame;
+    }];
     
     MKMapView * mv = self.mapView;
-    [mv removeOverlays:mv.overlays];
-    [mv removeAnnotations:mv.annotations];
     
     OBATripController * tc = self.tripController;
     
     self.leftButton.enabled = tc.hasPreviousState;
     self.rightButton.enabled = tc.hasNextState;
     
-    OBAPlaceAnnotation * placeToAnnotation = [[OBAPlaceAnnotation alloc] initWithPlace:tc.placeTo];
-    [mv addAnnotation:placeToAnnotation];
-    [placeToAnnotation release];
-    
-    OBATripState * state = tc.tripState;
-    
-    if( state ) {        
-        [mv addOverlays:state.overlays];
-        [mv setRegion:state.preferredRegion animated:TRUE];
-        
-        [self showInfoOverlay:TRUE clear:TRUE];
-        switch(state.type) {
-            case OBATripStateTypeCompleteItinerary: {
-
-                UILabel * departureLabel = [self getItineraryTripDepartureLabel:state];
-                UILabel * arrivalLabel = [self getItineraryTripArrivalLabel:state];
-
-                [departureLabel setOrigin:CGPointMake(10, 10)];
-                [arrivalLabel setOrigin:CGPointMake(10, CGRectGetMaxY(departureLabel.bounds) + 10)];
-                
-                [_infoOverlay addSubview:departureLabel];
-                [_infoOverlay addSubview:arrivalLabel];
-                
-                break;
-            }
-        }
+    // We only need to update overlays and annotations if the itinerary has changed
+    if( _currentItinerary != state.itinerary ) {
+        NSArray * annotations = [self annotationsForTripState:state];
+        NSArray* overlays = [self overlaysForItinerary:state.itinerary];        
+        [mv removeOverlays:mv.overlays];
+        [mv removeAnnotations:mv.annotations];
+        [mv addOverlays:overlays];
+        [mv addAnnotations:annotations];
     }
+    
+    _currentItinerary = [NSObject releaseOld:_currentItinerary retainNew:state.itinerary];
+    
+    [mv setRegion:state.region animated:TRUE];
+}
+
+#pragma mark OBABookmarkViewControllerDelegate
+
+- (void) placeBookmarkSelected:(OBAPlace*)place {
+    OBAPlace * placeFrom = [OBAPlace placeWithCurrentLocation];
+    [self.tripController planTripFrom:placeFrom to:place];
 }
 
 @end
@@ -227,85 +261,70 @@
 
 
 @implementation OBATripViewController (Private)
-
--(UILabel*) getItineraryTripDepartureLabel:(OBATripState*)state {
-    UILabel * label = [[[UILabel alloc] init] autorelease];
-    label.text = [self getItineraryTripDepartureLabelText:state];
-    label.font = [UIFont boldSystemFontOfSize:16];
-    label.backgroundColor = [UIColor clearColor];
-    label.shadowColor     = [UIColor colorWithWhite:0.0 alpha:0.5];
-    label.textColor       = [UIColor whiteColor];
-    [label sizeToFit];
-    return label;
-}
-
--(NSString*) getItineraryTripDepartureLabelText:(OBATripState*)state {
+                             
+- (NSArray*) annotationsForTripState:(OBATripState*)state {
+    
+    NSMutableArray * annotations = [NSMutableArray array];
+    
+    OBAPlaceAnnotation * placeFromAnnotation = [[OBAPlaceAnnotation alloc] initWithPlace:state.placeFrom];
+    OBAPlaceAnnotation * placeToAnnotation = [[OBAPlaceAnnotation alloc] initWithPlace:state.placeTo];
+    [annotations addObject:placeFromAnnotation];
+    [annotations addObject:placeToAnnotation];
+    [placeFromAnnotation release];
+    [placeToAnnotation release];
+    
     OBAItineraryV2 * itinerary = state.itinerary;
-    NSDate * startTime = itinerary.startTime;
-    NSTimeInterval interval = [startTime timeIntervalSinceNow];
-    NSInteger mins = interval / 60;
-    if( -1 <= mins && mins <= 1 ) {
-        return @"Start walking now!";
+    NSMutableSet * stopIds = [NSMutableSet set];
+    
+    for( OBALegV2 * leg in itinerary.legs ) {
+        if( leg.transitLeg ) {
+            OBATransitLegV2 * transitLeg = leg.transitLeg;
+            OBAStopV2 * fromStop = transitLeg.fromStop;
+            OBAStopV2 * toStop = transitLeg.toStop;
+            if( fromStop && ! [stopIds containsObject:fromStop.stopId]) {
+                [annotations addObject:fromStop];
+                [stopIds addObject:fromStop.stopId];
+            }
+            if( toStop && ! [stopIds containsObject:toStop.stopId] ) {
+                [annotations addObject:toStop];
+                [stopIds addObject:toStop.stopId];
+            }
+        }
     }
-    else if( 1 < mins && mins <= 50 ) {
-        return [NSString stringWithFormat:@"Start walking in %d minutes", mins];
-    }
-    else if( 50 < mins ) {
-        return [NSString stringWithFormat:@"Start walking at %@",[_timeFormatter stringFromDate:startTime]];
-    }
-    else if( -50 <= mins && mins < -1 ) {
-        return [NSString stringWithFormat:@"Should have started walking %d minutes ago", (-mins)];
-    }
-    else {
-        return [NSString stringWithFormat:@"Should have started walking at %@",[_timeFormatter stringFromDate:startTime]];
-    }
+    
+    return annotations;
 }
 
--(UILabel*) getItineraryTripArrivalLabel:(OBATripState*)state {
-    UILabel * label = [[[UILabel alloc] init] autorelease];
-    label.text = [self getItineraryTripArrivalLabelText:state];
-    label.font = [UIFont systemFontOfSize:16];
-    label.backgroundColor = [UIColor clearColor];
-    label.shadowColor     = [UIColor colorWithWhite:0.0 alpha:0.5];
-    label.textColor       = [UIColor whiteColor];
-    [label sizeToFit];
-    return label;
-}
-
--(NSString*) getItineraryTripArrivalLabelText:(OBATripState*)state {
-    OBAItineraryV2 * itinerary = state.itinerary;
-    NSDate * endTime = itinerary.endTime;
-    NSTimeInterval interval = [endTime timeIntervalSinceNow];
-    NSInteger mins = interval / 60;
-    if( -1 <= mins && mins <= 1 ) {
-        return @"Arrives now!";
+- (NSArray*) overlaysForItinerary:(OBAItineraryV2*)itinerary {
+    
+    NSMutableArray * list = [NSMutableArray array];
+    for( OBALegV2 * leg in itinerary.legs ) {
+        if( leg.transitLeg ) {
+            OBATransitLegV2 * transitLeg = leg.transitLeg;
+            if( transitLeg.path ) {
+                NSArray * points = [OBASphericalGeometryLibrary decodePolylineString:transitLeg.path];
+                MKPolyline * polyline = [OBASphericalGeometryLibrary createMKPolylineFromLocations:points];
+                OBATripPolyline * tripPolyline = [OBATripPolyline tripPolyline:polyline type:OBATripPolylineTypeTransitLeg];                    
+                [list addObject:tripPolyline];
+            }
+        }
+        if ([leg.streetLegs count] > 0 ) {
+            NSMutableArray * allPoints = [NSMutableArray array];
+            for( OBAStreetLegV2 * streetLeg in leg.streetLegs ) {
+                if( streetLeg.path ) {
+                    NSArray * points = [OBASphericalGeometryLibrary decodePolylineString:streetLeg.path];
+                    [allPoints addObjectsFromArray:points];
+                }
+            }
+            if( [allPoints count] > 0 ) {
+                MKPolyline * polyline = [OBASphericalGeometryLibrary createMKPolylineFromLocations:allPoints];
+                OBATripPolyline * tripPolyline = [OBATripPolyline tripPolyline:polyline type:OBATripPolylineTypeStreetLeg]; 
+                [list addObject:tripPolyline];
+            }
+        }
     }
-    else if( 1 < mins && mins <= 50 ) {
-        return [NSString stringWithFormat:@"Arrives in %d minutes", mins];
-    }
-    else if( 50 < mins ) {
-        return [NSString stringWithFormat:@"Arrives at %@",[_timeFormatter stringFromDate:endTime]];
-    }
-    else if( -50 <= mins && mins < -1 ) {
-        return [NSString stringWithFormat:@"Arrived %d minutes ago", (-mins)];
-    }
-    else {
-        return [NSString stringWithFormat:@"Arrived at %@",[_timeFormatter stringFromDate:endTime]];
-    }
-}
-
--(void) showInfoOverlay:(BOOL)show clear:(BOOL)clear{
-    if( show != _infoOverlayVisible ) {
-        _infoOverlayVisible = show;
-        if( _infoOverlayVisible )
-            [self.view addSubview:_infoOverlay];
-        else
-            [_infoOverlay removeFromSuperview];
-    }
-    if( clear ) {
-        for( UIView * view in _infoOverlay.subviews )
-            [view removeFromSuperview];
-    }
+    
+    return list;
 }
 
 @end

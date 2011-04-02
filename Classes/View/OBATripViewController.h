@@ -16,17 +16,20 @@
 
 #import "OBAApplicationContext.h"
 #import "OBATripController.h"
+#import "OBABookmarksViewController.h"
+#import "OBATripStateTableViewCellFactory.h"
+#import "OBAItineraryV2.h"
 
 
-@interface OBATripViewController : UIViewController <MKMapViewDelegate,OBATripControllerDelegate> {
-    UIView * _infoOverlay;
-    BOOL _infoOverlayVisible;
-    NSDateFormatter * _timeFormatter;
+@interface OBATripViewController : UIViewController <UITableViewDataSource,UITableViewDelegate, MKMapViewDelegate,OBATripControllerDelegate,OBABookmarksViewControllerDelegate> {
+    OBATripStateTableViewCellFactory * _tripStateTableViewCellFactory;    
+    OBAItineraryV2 * _currentItinerary;
 }
 
 @property (nonatomic,retain) IBOutlet OBAApplicationContext * appContext;
 @property (nonatomic,retain) OBATripController * tripController;
 
+@property (nonatomic,retain) IBOutlet UITableView * tableView;
 @property (nonatomic,retain) IBOutlet MKMapView * mapView;
 @property (nonatomic,retain) IBOutlet UIBarButtonItem * currentLocationButton;
 @property (nonatomic,retain) IBOutlet UIBarButtonItem * editButton;
@@ -38,5 +41,6 @@
 -(IBAction) onLeftButton:(id)sender;
 -(IBAction) onRightButton:(id)sender;
 -(IBAction) onBookmakrButton:(id)sender;
+-(IBAction) onSettingsButton:(id)sender;
 
 @end

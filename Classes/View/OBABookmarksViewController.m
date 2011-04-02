@@ -15,11 +15,9 @@
  */
 
 #import "OBABookmarksViewController.h"
-#import "OBAUITableViewCell.h"
-#import "OBAUIKit.h"
 #import "OBALogger.h"
-#import "OBAEditStopBookmarkViewController.h"
-#import "OBAStopViewController.h"
+#import "OBAEditBookmarkViewController.h"
+#import "OBAPlace.h"
 
 
 @interface OBABookmarksViewController (Private)
@@ -40,6 +38,7 @@
     self = [super initWithStyle:UITableViewStylePlain];
 	if (self) {
 		_appContext = [appContext retain];
+        _includeCurrentLocation = FALSE;
 	}
 	return self;
 }
@@ -50,6 +49,14 @@
     [super dealloc];
 }
 
+- (BOOL) includeCurrentLocation {
+    return _includeCurrentLocation;
+}
+
+- (void) setIncludeCurrentLocation:(BOOL)includeCurrentLocation {
+    _includeCurrentLocation = includeCurrentLocation;
+    [self.tableView reloadData];
+}
 - (void) viewDidLoad {
     [super viewDidLoad];
     self.navigationItem.title = @"Bookmarks";
@@ -72,57 +79,71 @@
 // Customize the number of rows in the table view.
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {	
 	int count = [_bookmarks count];
-	return count + 1;
+    if( _includeCurrentLocation ) {
+        return count + 1;
+    }
+	return count;
 }
 
 
 // Customize the appearance of table view cells.
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
 	
-    if( indexPath.row == 0 ) {
-		UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView cellId:@"CurrentLocationTableViewCell"];
-		cell.textLabel.text = @"Current Location";
-        cell.textLabel.textColor = [UIColor blueColor];
-		cell.textLabel.textAlignment = UITextAlignmentCenter;
-		cell.accessoryType = UITableViewCellAccessoryNone;		
-		cell.selectionStyle = UITableViewCellSelectionStyleNone;
-		return cell;
-	}
-	else {
-		OBABookmarkV2 * bookmark = [_bookmarks objectAtIndex:(indexPath.row - 1)];
-		UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView];
-		cell.textLabel.text = bookmark.name;
-		cell.textLabel.textAlignment = UITextAlignmentLeft;		
-		cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-		cell.selectionStyle = UITableViewCellSelectionStyleBlue;
-		return cell;
-	}
+    NSInteger offset = 0;
+
+    if( _includeCurrentLocation ) {
+        
+        offset = 1;
+
+        if( indexPath.row == 0 ) {
+            UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView cellId:@"CurrentLocationTableViewCell"];
+            cell.textLabel.text = @"Current Location";
+            cell.textLabel.textColor = [UIColor blueColor];
+            cell.textLabel.textAlignment = UITextAlignmentCenter;
+            cell.accessoryType = UITableViewCellAccessoryNone;		
+            cell.selectionStyle = UITableViewCellSelectionStyleNone;
+            return cell;
+        }
+    }
+
+    OBAPlace * bookmark = [_bookmarks objectAtIndex:(indexPath.row - offset)];
+    UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView];
+    cell.textLabel.text = bookmark.name;
+    cell.textLabel.textAlignment = UITextAlignmentLeft;		
+    cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+    cell.selectionStyle = UITableViewCellSelectionStyleBlue;
+    return cell;
 }
 
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
 	
-    if( indexPath.row == 0 ) {
-        OBAPlace * place = [OBAPlace placeWithCurrentLocation];
-        [self.delegate placeBookmarkSelected:place];
-        [self.navigationController popViewControllerAnimated:TRUE];
+    NSInteger offset = 0;
+    
+    if( _includeCurrentLocation ) {
+        offset = 1;
+        if( indexPath.row == 0 ) {
+            OBAPlace * place = [OBAPlace placeWithCurrentLocation];
+            [self.delegate placeBookmarkSelected:place];
+            [self.navigationController popViewControllerAnimated:TRUE];
+            return;
+        }
     }
     
 	if( [_bookmarks count] == 0 )
 		return;
 	
-	OBABookmarkV2 * bookmark = [_bookmarks objectAtIndex:(indexPath.row)];
+	OBAPlace * bookmark = [_bookmarks objectAtIndex:(indexPath.row-offset)];
 	
 	if( self.tableView.editing ) {
-		OBAEditStopBookmarkViewController * vc = [[OBAEditStopBookmarkViewController alloc] initWithApplicationContext:_appContext bookmark:bookmark editType:OBABookmarkEditExisting];
+		OBAEditBookmarkViewController * vc = [[OBAEditBookmarkViewController alloc] initWithApplicationContext:_appContext bookmark:bookmark editType:OBABookmarkEditExisting];
 		[self.navigationController pushViewController:vc animated:TRUE];
 		[vc release];
 	}
 	else {
-		[_appContext.activityListeners bookmarkClicked:bookmark];
-		OBAStopViewController * vc = [[OBAStopViewController alloc] initWithApplicationContext:_appContext stopIds:bookmark.stopIds];
-		[self.navigationController pushViewController:vc animated:TRUE];
-		[vc release];
+        [self.delegate placeBookmarkSelected:bookmark];
+        [self.navigationController popViewControllerAnimated:TRUE];
+        return;
 	}
 }
 
@@ -131,7 +152,7 @@
 forRowAtIndexPath:(NSIndexPath *)indexPath  {
 	
 	OBAModelDAO * modelDao = _appContext.modelDao;
-	OBABookmarkV2 * bookmark = [_bookmarks objectAtIndex:(indexPath.row)];
+	OBAPlace * bookmark = [_bookmarks objectAtIndex:(indexPath.row)];
 	NSError * error = nil;
 	[modelDao removeBookmark:bookmark error:&error];
 	if( error ) 

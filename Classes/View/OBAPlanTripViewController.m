@@ -34,7 +34,7 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
 @synthesize tripController;
 
 + (OBAPlanTripViewController*) viewControllerWithApplicationContext:(OBAApplicationContext*)appContext {
-    NSArray* wired = [[NSBundle mainBundle] loadNibNamed:@"OBAPlanTripViewController" owner:nil options:nil];
+    NSArray* wired = [[NSBundle mainBundle] loadNibNamed:@"OBAPlanTripViewController" owner:appContext options:nil];
     OBAPlanTripViewController* vc = [wired objectAtIndex:0];
     vc.appContext = appContext;
     vc.tripController = appContext.tripController;
@@ -54,8 +54,8 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
 
 - (void) setPlaceFrom:(OBAPlace*)placeFrom placeTo:(OBAPlace*)placeTo {
     if( placeFrom ) {
-        if( placeFrom.useCurrentLocation ) {
-            TTTableItem *item = [TTTableTextItem itemWithText:@"Current Location" URL:nil];
+        if( placeFrom.useCurrentLocation || placeFrom.isBookmark) {
+            TTTableItem *item = [TTTableTextItem itemWithText:placeFrom.name URL:nil];
             item.userInfo = placeFrom;
             [_startTextField addCellWithObject:item];
         } else {
@@ -63,8 +63,8 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
         }
     }
     if( placeTo ) {
-        if( placeTo.useCurrentLocation ) {
-            TTTableItem *item = [TTTableTextItem itemWithText:@"Current Location" URL:nil];
+        if( placeTo.useCurrentLocation || placeTo.isBookmark) {
+            TTTableItem *item = [TTTableTextItem itemWithText:placeTo.name URL:nil];
             item.userInfo = placeTo;
             [_endTextField addCellWithObject:item];
         } else {
@@ -101,7 +101,7 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
     [endBookmarkButton addTarget:self action:@selector(onEndTextFieldBookmarkButton:) forControlEvents:UIControlEventTouchUpInside];
 
     _startTextField = [[OBAFixedHeightPickerTextField alloc] initWithFrame:CGRectMake(10, 10, CGRectGetWidth(self.view.bounds) - 20, 40)];
-    _startTextField.dataSource = [[[OBAPlaceDataSource alloc] init] autorelease];;
+    _startTextField.dataSource = [[[OBAPlaceDataSource alloc] initWithAppContext:self.appContext] autorelease];;
     _startTextField.searchesAutomatically = TRUE;
     _startTextField.borderStyle = UITextBorderStyleRoundedRect;
     _startTextField.leftView = startLabel;
@@ -113,7 +113,7 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
     _startTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
     
     _endTextField = [[OBAFixedHeightPickerTextField alloc] initWithFrame:CGRectMake(10, 60, CGRectGetWidth(self.view.bounds) - 20, 40)];
-    _endTextField.dataSource = [[[OBAPlaceDataSource alloc] init] autorelease];;
+    _endTextField.dataSource = [[[OBAPlaceDataSource alloc] initWithAppContext:self.appContext] autorelease];;
     _endTextField.searchesAutomatically = TRUE;
     _endTextField.borderStyle = UITextBorderStyleRoundedRect;
     _endTextField.leftView = endLabel;
@@ -149,6 +149,7 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
 -(IBAction) onStartTextFieldBookmarkButton:(id)sender {
     OBABookmarksViewController * vc = [[OBABookmarksViewController alloc] initWithApplicationContext:self.appContext];
     vc.delegate = self;
+    vc.includeCurrentLocation = TRUE;
     _currentContext = OBAPlanTripViewControllerContextStartLabel;
     [self.navigationController pushViewController:vc animated:TRUE];
     [vc release];
@@ -157,6 +158,7 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
 -(IBAction) onEndTextFieldBookmarkButton:(id)sender {
     OBABookmarksViewController * vc = [[OBABookmarksViewController alloc] initWithApplicationContext:self.appContext];
     vc.delegate = self;
+    vc.includeCurrentLocation = TRUE;
     _currentContext = OBAPlanTripViewControllerContextEndLabel;
     [self.navigationController pushViewController:vc animated:TRUE];
     [vc release];

@@ -20,7 +20,7 @@ typedef enum {
 
 + (OBAPlanTripViewController*) viewControllerWithApplicationContext:(OBAApplicationContext*)appContext;
 
-@property (nonatomic,retain) OBAApplicationContext * appContext;
+@property (nonatomic,retain) IBOutlet OBAApplicationContext * appContext;
 @property (nonatomic,retain) OBATripController * tripController;
 @property (nonatomic,retain) OBAPlace * placeStart;
 @property (nonatomic,retain) OBAPlace * placeEnd;

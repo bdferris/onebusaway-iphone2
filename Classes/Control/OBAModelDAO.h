@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
+#import "OBAPlace.h"
 #import "OBAStopV2.h"
-#import "OBABookmarkV2.h"
 #import "OBAStopAccessEventV2.h"
 #import "OBAStopPreferencesV2.h"
-#import "OBAActivityListeners.h"
 #import "OBAServiceAlertsModel.h"
 
 
 @class OBAModelDAOUserPreferencesImpl;
 
-@interface OBAModelDAO : NSObject<OBAActivityListener> {
+@interface OBAModelDAO : NSObject {
 	OBAModelDAOUserPreferencesImpl * _preferencesDao;
 	NSMutableArray * _bookmarks;
 	NSMutableArray * _mostRecentStops;
@@ -37,12 +36,10 @@
 @property (nonatomic,readonly) NSArray * mostRecentStops;
 @property (nonatomic,assign) CLLocation * mostRecentLocation;
 
-- (OBABookmarkV2*) createTransientBookmark:(OBAStopV2*)stop;
-
-- (void) addNewBookmark:(OBABookmarkV2*)bookmark error:(NSError**)error;
-- (void) saveExistingBookmark:(OBABookmarkV2*)bookmark error:(NSError**)error;
+- (void) addNewBookmark:(OBAPlace*)bookmark error:(NSError**)error;
+- (void) saveExistingBookmark:(OBAPlace*)bookmark error:(NSError**)error;
 - (void) moveBookmark:(NSInteger)startIndex to:(NSInteger)endIndex error:(NSError**)error;
-- (void) removeBookmark:(OBABookmarkV2*) bookmark error:(NSError**)error;
+- (void) removeBookmark:(OBAPlace*) bookmark error:(NSError**)error;
 
 - (void) addStopAccessEvent:(OBAStopAccessEventV2*)event;
 

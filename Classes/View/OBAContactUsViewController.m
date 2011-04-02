@@ -15,8 +15,6 @@
  */
 
 #import "OBAContactUsViewController.h"
-#import "OBAUITableViewCell.h"
-//#import "ISFeedback.h"
 
 
 @implementation OBAContactUsViewController
@@ -24,7 +22,8 @@
 @synthesize appContext = _appContext;
 
 - (id) initWithApplicationContext:(OBAApplicationContext*)appContext {
-    if (self = [super initWithStyle:UITableViewStyleGrouped]) {
+    self = [super initWithStyle:UITableViewStyleGrouped];
+    if (self) {
 		_appContext = [appContext retain];
 	}
     return self;

@@ -29,6 +29,7 @@
 @interface OBABookmarksViewController : UITableViewController {
 	OBAApplicationContext * _appContext;	
 	NSArray * _bookmarks;
+    BOOL _includeCurrentLocation;
 	UIBarButtonItem * _customEditButtonItem;
 }
 
@@ -37,7 +38,7 @@
 @property (nonatomic,retain) IBOutlet OBAApplicationContext * appContext;
 @property (nonatomic,retain) IBOutlet UIBarButtonItem * customEditButtonItem;
 @property (nonatomic,retain) IBOutlet id<OBABookmarksViewControllerDelegate> delegate;
-
+@property (nonatomic) BOOL includeCurrentLocation;
 - (IBAction) onEditButton:(id)sender;
 
 @end
