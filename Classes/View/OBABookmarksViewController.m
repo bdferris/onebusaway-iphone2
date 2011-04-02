@@ -99,9 +99,9 @@
             UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView cellId:@"CurrentLocationTableViewCell"];
             cell.textLabel.text = @"Current Location";
             cell.textLabel.textColor = [UIColor blueColor];
-            cell.textLabel.textAlignment = UITextAlignmentCenter;
+            cell.textLabel.textAlignment = UITextAlignmentLeft;
             cell.accessoryType = UITableViewCellAccessoryNone;		
-            cell.selectionStyle = UITableViewCellSelectionStyleNone;
+            cell.selectionStyle = UITableViewCellSelectionStyleBlue;
             return cell;
         }
     }
@@ -110,7 +110,7 @@
     UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView];
     cell.textLabel.text = bookmark.name;
     cell.textLabel.textAlignment = UITextAlignmentLeft;		
-    cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+    cell.accessoryType = UITableViewCellAccessoryNone;
     cell.selectionStyle = UITableViewCellSelectionStyleBlue;
     return cell;
 }

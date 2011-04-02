@@ -8,6 +8,7 @@
 
 @interface OBATripController (Private)
 
+- (void) refreshLocationForPlace:(OBAPlace*)place;
 - (void) refreshTripState;
 - (void) applyItinerary:(OBAItineraryV2*)itinerary;
 - (OBATripState*) computeSummaryState;
@@ -23,6 +24,7 @@
 
 @implementation OBATripController
 
+@synthesize locationManager;
 @synthesize modelService;
 @synthesize delegate;
 
@@ -46,6 +48,9 @@
     
     _placeFrom = [NSObject releaseOld:_placeFrom retainNew:fromPlace];
     _placeTo = [NSObject releaseOld:_placeTo retainNew:toPlace];
+    
+    [self refreshLocationForPlace:_placeFrom];
+    [self refreshLocationForPlace:_placeTo];
 
     CLLocation * from = fromPlace.location;
     CLLocation * to = toPlace.location;    
@@ -118,6 +123,11 @@
 
 
 @implementation OBATripController (Private)
+
+- (void) refreshLocationForPlace:(OBAPlace*)place {
+    if( place.useCurrentLocation )
+        place.location = locationManager.currentLocation;
+}
 
 - (void) refreshTripState {
     [self.delegate refreshTripState:[_currentStates objectAtIndex:_currentStateIndex]];

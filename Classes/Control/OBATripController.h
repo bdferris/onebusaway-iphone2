@@ -1,3 +1,4 @@
+#import "OBALocationManager.h"
 #import "OBAModelService.h"
 #import "OBAPlace.h"
 #import "OBAItinerariesV2.h"
@@ -17,6 +18,7 @@
     NSInteger _currentStateIndex;
 }
 
+@property (nonatomic,retain) OBALocationManager * locationManager;
 @property (nonatomic,retain) OBAModelService * modelService;
 @property (nonatomic,retain) id<OBATripControllerDelegate> delegate;
 

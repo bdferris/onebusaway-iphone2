@@ -178,6 +178,30 @@ typedef struct  {
 
 - (UITableViewCell*) createCellForTripSummary:(OBAItineraryV2*)itinerary {
     OBATripSummaryTableViewCell * cell = [self getOrCreateCellFromNibNamed:@"OBATripSummaryTableViewCell"];
+    UIView * contentView = cell.contentView;
+    double x = 7;
+    for( OBALegV2 * leg in itinerary.legs ) {
+        OBATransitLegV2 * transitLeg = leg.transitLeg;
+        
+        if( transitLeg ) {
+            
+            UIImageView * imageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Mode-Bus.png"]];
+            imageView.frame = CGRectMake(x, 7, CGRectGetWidth(imageView.frame), CGRectGetHeight(imageView.frame));            
+            [contentView addSubview:imageView];
+            x = CGRectGetMaxX(imageView.frame) + 5;
+            [imageView release];
+            
+            
+
+            UILabel * label = [[UILabel alloc] initWithFrame:CGRectMake(x, 8, 22, 30)];                               
+            label.text = [OBAPresentation getRouteShortNameForTransitLeg:transitLeg];
+            label.font = [UIFont boldSystemFontOfSize:22];
+            [label sizeToFit];
+            [contentView addSubview:label];
+            x = CGRectGetMaxX(label.frame) + 5;
+            [label release];
+        }
+    }
     return cell;
 }
 

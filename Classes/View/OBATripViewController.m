@@ -22,6 +22,7 @@
 
 #import "OBAPlaceAnnotation.h"
 #import "OBATripPolyline.h"
+#import "OBAStopIconFactory.h"
 
 
 @interface OBATripViewController (Private)

@@ -106,6 +106,7 @@ static const NSUInteger kTagSettingsView = 3;
 		_stopIconFactory = [[OBAStopIconFactory alloc] init];
         
         _tripController = [[OBATripController alloc] init];
+        _tripController.locationManager = _locationManager;
         _tripController.modelService = _modelService;
 		
 		[self refreshSettings];
