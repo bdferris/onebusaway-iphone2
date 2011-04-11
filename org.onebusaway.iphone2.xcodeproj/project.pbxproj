@@ -228,6 +228,9 @@
 		D6CEA0610F8D0EDF009DBD66 /* OBAModelDAOUserPreferencesImpl.m in Sources */ = {isa = PBXBuildFile; fileRef = D6CEA0600F8D0EDF009DBD66 /* OBAModelDAOUserPreferencesImpl.m */; };
 		D6CFB1421032229F00005000 /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = D6CFB1411032229F00005000 /* Default.png */; };
 		D6E884EA121C3F1400C53386 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = D6E884E9121C3F1400C53386 /* Settings.bundle */; };
+		D6EC893F134BCAC500A9B16C /* OBATargetTime.m in Sources */ = {isa = PBXBuildFile; fileRef = D6EC893E134BCAC500A9B16C /* OBATargetTime.m */; };
+		D6EC894A134BDD0D00A9B16C /* OBATripQuery.m in Sources */ = {isa = PBXBuildFile; fileRef = D6EC8949134BDD0D00A9B16C /* OBATripQuery.m */; };
+		D6EC894D134C2FE100A9B16C /* OBAPickTripViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D6EC894C134C2FE100A9B16C /* OBAPickTripViewController.m */; };
 		D6F0F9BE1341243D00AAA7EE /* OBACommon.m in Sources */ = {isa = PBXBuildFile; fileRef = D6F0F9601341243D00AAA7EE /* OBACommon.m */; };
 		D6F0F9BF1341243D00AAA7EE /* OBALocationManager.m in Sources */ = {isa = PBXBuildFile; fileRef = D6F0F9621341243D00AAA7EE /* OBALocationManager.m */; };
 		D6F0F9C01341243D00AAA7EE /* OBALogger.m in Sources */ = {isa = PBXBuildFile; fileRef = D6F0F9641341243D00AAA7EE /* OBALogger.m */; };
@@ -869,6 +872,12 @@
 		D6CEA0600F8D0EDF009DBD66 /* OBAModelDAOUserPreferencesImpl.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBAModelDAOUserPreferencesImpl.m; path = Control/OBAModelDAOUserPreferencesImpl.m; sourceTree = "<group>"; };
 		D6CFB1411032229F00005000 /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Default.png; path = Resources/Default.png; sourceTree = "<group>"; };
 		D6E884E9121C3F1400C53386 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
+		D6EC893D134BCAC500A9B16C /* OBATargetTime.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBATargetTime.h; path = Model/OBATargetTime.h; sourceTree = "<group>"; };
+		D6EC893E134BCAC500A9B16C /* OBATargetTime.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBATargetTime.m; path = Model/OBATargetTime.m; sourceTree = "<group>"; };
+		D6EC8948134BDD0D00A9B16C /* OBATripQuery.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBATripQuery.h; path = Model/OBATripQuery.h; sourceTree = "<group>"; };
+		D6EC8949134BDD0D00A9B16C /* OBATripQuery.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBATripQuery.m; path = Model/OBATripQuery.m; sourceTree = "<group>"; };
+		D6EC894B134C2FE100A9B16C /* OBAPickTripViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBAPickTripViewController.h; path = View/OBAPickTripViewController.h; sourceTree = "<group>"; };
+		D6EC894C134C2FE100A9B16C /* OBAPickTripViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBAPickTripViewController.m; path = View/OBAPickTripViewController.m; sourceTree = "<group>"; };
 		D6F0F95F1341243D00AAA7EE /* OBACommon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OBACommon.h; sourceTree = "<group>"; };
 		D6F0F9601341243D00AAA7EE /* OBACommon.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OBACommon.m; sourceTree = "<group>"; };
 		D6F0F9611341243D00AAA7EE /* OBALocationManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OBALocationManager.h; sourceTree = "<group>"; };
@@ -1553,6 +1562,10 @@
 				D647A3CA134233620045A7CB /* OBAPlace.m */,
 				D647F37E1343822500A4CE84 /* OBATripState.h */,
 				D647F37F1343822500A4CE84 /* OBATripState.m */,
+				D6EC893D134BCAC500A9B16C /* OBATargetTime.h */,
+				D6EC893E134BCAC500A9B16C /* OBATargetTime.m */,
+				D6EC8948134BDD0D00A9B16C /* OBATripQuery.h */,
+				D6EC8949134BDD0D00A9B16C /* OBATripQuery.m */,
 			);
 			name = Model;
 			sourceTree = "<group>";
@@ -1565,6 +1578,8 @@
 				D647A3C0134231900045A7CB /* OBATripViewController.m */,
 				D647A3BD134231900045A7CB /* OBAPlanTripViewController.h */,
 				D647A3BE134231900045A7CB /* OBAPlanTripViewController.m */,
+				D6EC894B134C2FE100A9B16C /* OBAPickTripViewController.h */,
+				D6EC894C134C2FE100A9B16C /* OBAPickTripViewController.m */,
 				D6B23BED12AAC5D5000C17FD /* OBAAgenciesListViewController.h */,
 				D6B23BEE12AAC5D5000C17FD /* OBAAgenciesListViewController.m */,
 				D68CDC330FCB53F000EE6BDF /* OBABookmarksViewController.h */,
@@ -2581,6 +2596,9 @@
 				D6763A5F1346B7DA001931F0 /* OBAStopIconFactory.m in Sources */,
 				D69DDEA31346F9C800EDD847 /* OBAVehicleRideTableViewCell.m in Sources */,
 				D69DDEA61346FE0F00EDD847 /* OBAVehicleArrivalTableViewCell.m in Sources */,
+				D6EC893F134BCAC500A9B16C /* OBATargetTime.m in Sources */,
+				D6EC894A134BDD0D00A9B16C /* OBATripQuery.m in Sources */,
+				D6EC894D134C2FE100A9B16C /* OBAPickTripViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

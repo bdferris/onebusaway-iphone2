@@ -1,18 +1,19 @@
 #import "OBALocationManager.h"
 #import "OBAModelService.h"
-#import "OBAPlace.h"
+#import "OBATripQuery.h"
 #import "OBAItinerariesV2.h"
 #import "OBATripState.h"
 
 
 @protocol OBATripControllerDelegate <NSObject>
 -(void) refreshTripState:(OBATripState*)tripState;
+-(void) chooseFromItineraries:(NSArray*)itineraries;
 @end
 
 
 @interface OBATripController : NSObject <OBAModelServiceDelegate> {
-    OBAPlace * _placeFrom;
-    OBAPlace * _placeTo;
+    OBATripQuery * _query;
+    NSArray * _itineraries;
     OBAItineraryV2 * _currentItinerary;
     NSMutableArray * _currentStates;
     NSInteger _currentStateIndex;
@@ -22,14 +23,18 @@
 @property (nonatomic,retain) OBAModelService * modelService;
 @property (nonatomic,retain) id<OBATripControllerDelegate> delegate;
 
-- (void) planTripFrom:(OBAPlace*)fromPlace to:(OBAPlace*)toPlace;
+- (void) planTripWithQuery:(OBATripQuery*)query;
+- (void) selectItinerary:(OBAItineraryV2*)itinerary;
+- (void) showItineraries;
+- (void) refresh;
 
-@property (nonatomic,readonly) OBAPlace * placeFrom;
-@property (nonatomic,readonly) OBAPlace * placeTo;
-
+@property (nonatomic,readonly) OBATripQuery * query;
+@property (nonatomic,readonly) NSArray * itineraries;
+@property (nonatomic,readonly) OBAItineraryV2 * currentItinerary;
 @property (nonatomic,readonly) OBATripState * tripState;
 
 @property (nonatomic,readonly) BOOL hasPreviousState;
+@property (nonatomic,readonly) BOOL hasCurrentState;
 @property (nonatomic,readonly) BOOL hasNextState;
 
 - (void) moveToPrevState;

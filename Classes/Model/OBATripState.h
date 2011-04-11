@@ -12,6 +12,7 @@
 
 @property (nonatomic) BOOL showTripSummary;
 @property (nonatomic,retain) NSDate * startTime;
+@property (nonatomic) BOOL isLateStartTime;
 @property (nonatomic,retain) OBAStopV2 * walkToStop;
 @property (nonatomic,retain) OBAPlace * walkToPlace;
 @property (nonatomic,retain) OBATransitLegV2 * departure;

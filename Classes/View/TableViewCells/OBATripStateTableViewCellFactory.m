@@ -14,6 +14,7 @@
 #import "OBAVehicleDepartureTableViewCell.h"
 #import "OBAVehicleRideTableViewCell.h"
 #import "OBAVehicleArrivalTableViewCell.h"
+#import "OBAStopIconFactory.h"
 #import "OBAPresentation.h"
 
 
@@ -26,11 +27,24 @@ typedef struct  {
     BOOL isNow;
 } OBATimeStruct;
 
+typedef enum {
+    CellTypeTripSummary,
+    CellTypeStartTime,
+    CellTypeWalkToStop,
+    CellTypeWalkToPlace,
+    CellTypeDeparture,
+    CellTypeRide,
+    CellTypeArrival,
+    CellTypeNone
+} CellType;
+
 @interface OBATripStateTableViewCellFactory (Private)
 
+- (CellType) getCellTypeForTripState:(OBATripState*)state indexPath:(NSIndexPath*)indexPath;
+
 - (UITableViewCell*) createCellForPlanYourTrip;
-- (UITableViewCell*) createCellForTripSummary:(OBAItineraryV2*)itinerary;
-- (UITableViewCell*) createCellForStartTrip:(NSDate*)startTime;
+
+- (UITableViewCell*) createCellForStartTrip:(OBATripState*)state;
 - (UITableViewCell*) createCellForWalkToStop:(OBAStopV2*)stop;
 - (UITableViewCell*) createCellForWalkToPlace:(OBAPlace*)place;
 - (UITableViewCell*) createCellForVehicleDeparture:(OBATransitLegV2*)transitLeg;
@@ -107,73 +121,50 @@ typedef struct  {
 }
 
 - (UITableViewCell*) getCellForState:(OBATripState*)state indexPath:(NSIndexPath*)indexPath {
+
     if( state == nil )
         return [self createCellForPlanYourTrip];
 
-    NSInteger index = 0;
+    CellType cellType = [self getCellTypeForTripState:state indexPath:indexPath];
 
-    if( state.showTripSummary ) {
-        if( indexPath.row == index )
+    switch (cellType) {
+        case CellTypeTripSummary:
             return [self createCellForTripSummary:state.itinerary];
-        index++;
-    }
-    
-    if( state.startTime ) {
-        if( indexPath.row == index )
-            return [self createCellForStartTrip:state.startTime];
-        index++;
-    }
-    
-    if( state.walkToStop ) {
-        if( indexPath.row == index )
+        case CellTypeStartTime:
+            return [self createCellForStartTrip:state];
+        case CellTypeWalkToStop:
             return [self createCellForWalkToStop:state.walkToStop];
-        index++;
-    }
-
-    if( state.walkToPlace ) {
-        if( indexPath.row == index )
+        case CellTypeWalkToPlace:
             return [self createCellForWalkToPlace:state.walkToPlace];
-        index++;
-    }
-    
-    if( state.departure ) {
-        if( indexPath.row == index )
+        case CellTypeDeparture:
             return [self createCellForVehicleDeparture:state.departure];
-        index++;
-    }
-
-    if( state.ride ) {
-        if( indexPath.row == index )
+        case CellTypeRide:
             return [self createCellForVehicleRide:state.ride];
-        index++;
-    }
-    
-    if( state.arrival ) {
-        if( indexPath.row == index )
+        case CellTypeArrival:
             return [self createCellForVehicleArrival:state.arrival];
-        index++;
+        default:
+            return [UITableViewCell getOrCreateCellForTableView:_tableView];
     }
-
-
-    return [UITableViewCell getOrCreateCellForTableView:_tableView];
 }
 
 - (void) didSelectRowForState:(OBATripState*)state indexPath:(NSIndexPath*)indexPath {
+
     if( state == nil) {
         OBAPlanTripViewController * vc = [OBAPlanTripViewController viewControllerWithApplicationContext:_appContext];
         [_navigationController pushViewController:vc animated:TRUE];
         return;
     }
-}
-
-@end
-
-
-
-@implementation OBATripStateTableViewCellFactory (Private)
-
-- (UITableViewCell*) createCellForPlanYourTrip {
-    return [self getOrCreateCellFromNibNamed:@"OBAPlanYourTripTableViewCell"];	
+    
+    CellType cellType = [self getCellTypeForTripState:state indexPath:indexPath];
+    
+    switch (cellType) {
+        case CellTypeTripSummary: {
+            [_appContext.tripController showItineraries];
+            break;
+        }
+        default:
+            break;
+    }
 }
 
 - (UITableViewCell*) createCellForTripSummary:(OBAItineraryV2*)itinerary {
@@ -185,33 +176,126 @@ typedef struct  {
         
         if( transitLeg ) {
             
-            UIImageView * imageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Mode-Bus.png"]];
-            imageView.frame = CGRectMake(x, 7, CGRectGetWidth(imageView.frame), CGRectGetHeight(imageView.frame));            
+            OBAStopIconFactory * factory = _appContext.stopIconFactory;
+            UIImage * img = [factory getModeIconForRoute:transitLeg.trip.route];
+            UIImageView * imageView = [[UIImageView alloc] initWithImage:img];
+            imageView.frame = CGRectMake(x, 7, CGRectGetWidth(imageView.frame)/2, CGRectGetHeight(imageView.frame)/2);            
             [contentView addSubview:imageView];
             x = CGRectGetMaxX(imageView.frame) + 5;
             [imageView release];
             
-            
-
-            UILabel * label = [[UILabel alloc] initWithFrame:CGRectMake(x, 8, 22, 30)];                               
+            UILabel * label = [[UILabel alloc] initWithFrame:CGRectMake(x, 8, 22, 15)];
             label.text = [OBAPresentation getRouteShortNameForTransitLeg:transitLeg];
-            label.font = [UIFont boldSystemFontOfSize:22];
+            label.font = [UIFont boldSystemFontOfSize:12];
             [label sizeToFit];
             [contentView addSubview:label];
             x = CGRectGetMaxX(label.frame) + 5;
             [label release];
         }
     }
+    
+    NSString * startTime = [_timeFormatter stringFromDate:itinerary.startTime];
+    NSString * endTime = [_timeFormatter stringFromDate:itinerary.endTime];
+    NSTimeInterval interval = [itinerary.endTime timeIntervalSinceDate:itinerary.startTime];
+    NSInteger mins = interval / 60;
+    NSString * duration = @"";
+    if( mins >= 60 ) {
+        NSInteger hours = mins / 60;
+        mins = mins % 60;
+        duration = [NSString stringWithFormat:@"%d hrs % mins",hours,mins];
+    }
+    else {
+        duration = [NSString stringWithFormat:@"%d mins",mins];
+    }
+    
+    cell.summaryLabel.text = [NSString stringWithFormat:@"%@ - %@ - %@", startTime, endTime, duration];
+    
     return cell;
 }
 
-- (UITableViewCell*) createCellForStartTrip:(NSDate*)startTime {
+@end
+
+
+
+@implementation OBATripStateTableViewCellFactory (Private)
+
+- (CellType) getCellTypeForTripState:(OBATripState*)state indexPath:(NSIndexPath*)indexPath {
+   
+    NSInteger index = 0;
+    
+    if( state.showTripSummary ) {
+        if( indexPath.row == index )
+            return CellTypeTripSummary;
+        index++;
+    }
+    
+    if( state.startTime ) {
+        if( indexPath.row == index )
+            return CellTypeStartTime;
+        index++;
+    }
+    
+    if( state.walkToStop ) {
+        if( indexPath.row == index )
+            return CellTypeWalkToStop;
+        index++;
+    }
+    
+    if( state.walkToPlace ) {
+        if( indexPath.row == index )
+            return CellTypeWalkToPlace;
+        index++;
+    }
+    
+    if( state.departure ) {
+        if( indexPath.row == index )
+            return CellTypeDeparture;
+        index++;
+    }
+    
+    if( state.ride ) {
+        if( indexPath.row == index )
+            return CellTypeRide;
+        index++;
+    }
+    
+    if( state.arrival ) {
+        if( indexPath.row == index )
+            return CellTypeArrival;
+        index++;
+    }
+    
+    return CellTypeNone;
+}
+
+- (UITableViewCell*) createCellForPlanYourTrip {
+    return [self getOrCreateCellFromNibNamed:@"OBAPlanYourTripTableViewCell"];	
+}
+
+- (UITableViewCell*) createCellForStartTrip:(OBATripState*)state {
+    
+    NSDate * startTime = state.startTime;
     
     OBAStartTripTableViewCell * cell = [self getOrCreateCellFromNibNamed:@"OBAStartTripTableViewCell"];
     NSTimeInterval interval = [startTime timeIntervalSinceNow];
-    NSInteger mins = abs(interval / 60);
+    NSInteger mins = interval / 60;
+    
+    if( state.isLateStartTime )
+        cell.backgroundColor = [UIColor yellowColor];
+    else
+        cell.backgroundColor = [UIColor clearColor];
 
-    if( mins <= 1 ) {
+    if( mins < -50 ) {
+        cell.timeLabel.text = [_timeFormatter stringFromDate:startTime];
+        cell.statusLabel.text = @"Should've started your trip at:";
+        cell.minutesLabel.hidden = TRUE;
+    }
+    else if( -50 <= mins && mins < 1 ) {
+        cell.timeLabel.text = [NSString stringWithFormat:@"%d", mins];
+        cell.statusLabel.text = @"Should've started your trip mins ago:";
+        cell.minutesLabel.hidden = FALSE;
+    }
+    else if( -1 <= mins && mins <= 1 ) {
         cell.timeLabel.text = @"NOW";
         cell.statusLabel.text = @"Start your trip:";
         cell.minutesLabel.hidden = TRUE;

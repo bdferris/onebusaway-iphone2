@@ -127,7 +127,7 @@
 								<object class="IBMKMapView" id="608672297">
 									<reference key="NSNextResponder" ref="335079913"/>
 									<int key="NSvFlags">274</int>
-									<string key="NSFrame">{{0, 44}, {320, 328}}</string>
+									<string key="NSFrame">{{0, 45}, {320, 327}}</string>
 									<reference key="NSSuperview" ref="335079913"/>
 									<reference key="NSNextKeyView" ref="997485957"/>
 									<bool key="IBUIClipsSubviews">YES</bool>
@@ -140,10 +140,7 @@
 							<reference key="NSNextKeyView" ref="989839681"/>
 							<object class="NSColor" key="IBUIBackgroundColor">
 								<int key="NSColorSpace">3</int>
-								<bytes key="NSWhite">MQA</bytes>
-								<object class="NSColorSpace" key="NSCustomColorSpace">
-									<int key="NSID">2</int>
-								</object>
+								<bytes key="NSWhite">MC42NjY2NjY2NjY3AA</bytes>
 							</object>
 							<string key="targetRuntimeIdentifier">IBCocoaTouchFramework</string>
 						</object>
@@ -157,7 +154,7 @@
 								<string key="targetRuntimeIdentifier">IBCocoaTouchFramework</string>
 								<int key="IBUIStyle">1</int>
 							</object>
-							<object class="IBUIBarButtonItem" id="882489076">
+							<object class="IBUIBarButtonItem" id="650385365">
 								<object class="NSCustomResource" key="IBUIImage">
 									<string key="NSClassName">NSImage</string>
 									<string key="NSResourceName">SegmentedControl-CrossHairs.png</string>
@@ -184,12 +181,9 @@
 								<int key="IBUISystemItemIdentifier">11</int>
 							</object>
 							<object class="IBUIBarButtonItem" id="17129992">
-								<object class="NSCustomResource" key="IBUIImage">
-									<string key="NSClassName">NSImage</string>
-									<string key="NSResourceName">Gear.png</string>
-								</object>
 								<string key="targetRuntimeIdentifier">IBCocoaTouchFramework</string>
 								<int key="IBUIStyle">1</int>
+								<int key="IBUISystemItemIdentifier">23</int>
 							</object>
 						</object>
 						<object class="IBUINavigationItem" key="IBUINavigationItem" id="1073244012">
@@ -198,6 +192,12 @@
 								<string key="IBUITitle">Cancel</string>
 								<string key="targetRuntimeIdentifier">IBCocoaTouchFramework</string>
 								<int key="IBUIStyle">1</int>
+							</object>
+							<object class="IBUIBarButtonItem" key="IBUILeftBarButtonItem" id="587363415">
+								<string key="targetRuntimeIdentifier">IBCocoaTouchFramework</string>
+								<int key="IBUIStyle">1</int>
+								<reference key="IBUINavigationItem" ref="1073244012"/>
+								<int key="IBUISystemItemIdentifier">13</int>
 							</object>
 							<object class="IBUIBarButtonItem" key="IBUIRightBarButtonItem" id="465751707">
 								<string key="targetRuntimeIdentifier">IBCocoaTouchFramework</string>
@@ -247,22 +247,6 @@
 						<reference key="destination" ref="664661524"/>
 					</object>
 					<int key="connectionID">268</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBCocoaTouchEventConnection" key="connection">
-						<string key="label">onCrossHairsButton:</string>
-						<reference key="source" ref="882489076"/>
-						<reference key="destination" ref="451842630"/>
-					</object>
-					<int key="connectionID">316</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBCocoaTouchOutletConnection" key="connection">
-						<string key="label">currentLocationButton</string>
-						<reference key="source" ref="451842630"/>
-						<reference key="destination" ref="882489076"/>
-					</object>
-					<int key="connectionID">317</int>
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBCocoaTouchOutletConnection" key="connection">
@@ -376,6 +360,38 @@
 					</object>
 					<int key="connectionID">386</int>
 				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBCocoaTouchOutletConnection" key="connection">
+						<string key="label">currentLocationButton</string>
+						<reference key="source" ref="451842630"/>
+						<reference key="destination" ref="650385365"/>
+					</object>
+					<int key="connectionID">392</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBCocoaTouchEventConnection" key="connection">
+						<string key="label">onCrossHairsButton:</string>
+						<reference key="source" ref="650385365"/>
+						<reference key="destination" ref="451842630"/>
+					</object>
+					<int key="connectionID">393</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBCocoaTouchOutletConnection" key="connection">
+						<string key="label">refreshButton</string>
+						<reference key="source" ref="451842630"/>
+						<reference key="destination" ref="587363415"/>
+					</object>
+					<int key="connectionID">394</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBCocoaTouchEventConnection" key="connection">
+						<string key="label">onRefreshButton:</string>
+						<reference key="source" ref="587363415"/>
+						<reference key="destination" ref="451842630"/>
+					</object>
+					<int key="connectionID">395</int>
+				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
 				<object class="NSArray" key="orderedObjects">
@@ -437,9 +453,9 @@
 							<reference ref="858234498"/>
 							<reference ref="927742810"/>
 							<reference ref="1055939268"/>
-							<reference ref="882489076"/>
 							<reference ref="17129992"/>
 							<reference ref="335079913"/>
+							<reference ref="650385365"/>
 						</object>
 						<reference key="parent" ref="653295622"/>
 						<string key="objectName">Trip View Controller - Trip</string>
@@ -451,6 +467,7 @@
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<reference ref="768749968"/>
 							<reference ref="465751707"/>
+							<reference ref="587363415"/>
 						</object>
 						<reference key="parent" ref="451842630"/>
 					</object>
@@ -474,12 +491,13 @@
 						<int key="objectID">365</int>
 						<reference key="object" ref="422246279"/>
 						<reference key="parent" ref="451842630"/>
-						<string key="objectName">Bar Button Item - Blah</string>
+						<string key="objectName">Bar Button Item - Left</string>
 					</object>
 					<object class="IBObjectRecord">
 						<int key="objectID">366</int>
 						<reference key="object" ref="858234498"/>
 						<reference key="parent" ref="451842630"/>
+						<string key="objectName">Bar Button Item - Right</string>
 					</object>
 					<object class="IBObjectRecord">
 						<int key="objectID">367</int>
@@ -490,12 +508,6 @@
 						<int key="objectID">368</int>
 						<reference key="object" ref="1055939268"/>
 						<reference key="parent" ref="451842630"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">315</int>
-						<reference key="object" ref="882489076"/>
-						<reference key="parent" ref="451842630"/>
-						<string key="objectName">Current Location</string>
 					</object>
 					<object class="IBObjectRecord">
 						<int key="objectID">376</int>
@@ -522,6 +534,16 @@
 						<reference key="object" ref="989839681"/>
 						<reference key="parent" ref="335079913"/>
 					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">390</int>
+						<reference key="object" ref="587363415"/>
+						<reference key="parent" ref="1073244012"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">391</int>
+						<reference key="object" ref="650385365"/>
+						<reference key="parent" ref="451842630"/>
+					</object>
 				</object>
 			</object>
 			<object class="NSMutableDictionary" key="flattenedProperties">
@@ -539,7 +561,6 @@
 					<string>292.IBPluginDependency</string>
 					<string>3.CustomClassName</string>
 					<string>3.IBPluginDependency</string>
-					<string>315.IBPluginDependency</string>
 					<string>349.IBPluginDependency</string>
 					<string>350.IBPluginDependency</string>
 					<string>365.IBPluginDependency</string>
@@ -550,6 +571,8 @@
 					<string>378.IBPluginDependency</string>
 					<string>379.IBPluginDependency</string>
 					<string>381.IBPluginDependency</string>
+					<string>390.IBPluginDependency</string>
+					<string>391.IBPluginDependency</string>
 				</object>
 				<object class="NSMutableArray" key="dict.values">
 					<bool key="EncodedWithXMLCoder">YES</bool>
@@ -579,6 +602,7 @@
 					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
 					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
 					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
+					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
 				</object>
 			</object>
 			<object class="NSMutableDictionary" key="unlocalizedProperties">
@@ -593,7 +617,7 @@
 				<reference key="dict.values" ref="0"/>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">386</int>
+			<int key="maxID">395</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes"/>
 		<int key="IBDocument.localizationMode">0</int>
@@ -616,14 +640,12 @@
 			<bool key="EncodedWithXMLCoder">YES</bool>
 			<object class="NSArray" key="dict.sortedKeys">
 				<bool key="EncodedWithXMLCoder">YES</bool>
-				<string>Gear.png</string>
 				<string>LeftArrow.png</string>
 				<string>RightArrow.png</string>
 				<string>SegmentedControl-CrossHairs.png</string>
 			</object>
 			<object class="NSMutableArray" key="dict.values">
 				<bool key="EncodedWithXMLCoder">YES</bool>
-				<string>{26, 24}</string>
 				<string>{16, 16}</string>
 				<string>{16, 16}</string>
 				<string>{20, 20}</string>

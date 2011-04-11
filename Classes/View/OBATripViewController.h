@@ -31,14 +31,17 @@
 
 @property (nonatomic,retain) IBOutlet UITableView * tableView;
 @property (nonatomic,retain) IBOutlet MKMapView * mapView;
-@property (nonatomic,retain) IBOutlet UIBarButtonItem * currentLocationButton;
+
+@property (nonatomic,retain) IBOutlet UIBarButtonItem * refreshButton;
 @property (nonatomic,retain) IBOutlet UIBarButtonItem * editButton;
 @property (nonatomic,retain) IBOutlet UIBarButtonItem * leftButton;
+@property (nonatomic,retain) IBOutlet UIBarButtonItem * currentLocationButton;
 @property (nonatomic,retain) IBOutlet UIBarButtonItem * rightButton;
 
--(IBAction) onCrossHairsButton:(id)sender;
+-(IBAction) onRefreshButton:(id)sender;
 -(IBAction) onEditButton:(id)sender;
 -(IBAction) onLeftButton:(id)sender;
+-(IBAction) onCrossHairsButton:(id)sender;
 -(IBAction) onRightButton:(id)sender;
 -(IBAction) onBookmakrButton:(id)sender;
 -(IBAction) onSettingsButton:(id)sender;

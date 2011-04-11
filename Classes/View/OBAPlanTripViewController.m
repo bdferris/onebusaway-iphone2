@@ -18,6 +18,7 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
 
 - (TTPickerTextField*) getTextFieldForContext:(id)context;
 - (OBAPlace*) getPlaceForContext:(id)context;
+- (OBATargetTime*) getTargetTime;
 
 - (void) showLocationNotFound:(NSString*)locationName;
 - (void) showLocationLookupError:(NSString*)locationName;
@@ -29,9 +30,9 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
 @implementation OBAPlanTripViewController
 
 @synthesize appContext;
-@synthesize placeStart;
-@synthesize placeEnd;
 @synthesize tripController;
+@synthesize datePicker;
+@synthesize dateTypePicker;
 
 + (OBAPlanTripViewController*) viewControllerWithApplicationContext:(OBAApplicationContext*)appContext {
     NSArray* wired = [[NSBundle mainBundle] loadNibNamed:@"OBAPlanTripViewController" owner:appContext options:nil];
@@ -46,14 +47,27 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
     [_startTextField release];
     [_endTextField release];
     
+    [_placeFrom release];
+    [_placeTo release];
+    
     self.appContext = nil;
-    self.placeStart = nil;
-    self.placeEnd = nil;
+    self.tripController = nil;
+    self.dateTypePicker = nil;
+    self.datePicker = nil;
+    
     [super dealloc];
 }
 
-- (void) setPlaceFrom:(OBAPlace*)placeFrom placeTo:(OBAPlace*)placeTo {
-    if( placeFrom ) {
+- (void) setTripQuery:(OBATripQuery*)query {
+    
+    if( ! query )
+        return;
+    
+    OBAPlace * placeFrom = query.placeFrom;
+    OBAPlace * placeTo = query.placeTo;
+    OBATargetTime * time = query.time;
+    
+    if( placeFrom ) {        
         if( placeFrom.useCurrentLocation || placeFrom.isBookmark) {
             TTTableItem *item = [TTTableTextItem itemWithText:placeFrom.name URL:nil];
             item.userInfo = placeFrom;
@@ -69,6 +83,25 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
             [_endTextField addCellWithObject:item];
         } else {
             _endTextField.text = placeTo.name;
+        }
+    }
+    
+    if( time ) {
+        UISegmentedControl * dateTypePickerControl = self.dateTypePicker;
+        UIDatePicker * datePickerControl = self.datePicker;
+        switch (time.type) {
+            case OBATargetTimeTypeNow:
+                dateTypePickerControl.selectedSegmentIndex = 0;
+                datePickerControl.date = [NSDate date];
+                break;
+            case OBATargetTimeTypeDepartBy:
+                dateTypePickerControl.selectedSegmentIndex = 1;
+                datePickerControl.date = time.time;
+                break;
+            case OBATargetTimeTypeArriveBy:
+                dateTypePickerControl.selectedSegmentIndex = 2;
+                datePickerControl.date = time.time;
+                break;                
         }
     }
 }
@@ -127,6 +160,10 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
     [self.view addSubview:_startTextField];
     [self.view addSubview:_endTextField];
     
+    self.dateTypePicker.selectedSegmentIndex = 0;    
+    self.datePicker.enabled = FALSE;
+    self.datePicker.date = [NSDate date];
+    
     [endLabel release];
     [startLabel release];
     
@@ -163,7 +200,29 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
     [self.navigationController pushViewController:vc animated:TRUE];
     [vc release];
 }
-     
+
+-(IBAction) onDateTypeChanged:(id)sender {
+
+    UISegmentedControl * dateTypePickerControl = self.dateTypePicker;
+    UIDatePicker * datePickerControl = self.datePicker;
+    
+    NSInteger index = [dateTypePickerControl selectedSegmentIndex];
+    
+    switch (index) {
+        case 1:
+        case 2:
+            datePickerControl.enabled = TRUE;
+            break;
+        default:
+            datePickerControl.enabled = FALSE;
+            break;
+    }
+}
+
+- (IBAction) onTimeChanged:(id)sender {
+    
+}
+
 #pragma mark OBAModelServiceDelegate
 
 - (void)requestDidFinish:(id<OBAModelServiceRequest>)request withObject:(id)obj context:(id)context {
@@ -228,23 +287,28 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
 - (BOOL) ensurePlacesAreSet {
 
     
-    self.placeStart = [self ensurePlaceIsSet:self.placeStart textField:_startTextField];
+    _placeFrom = [NSObject releaseOld:_placeFrom retainNew:[self ensurePlaceIsSet:_placeFrom textField:_startTextField]];
 
-    if( ! self.placeStart )
+    if( ! _placeFrom )
         return FALSE;
     
-    if( ! [self ensurePlaceLocationIsSet:self.placeStart context:kContextPlaceStart] )
+    if( ! [self ensurePlaceLocationIsSet:_placeFrom context:kContextPlaceStart] )
         return FALSE;
         
-    self.placeEnd = [self ensurePlaceIsSet:self.placeEnd textField:_endTextField];    
+    _placeTo = [NSObject releaseOld:_placeTo retainNew:[self ensurePlaceIsSet:_placeTo textField:_endTextField]];
     
-    if( ! self.placeEnd )
+    if( ! _placeTo )
         return FALSE;
     
-    if( ! [self ensurePlaceLocationIsSet:self.placeEnd context:kContextPlaceEnd] )
+    if( ! [self ensurePlaceLocationIsSet:_placeTo context:kContextPlaceEnd] )
         return FALSE;
     
-    [self.tripController planTripFrom:self.placeStart to:self.placeEnd];
+    OBATargetTime * t = [self getTargetTime];
+    
+    
+    OBATripQuery * query = [[OBATripQuery alloc] initWithPlaceFrom:_placeFrom placeTo:_placeTo time:t];
+    [self.tripController planTripWithQuery:query];
+    [query release];
     
     return TRUE;
 }
@@ -298,12 +362,30 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
 
 - (OBAPlace*) getPlaceForContext:(id)context {
     if( context == kContextPlaceStart ) {
-        return self.placeStart;
+        return _placeFrom;
     }
     else if( context == kContextPlaceEnd ) {
-        return self.placeEnd;
+        return _placeTo;
     }
     return nil;
+}
+
+- (OBATargetTime*) getTargetTime {
+    
+    UISegmentedControl * dateTypePickerControl = self.dateTypePicker;
+    NSInteger index = [dateTypePickerControl selectedSegmentIndex];
+
+    UIDatePicker * datePickerControl = self.datePicker;
+    NSDate * time = [datePickerControl date];    
+    
+    switch (index) {
+        case 1:
+            return [OBATargetTime timeDepartBy:time];
+        case 2:
+            return [OBATargetTime timeArriveBy:time];
+        default:
+            return [OBATargetTime timeNow];
+    }
 }
 
 - (void) showLocationNotFound:(NSString*)locationName {

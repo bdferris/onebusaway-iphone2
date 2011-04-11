@@ -16,4 +16,6 @@
 - (UITableViewCell*) getCellForState:(OBATripState*)state indexPath:(NSIndexPath*)indexPath;
 - (void) didSelectRowForState:(OBATripState*)state indexPath:(NSIndexPath*)indexPath;
 
+- (UITableViewCell*) createCellForTripSummary:(OBAItineraryV2*)itinerary;
+
 @end

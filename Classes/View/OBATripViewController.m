@@ -16,6 +16,7 @@
 
 #import "OBATripViewController.h"
 #import "OBAPlanTripViewController.h"
+#import "OBAPickTripViewController.h"
 #import "OBAPlaceAnnotationViewController.h"
 #import "OBAMoreViewController.h"
 #import "OBASphericalGeometryLibrary.h"
@@ -39,9 +40,10 @@
 @synthesize tripController;
 @synthesize tableView;
 @synthesize mapView;
-@synthesize currentLocationButton;
+@synthesize refreshButton;
 @synthesize editButton;
 @synthesize leftButton;
+@synthesize currentLocationButton;
 @synthesize rightButton;
 
 -(void) dealloc {
@@ -51,16 +53,19 @@
     
 	self.appContext = nil;
     self.mapView = nil;
-    self.currentLocationButton = nil;
+    self.refreshButton = nil;
     self.editButton = nil;
     self.leftButton = nil;
+    self.currentLocationButton = nil;
     self.rightButton = nil;
     [super dealloc];
 }
 
 - (void) viewDidLoad {
 	[super viewDidLoad];
+    self.refreshButton.enabled = FALSE;
     self.leftButton.enabled = FALSE;
+    self.currentLocationButton.enabled = FALSE;
     self.rightButton.enabled = FALSE;
 
     self.tripController = self.appContext.tripController;
@@ -76,6 +81,9 @@
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
+    NSIndexPath * indexPath = [self.tableView indexPathForSelectedRow];
+    if( indexPath )
+        [self.tableView deselectRowAtIndexPath:indexPath animated:FALSE];
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
@@ -86,9 +94,13 @@
 
 #pragma mark OBATripViewController
 
+-(IBAction) onRefreshButton:(id)sender {
+    [self.tripController refresh];
+}
+
 -(IBAction) onEditButton:(id)sender {
     OBAPlanTripViewController * vc = [OBAPlanTripViewController viewControllerWithApplicationContext:self.appContext];
-    [vc setPlaceFrom:self.tripController.placeFrom placeTo:self.tripController.placeTo];
+    [vc setTripQuery:self.tripController.query];
     [self.navigationController pushViewController:vc animated:TRUE];
 }
 
@@ -206,6 +218,13 @@
 
 #pragma mark OBATripControllerDelegate
 
+-(void) chooseFromItineraries:(NSArray*)itineraries {
+    OBAPickTripViewController * vc = [[OBAPickTripViewController alloc] initWithAppContext:self.appContext];
+    [self.navigationController popToRootViewController];
+    [self.navigationController pushViewController:vc animated:TRUE];
+    [vc release];
+}
+
 -(void) refreshTripState:(OBATripState*)state {
     
     // Make sure our view controller is visible
@@ -219,7 +238,7 @@
     
     CGRect mapFrame = self.mapView.frame;
     double maxY = CGRectGetMaxY(mapFrame);
-    mapFrame.origin.y = CGRectGetMaxY(tableFrame);
+    mapFrame.origin.y = CGRectGetMaxY(tableFrame) + 1;
     mapFrame.size.height = maxY - mapFrame.origin.y;
 
     [UIView animateWithDuration:0.25 animations:^{
@@ -231,7 +250,9 @@
     
     OBATripController * tc = self.tripController;
     
+    self.refreshButton.enabled = TRUE;
     self.leftButton.enabled = tc.hasPreviousState;
+    self.currentLocationButton.enabled = tc.hasCurrentState;
     self.rightButton.enabled = tc.hasNextState;
     
     // We only need to update overlays and annotations if the itinerary has changed
@@ -253,7 +274,10 @@
 
 - (void) placeBookmarkSelected:(OBAPlace*)place {
     OBAPlace * placeFrom = [OBAPlace placeWithCurrentLocation];
-    [self.tripController planTripFrom:placeFrom to:place];
+    OBATripQuery * query = [[OBATripQuery alloc] initWithPlaceFrom:placeFrom placeTo:place time:[OBATargetTime timeNow]];
+    query.automaticallyPickBestItinerary = TRUE;
+    [self.tripController planTripWithQuery:query];
+    [query release];
 }
 
 @end

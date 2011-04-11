@@ -9,6 +9,7 @@
 
 @synthesize showTripSummary;
 @synthesize startTime;
+@synthesize isLateStartTime;
 @synthesize walkToStop;
 @synthesize walkToPlace;
 @synthesize departure;

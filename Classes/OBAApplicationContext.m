@@ -38,7 +38,7 @@ static NSString * kOBAHiddenPreferenceApplicationLastActiveTimestamp = @"OBAAppl
 static NSString * kOBAHiddenPreferenceUserId = @"OBAApplicationUserId";
 static NSString * kOBAHiddenPreferenceTabOrder = @"OBATabOrder";
 
-static NSString * kOBADefaultApiServerName = @"api.onebusaway.org";
+static NSString * kOBADefaultApiServerName = @"soak-api.onebusaway.org";
 
 static const double kMaxTimeSinceApplicationTerminationToRestoreState = 15 * 60;
 
@@ -177,6 +177,8 @@ static const NSUInteger kTagSettingsView = 3;
 	[_window addSubview:rootView];
 	[_window makeKeyAndVisible];
 	
+    [_locationManager startUpdatingLocation];
+    
 	[self restoreState];
 }
 

@@ -11,8 +11,11 @@
 
 @implementation OBATripSummaryTableViewCell
 
+@synthesize summaryLabel;
+
 - (void)dealloc
 {
+    self.summaryLabel = nil;
     [super dealloc];
 }
 
