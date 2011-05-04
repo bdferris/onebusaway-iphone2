@@ -20,6 +20,7 @@
 #import "OBADataSourceConfig.h"
 #import "OBALocationManager.h"
 #import "OBATripController.h"
+#import "OBACurrentTravelModeController.h"
 #import "OBAReferencesV2.h"
 
 #import "IASKAppSettingsViewController.h"
@@ -37,6 +38,7 @@
 	OBAModelService * _modelService;
 	
     OBATripController * _tripController;
+    OBACurrentTravelModeController * _currentTravelModeController;
     
 	OBALocationManager * _locationManager;
 
@@ -44,7 +46,6 @@
 	
 	UIWindow * _window;
 	UINavigationController * _navController;
-	
 }
 
 @property (nonatomic, retain) IBOutlet UIWindow *window;
@@ -55,6 +56,7 @@
 @property (nonatomic,readonly) OBAModelService * modelService;
 
 @property (nonatomic,readonly) OBATripController * tripController;
+@property (nonatomic,readonly) OBACurrentTravelModeController * currentTravelModeController;
 
 @property (nonatomic,readonly) OBAStopIconFactory * stopIconFactory;
 

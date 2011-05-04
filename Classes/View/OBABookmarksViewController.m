@@ -18,12 +18,29 @@
 #import "OBALogger.h"
 #import "OBAEditBookmarkViewController.h"
 #import "OBAPlace.h"
+#import "OBACurrentTravelModeState.h"
 
 
 @interface OBABookmarksViewController (Private)
 
-- (void) refreshBookmarks;
+- (UITableViewCell *)bookmarkCellForRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView;
+- (UITableViewCell *)recentCellForRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView;
+- (UITableViewCell *)contactCellForRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView;
+- (UITableViewCell *)currentLocationCellForRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView;
+
+- (void)didSelectBookmarkRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView;
+- (void)didSelectRecentRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView;
+- (void)didSelectContactRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView;
+- (void)didSelectCurrentLocationRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView;
+
+
+- (void) refreshData;
 - (void) abortEditing;
+
+- (IBAction) onCancel:(id)sender;
+- (IBAction) onEditButton:(id)sender;
+- (IBAction) onClearRecentPlaces:(id)sender;
+- (IBAction) onBookmarkTypeChanged:(id)sender;
 
 @end
 
@@ -31,7 +48,6 @@
 @implementation OBABookmarksViewController
 
 @synthesize appContext = _appContext;
-@synthesize customEditButtonItem = _customEditButtonItem;
 @synthesize delegate;
 
 - (id) initWithApplicationContext:(OBAApplicationContext*)appContext { 
@@ -39,15 +55,40 @@
 	if (self) {
 		_appContext = [appContext retain];
         _includeCurrentLocation = FALSE;
+        _mode = OBABookmarksViewControllerModeBookmarks;
+        self.modalTransitionStyle = UIModalTransitionStyleCoverVertical;
+        self.hidesBottomBarWhenPushed = FALSE;
+        self.tableView.allowsSelectionDuringEditing = TRUE;
 	}
 	return self;
 }
 
 - (void)dealloc {
 	[_appContext release];
+    [_currentLocations release];
 	[_bookmarks release];
+    [_recents release];
+    [_segmented release];
+    [_bookmarkEditButton release];
+    [_recentClearButton release];
     [super dealloc];
 }
+
+
++ (void) showBookmarksViewControllerWithAppContext:(OBAApplicationContext*)appContext parent:(UINavigationController*)parent delegate:(id<OBABookmarksViewControllerDelegate>)delegate includeCurrentLocation:(BOOL)includeCurrentLocation {
+
+    OBABookmarksViewController * vc = [[OBABookmarksViewController alloc] initWithApplicationContext:appContext];
+    vc.delegate = delegate;
+    vc.includeCurrentLocation = includeCurrentLocation;
+    
+    UINavigationController * nc =[[UINavigationController alloc] initWithRootViewController:vc];
+    [parent presentModalViewController:nc animated:TRUE];
+    
+    [nc setToolbarHidden:FALSE];
+    [nc release];
+    [vc release];
+}
+
 
 - (BOOL) includeCurrentLocation {
     return _includeCurrentLocation;
@@ -57,17 +98,100 @@
     _includeCurrentLocation = includeCurrentLocation;
     [self.tableView reloadData];
 }
+
+- (OBABookmarksViewControllerMode) mode {
+    return _mode;
+}
+
+- (void) setMode:(OBABookmarksViewControllerMode)mode {
+    
+    if( _mode == OBABookmarksViewControllerModeBookmarks && self.editing) {
+        self.editing = FALSE;
+        [self.tableView setEditing:FALSE animated:FALSE];
+        
+        _bookmarkEditButton.title = @"Edit";
+        _bookmarkEditButton.style = UIBarButtonItemStyleBordered;
+    }
+    
+    _mode = mode;
+
+    switch (_mode) {
+        case OBABookmarksViewControllerModeBookmarks: {
+            self.navigationItem.title = @"Bookmarks";
+            _segmented.selectedSegmentIndex = 0;
+            self.navigationItem.rightBarButtonItem = _bookmarkEditButton;
+            break;
+        }
+        case OBABookmarksViewControllerModeRecent: {
+            self.navigationItem.title = @"Recent";
+            _segmented.selectedSegmentIndex = 1;            
+            self.navigationItem.rightBarButtonItem = _recentClearButton;
+            break;
+        }
+        case OBABookmarksViewControllerModeContacts: {
+            self.navigationItem.title = @"Contacts";
+            self.navigationItem.rightBarButtonItem = nil;
+            _segmented.selectedSegmentIndex = 2;
+            break;
+        }
+    }
+    
+    [self.tableView reloadData];
+}
+
 - (void) viewDidLoad {
     [super viewDidLoad];
-    self.navigationItem.title = @"Bookmarks";
+    
+    UIBarButtonItem * cancelItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(onCancel:)];
+    self.navigationItem.leftBarButtonItem = cancelItem;
+    [cancelItem release];
+
+    _bookmarkEditButton = [[UIBarButtonItem alloc] initWithTitle:@"Edit" style:UIBarButtonItemStyleBordered target:self action:@selector(onEditButton:)];
+    _recentClearButton = [[UIBarButtonItem alloc] initWithTitle:@"Clear" style:UIBarButtonItemStyleBordered target:self action:@selector(onClearRecentPlaces:)];
+    
+    NSArray * items = [NSArray arrayWithObjects:@"Bookmarks",@"Recent",@"Contacts", nil];
+    
+    _segmented = [[UISegmentedControl alloc] initWithItems:items];
+    _segmented.segmentedControlStyle = UISegmentedControlStyleBar;
+    _segmented.selectedSegmentIndex = 0;
+    [_segmented addTarget:self action:@selector(onBookmarkTypeChanged:) forControlEvents:UIControlEventValueChanged];
+    [_segmented sizeToFit];
+    
+    UIBarButtonItem * itemA = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
+    UIBarButtonItem * itemB = [[UIBarButtonItem alloc] initWithCustomView:_segmented];
+    UIBarButtonItem * itemC = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];    
+    
+    self.toolbarItems = [NSArray arrayWithObjects:itemA,itemB,itemC,nil];
+
+    [itemA release];
+    [itemB release];
+    [itemC release];
+    
+    self.mode = OBABookmarksViewControllerModeBookmarks;
 }
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
 	// We reload the table here in case we are coming back from the user editing the label for bookmark
-	[self refreshBookmarks];
+	[self refreshData];
+    
+    if (_includeCurrentLocation) {
+        OBACurrentTravelModeController * controller = _appContext.currentTravelModeController;
+        [controller addDelegate:self];
+    }
+    
 	[self.tableView reloadData];
 }
+
+- (void)viewDidDisappear:(BOOL)animated {
+    [super viewDidDisappear:animated];
+    if (_includeCurrentLocation) {
+        OBACurrentTravelModeController * controller = _appContext.currentTravelModeController;
+        [controller removeDelegate:self];
+    }
+}
+     
+
 
 #pragma mark Table view methods
 
@@ -75,76 +199,63 @@
     return 1;
 }
 
-
 // Customize the number of rows in the table view.
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {	
-	int count = [_bookmarks count];
-    if( _includeCurrentLocation ) {
-        return count + 1;
+    switch (_mode) {
+        case OBABookmarksViewControllerModeBookmarks: {
+            int count = [_bookmarks count];
+            if( _includeCurrentLocation && ! self.editing)
+                count += [_currentLocations count];
+            if( count == 0 )
+                count++;
+            return count;
+        }
+        case OBABookmarksViewControllerModeRecent: {
+            int count = [_recents count];
+            if( _includeCurrentLocation && ! self.editing)
+                count += [_currentLocations count];
+            if( count == 0 )
+                count++;
+            return count;
+        }            
+        case OBABookmarksViewControllerModeContacts:
+            return 0;
+        default:
+            return 0;
     }
-	return count;
 }
 
 
 // Customize the appearance of table view cells.
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
 	
-    NSInteger offset = 0;
+    switch (_mode) {
+        case OBABookmarksViewControllerModeBookmarks:
+            return [self bookmarkCellForRowAtIndexPath:indexPath tableView:tableView];
+        case OBABookmarksViewControllerModeRecent:
+            return [self recentCellForRowAtIndexPath:indexPath tableView:tableView];
+        case OBABookmarksViewControllerModeContacts:
+            return [self contactCellForRowAtIndexPath:indexPath tableView:tableView];
 
-    if( _includeCurrentLocation ) {
-        
-        offset = 1;
-
-        if( indexPath.row == 0 ) {
-            UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView cellId:@"CurrentLocationTableViewCell"];
-            cell.textLabel.text = @"Current Location";
-            cell.textLabel.textColor = [UIColor blueColor];
-            cell.textLabel.textAlignment = UITextAlignmentLeft;
-            cell.accessoryType = UITableViewCellAccessoryNone;		
-            cell.selectionStyle = UITableViewCellSelectionStyleBlue;
-            return cell;
-        }
     }
-
-    OBAPlace * bookmark = [_bookmarks objectAtIndex:(indexPath.row - offset)];
-    UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView];
-    cell.textLabel.text = bookmark.name;
-    cell.textLabel.textAlignment = UITextAlignmentLeft;		
-    cell.accessoryType = UITableViewCellAccessoryNone;
-    cell.selectionStyle = UITableViewCellSelectionStyleBlue;
-    return cell;
+    
+    return nil;
 }
 
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
 	
-    NSInteger offset = 0;
-    
-    if( _includeCurrentLocation ) {
-        offset = 1;
-        if( indexPath.row == 0 ) {
-            OBAPlace * place = [OBAPlace placeWithCurrentLocation];
-            [self.delegate placeBookmarkSelected:place];
-            [self.navigationController popViewControllerAnimated:TRUE];
+    switch (_mode) {
+        case OBABookmarksViewControllerModeBookmarks:
+            [self didSelectBookmarkRowAtIndexPath:indexPath tableView:tableView];
             return;
-        }
+        case OBABookmarksViewControllerModeRecent:
+            [self didSelectRecentRowAtIndexPath:indexPath tableView:tableView];
+            return;
+        case OBABookmarksViewControllerModeContacts:
+            [self didSelectContactRowAtIndexPath:indexPath tableView:tableView];
+            return;
     }
-    
-	if( [_bookmarks count] == 0 )
-		return;
-	
-	OBAPlace * bookmark = [_bookmarks objectAtIndex:(indexPath.row-offset)];
-	
-	if( self.tableView.editing ) {
-		OBAEditBookmarkViewController * vc = [[OBAEditBookmarkViewController alloc] initWithApplicationContext:_appContext bookmark:bookmark editType:OBABookmarkEditExisting];
-		[self.navigationController pushViewController:vc animated:TRUE];
-		[vc release];
-	}
-	else {
-        [self.delegate placeBookmarkSelected:bookmark];
-        [self.navigationController popViewControllerAnimated:TRUE];
-        return;
-	}
 }
 
 
@@ -157,7 +268,7 @@ forRowAtIndexPath:(NSIndexPath *)indexPath  {
 	[modelDao removeBookmark:bookmark error:&error];
 	if( error ) 
 		OBALogSevereWithError(error,@"Error removing bookmark");
-	[self refreshBookmarks];
+	[self refreshData];
 	
 	if( [_bookmarks count] > 0 ) {
 		[self.tableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] 
@@ -180,45 +291,237 @@ forRowAtIndexPath:(NSIndexPath *)indexPath  {
 	[modelDao moveBookmark:oldPath.row to: newPath.row error:&error];
 	if( error ) 
 		OBALogSevereWithError(error,@"Error moving bookmark");
-	[self refreshBookmarks];
+	[self refreshData];
 }
 
-- (IBAction) onEditButton:(id)sender {
-	
-	BOOL isEditing = ! self.editing;
-	[self setEditing:isEditing animated:TRUE];
+#pragma mark OBACurrentTravelModeDelegate
 
-	if( isEditing ) {
-		_customEditButtonItem.title = @"Done";
-		_customEditButtonItem.style = UIBarButtonItemStyleDone;
-	}
-	else {
-		_customEditButtonItem.title = @"Edit";
-		_customEditButtonItem.style = UIBarButtonItemStyleBordered;
-	}
+- (void) didUpdateCurrentTravelModes:(NSArray*)modes controller:(OBACurrentTravelModeController*)controller {
+    
 }
 
 @end
 
+
+
 @implementation OBABookmarksViewController (Private)
 
-- (void) refreshBookmarks {
+- (UITableViewCell *)bookmarkCellForRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView {
+
+    NSInteger offset = 0;
+    
+    if( _includeCurrentLocation && ! self.editing ) {        
+        NSInteger locationCount = [_currentLocations count];
+        if( indexPath.row < locationCount )
+            return [self currentLocationCellForRowAtIndexPath:indexPath tableView:tableView];
+        offset = locationCount;
+    }
+    
+    if( [_bookmarks count] == 0 ) {
+        UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView];
+        cell.textLabel.text = @"No bookmarks set";
+        cell.textLabel.textAlignment = UITextAlignmentLeft;		
+        cell.accessoryType = UITableViewCellAccessoryNone;
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        return cell;
+    }
+    
+    OBAPlace * bookmark = [_bookmarks objectAtIndex:(indexPath.row - offset)];
+    UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView];
+    cell.textLabel.text = bookmark.name;
+    cell.textLabel.textAlignment = UITextAlignmentLeft;		
+    cell.accessoryType = UITableViewCellAccessoryNone;
+    cell.selectionStyle = UITableViewCellSelectionStyleBlue;
+    return cell;
+}
+
+- (UITableViewCell *)recentCellForRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView {
+
+    NSInteger offset = 0;
+    
+    if( _includeCurrentLocation && ! self.editing) {        
+        NSInteger locationCount = [_currentLocations count];
+        if( indexPath.row < locationCount )
+            return [self currentLocationCellForRowAtIndexPath:indexPath tableView:tableView];
+        offset = locationCount;        
+    }
+    
+    if( [_recents count] == 0 ) {
+        UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView];
+        cell.textLabel.text = @"No recent searches";
+        cell.textLabel.textAlignment = UITextAlignmentLeft;		
+        cell.accessoryType = UITableViewCellAccessoryNone;
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        return cell;
+    }
+    
+    OBAPlace * place = [_recents objectAtIndex:(indexPath.row - offset)];
+    UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView];
+    cell.textLabel.text = place.name;
+    cell.textLabel.textAlignment = UITextAlignmentLeft;		
+    cell.accessoryType = UITableViewCellAccessoryNone;
+    cell.selectionStyle = UITableViewCellSelectionStyleBlue;
+    return cell;
+}
+
+- (UITableViewCell *)contactCellForRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView { 
+    UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView];
+    cell.textLabel.text = @"No contacts";
+    cell.textLabel.textAlignment = UITextAlignmentLeft;		
+    cell.accessoryType = UITableViewCellAccessoryNone;
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    return cell;
+}
+
+- (UITableViewCell *)currentLocationCellForRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView {
+
+    OBACurrentTravelModeState * state = [_currentLocations objectAtIndex:indexPath.row];
+    
+    UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView style:UITableViewCellStyleSubtitle cellId:@"CurrentLocationTableViewCell"];
+    
+    cell.textLabel.text = @"Current Location";
+    cell.textLabel.textColor = [UIColor blueColor];
+    cell.textLabel.textAlignment = UITextAlignmentLeft;
+
+    cell.detailTextLabel.text = state.label;
+    cell.detailTextLabel.textAlignment = UITextAlignmentLeft;
+    
+    cell.accessoryType = UITableViewCellAccessoryNone;		
+    cell.selectionStyle = UITableViewCellSelectionStyleBlue;
+
+    return cell;
+}
+
+- (void)didSelectBookmarkRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView {
+
+    NSInteger offset = 0;
+    
+    if( _includeCurrentLocation && ! self.editing) {
+        NSInteger locationCount = [_currentLocations count];
+        if( indexPath.row < locationCount ) {
+            [self didSelectCurrentLocationRowAtIndexPath:indexPath tableView:tableView];
+            return; 
+        }
+        offset = locationCount;
+    }
+    
+	if( [_bookmarks count] == 0 )
+		return;
 	
+	OBAPlace * bookmark = [_bookmarks objectAtIndex:(indexPath.row-offset)];
+	
+	if( self.tableView.editing ) {
+		OBAEditBookmarkViewController * vc = [[OBAEditBookmarkViewController alloc] initWithApplicationContext:_appContext bookmark:bookmark editType:OBABookmarkEditExisting];
+		[self.navigationController pushViewController:vc animated:TRUE];
+		[vc release];
+	}
+	else {
+        [self.delegate placeBookmarkSelected:bookmark];
+        [self dismissModalViewControllerAnimated:TRUE];
+	}
+}
+
+- (void)didSelectRecentRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView {
+
+    NSInteger offset = 0;
+    
+    if( _includeCurrentLocation && ! self.editing) {
+        NSInteger locationCount = [_currentLocations count];
+        if( indexPath.row < locationCount ) {
+            [self didSelectCurrentLocationRowAtIndexPath:indexPath tableView:tableView];
+            return; 
+        }
+        offset = locationCount;
+    }
+    
+	if( [_recents count] == 0 )
+		return;
+	
+	OBAPlace * place = [_recents objectAtIndex:(indexPath.row-offset)];
+	
+    [self.delegate placeBookmarkSelected:place];
+    [self dismissModalViewControllerAnimated:TRUE];
+}
+
+- (void)didSelectContactRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView {
+    
+}
+
+- (void)didSelectCurrentLocationRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView {
+    OBAPlace * place = [OBAPlace placeWithCurrentLocation];
+    [self.delegate placeBookmarkSelected:place];
+    [self dismissModalViewControllerAnimated:TRUE];
+}
+
+
+- (void) refreshData {
+	
+    OBACurrentTravelModeController * controller = _appContext.currentTravelModeController;
+    _currentLocations = [NSObject releaseOld:_currentLocations retainNew:controller.currentModes];
+    
 	OBAModelDAO * dao = _appContext.modelDao;
 	_bookmarks = [NSObject releaseOld:_bookmarks retainNew:dao.bookmarks];
-	
-	_customEditButtonItem.enabled = [_bookmarks count] > 0;
+	_recents = [NSObject releaseOld:_recents retainNew:dao.recentPlaces];
+    
+	_bookmarkEditButton.enabled = [_bookmarks count] > 0;
+    _recentClearButton.enabled = [_recents count] > 0;
 }
 		
 - (void) abortEditing {
 	self.editing = FALSE;
 	[self.tableView setEditing:FALSE animated:FALSE];
 
-	_customEditButtonItem.title = @"Edit";
-	_customEditButtonItem.style = UIBarButtonItemStyleBordered;
+	_bookmarkEditButton.title = @"Edit";
+	_bookmarkEditButton.style = UIBarButtonItemStyleBordered;
 	
 	[self.tableView reloadData];
-}	
+}
+
+-(IBAction) onCancel:(id)sender {
+    [self dismissModalViewControllerAnimated:TRUE];
+}
+
+- (IBAction) onEditButton:(id)sender {
+	
+	BOOL isEditing = ! self.editing;
+	[self setEditing:isEditing animated:TRUE];
+    
+	if( isEditing ) {
+		_bookmarkEditButton.title = @"Done";
+		_bookmarkEditButton.style = UIBarButtonItemStyleDone;
+	}
+	else {
+		_bookmarkEditButton.title = @"Edit";
+		_bookmarkEditButton.style = UIBarButtonItemStyleBordered;
+	}
+    
+    [self.tableView reloadData];
+}
+
+-(IBAction) onClearRecentPlaces:(id)sender {
+    [_appContext.modelDao clearRecentPlaces];
+    [self refreshData];
+    [self.tableView reloadData];
+}
+
+-(IBAction) onBookmarkTypeChanged:(id)sender {
+    UISegmentedControl * segmented = sender;
+    NSInteger index = segmented.selectedSegmentIndex;
+    switch (index) {
+        case 0:
+            self.mode = OBABookmarksViewControllerModeBookmarks;
+            break;            
+        case 1:
+            self.mode = OBABookmarksViewControllerModeRecent;
+            break;            
+        case 2:
+            self.mode = OBABookmarksViewControllerModeContacts;
+            break;            
+        default:
+            self.mode = OBABookmarksViewControllerModeBookmarks;
+            break;            
+    }
+}
 
 @end
 

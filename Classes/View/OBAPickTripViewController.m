@@ -41,24 +41,14 @@
     // e.g. self.myOutlet = nil;
 }
 
-- (void)viewWillAppear:(BOOL)animated
-{
+- (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
+    _appContext.tripController.delegate = self;
 }
 
-- (void)viewDidAppear:(BOOL)animated
-{
-    [super viewDidAppear:animated];
-}
-
-- (void)viewWillDisappear:(BOOL)animated
-{
+- (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
-}
-
-- (void)viewDidDisappear:(BOOL)animated
-{
-    [super viewDidDisappear:animated];
+    _appContext.tripController.delegate = nil;
 }
 
 #pragma mark - Table view data source
@@ -100,9 +90,28 @@
         return;
     }
     
-    OBAItineraryV2 * itinerary = [itineraries objectAtIndex:indexPath.row];
+    [self.navigationController popToRootViewControllerAnimated:TRUE];
     
+    OBAItineraryV2 * itinerary = [itineraries objectAtIndex:indexPath.row];
     [_appContext.tripController selectItinerary:itinerary];
+}
+
+#pragma mark OBATripControllerDelegate
+
+-(void) chooseFromItineraries:(NSArray*)itineraries {
+    [self.tableView reloadData];
+}
+
+-(void) refreshingItineraries {
+    self.navigationItem.title = @"Updating...";
+}
+
+-(void) refreshingItinerariesCompleted {
+    self.navigationItem.title = nil;
+}
+
+-(void) refreshingItinerariesFailed:(NSError*)error {
+    self.navigationItem.title = @"Error updating...";
 }
 
 @end

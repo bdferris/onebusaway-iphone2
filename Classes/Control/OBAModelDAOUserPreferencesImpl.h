@@ -24,6 +24,9 @@
 - (NSArray*) readBookmarks;
 - (void) writeBookmarks:(NSArray*)source;
 
+- (NSArray*) readRecentPlaces;
+- (void) writeRecentPlaces:(NSArray*)source;
+
 - (NSArray*) readMostRecentStops;
 - (void) writeMostRecentStops:(NSArray*)source;
 

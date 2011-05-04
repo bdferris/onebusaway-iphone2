@@ -122,6 +122,9 @@
 		D62BF98D13445B2900667501 /* OBAFixedHeightPickerTextField.m in Sources */ = {isa = PBXBuildFile; fileRef = D62BF98C13445B2900667501 /* OBAFixedHeightPickerTextField.m */; };
 		D62F2F4C0F7A7EC600629092 /* OBASearchTableViewCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = D62F2F4B0F7A7EC600629092 /* OBASearchTableViewCell.xib */; };
 		D62F319D0F7ACFE900629092 /* OBAStopTableViewCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = D62F319C0F7ACFE900629092 /* OBAStopTableViewCell.xib */; };
+		D6304CAF1371125900A52835 /* OBAStartTripViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D6304CAE1371125800A52835 /* OBAStartTripViewController.m */; };
+		D6304CB2137113E800A52835 /* OBAAlarmTableViewCellFactory.m in Sources */ = {isa = PBXBuildFile; fileRef = D6304CB1137113E800A52835 /* OBAAlarmTableViewCellFactory.m */; };
+		D6304CB513711BFE00A52835 /* OBAAlarmState.m in Sources */ = {isa = PBXBuildFile; fileRef = D6304CB413711BFE00A52835 /* OBAAlarmState.m */; };
 		D63227E712A826480070B799 /* OBAStopTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = D63227DF12A826480070B799 /* OBAStopTableViewCell.m */; };
 		D63227E812A826480070B799 /* OBASearchTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = D63227E112A826480070B799 /* OBASearchTableViewCell.m */; };
 		D63227E912A826480070B799 /* OBAArrivalEntryTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = D63227E312A826480070B799 /* OBAArrivalEntryTableViewCell.m */; };
@@ -167,7 +170,10 @@
 		D67ACCD9122045B500D436C4 /* OBALabelAndTextFieldTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = D67ACCD8122045B500D436C4 /* OBALabelAndTextFieldTableViewCell.m */; };
 		D67C49C40F72A41D001782D5 /* OBAArrivalEntryTableViewCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = D67C49BF0F72A41D001782D5 /* OBAArrivalEntryTableViewCell.xib */; };
 		D67C49C50F72A41D001782D5 /* MainWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = D67C49C00F72A41D001782D5 /* MainWindow.xib */; };
+		D67C7F94135B4F0F00781E3B /* OBACurrentTravelModeController.m in Sources */ = {isa = PBXBuildFile; fileRef = D67C7F93135B4F0F00781E3B /* OBACurrentTravelModeController.m */; };
+		D67C7F97135B4FEE00781E3B /* OBACurrentTravelModeState.m in Sources */ = {isa = PBXBuildFile; fileRef = D67C7F96135B4FEE00781E3B /* OBACurrentTravelModeState.m */; };
 		D68CDC350FCB53F000EE6BDF /* OBABookmarksViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D68CDC340FCB53F000EE6BDF /* OBABookmarksViewController.m */; };
+		D68DEC071370632D002EE5D2 /* OBACurrentVehicleEstimateV2.m in Sources */ = {isa = PBXBuildFile; fileRef = D68DEC061370632D002EE5D2 /* OBACurrentVehicleEstimateV2.m */; };
 		D690BAF213466BFC00CD12EF /* OBATripSummaryTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = D690BAF113466BFC00CD12EF /* OBATripSummaryTableViewCell.m */; };
 		D69264D91344E9A200756F22 /* OBALabelAndSwitchTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = D69264C41344E9A200756F22 /* OBALabelAndSwitchTableViewCell.m */; };
 		D69264DA1344E9A200756F22 /* OBAListSelectionViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D69264C61344E9A200756F22 /* OBAListSelectionViewController.m */; };
@@ -525,7 +531,7 @@
 
 /* Begin PBXFileReference section */
 		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		1D6058910D05DD3D006BFB54 /* OneBusAway2.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OneBusAway2.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1D6058910D05DD3D006BFB54 /* OBA Blue.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "OBA Blue.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		1DF5F4DF0D08C38300B7A737 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		288765070DF74369002DB57D /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		29B97316FDCFA39411CA2CEA /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -690,6 +696,12 @@
 		D62BF98C13445B2900667501 /* OBAFixedHeightPickerTextField.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBAFixedHeightPickerTextField.m; path = View/OBAFixedHeightPickerTextField.m; sourceTree = "<group>"; };
 		D62F2F4B0F7A7EC600629092 /* OBASearchTableViewCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = OBASearchTableViewCell.xib; path = Resources/OBASearchTableViewCell.xib; sourceTree = "<group>"; };
 		D62F319C0F7ACFE900629092 /* OBAStopTableViewCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = OBAStopTableViewCell.xib; path = Resources/OBAStopTableViewCell.xib; sourceTree = "<group>"; };
+		D6304CAD1371125800A52835 /* OBAStartTripViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBAStartTripViewController.h; path = View/OBAStartTripViewController.h; sourceTree = "<group>"; };
+		D6304CAE1371125800A52835 /* OBAStartTripViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBAStartTripViewController.m; path = View/OBAStartTripViewController.m; sourceTree = "<group>"; };
+		D6304CB0137113E800A52835 /* OBAAlarmTableViewCellFactory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBAAlarmTableViewCellFactory.h; path = View/TableViewCells/OBAAlarmTableViewCellFactory.h; sourceTree = "<group>"; };
+		D6304CB1137113E800A52835 /* OBAAlarmTableViewCellFactory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBAAlarmTableViewCellFactory.m; path = View/TableViewCells/OBAAlarmTableViewCellFactory.m; sourceTree = "<group>"; };
+		D6304CB313711BFE00A52835 /* OBAAlarmState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBAAlarmState.h; path = Model/OBAAlarmState.h; sourceTree = "<group>"; };
+		D6304CB413711BFE00A52835 /* OBAAlarmState.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBAAlarmState.m; path = Model/OBAAlarmState.m; sourceTree = "<group>"; };
 		D63227DF12A826480070B799 /* OBAStopTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBAStopTableViewCell.m; path = View/TableViewCells/OBAStopTableViewCell.m; sourceTree = "<group>"; };
 		D63227E012A826480070B799 /* OBAStopTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBAStopTableViewCell.h; path = View/TableViewCells/OBAStopTableViewCell.h; sourceTree = "<group>"; };
 		D63227E112A826480070B799 /* OBASearchTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBASearchTableViewCell.m; path = View/TableViewCells/OBASearchTableViewCell.m; sourceTree = "<group>"; };
@@ -766,8 +778,14 @@
 		D67ACCD8122045B500D436C4 /* OBALabelAndTextFieldTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBALabelAndTextFieldTableViewCell.m; path = View/TableViewCells/OBALabelAndTextFieldTableViewCell.m; sourceTree = "<group>"; };
 		D67C49BF0F72A41D001782D5 /* OBAArrivalEntryTableViewCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = OBAArrivalEntryTableViewCell.xib; path = Resources/OBAArrivalEntryTableViewCell.xib; sourceTree = "<group>"; };
 		D67C49C00F72A41D001782D5 /* MainWindow.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = MainWindow.xib; path = Resources/MainWindow.xib; sourceTree = "<group>"; };
+		D67C7F92135B4F0F00781E3B /* OBACurrentTravelModeController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBACurrentTravelModeController.h; path = Control/OBACurrentTravelModeController.h; sourceTree = "<group>"; };
+		D67C7F93135B4F0F00781E3B /* OBACurrentTravelModeController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBACurrentTravelModeController.m; path = Control/OBACurrentTravelModeController.m; sourceTree = "<group>"; };
+		D67C7F95135B4FEE00781E3B /* OBACurrentTravelModeState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBACurrentTravelModeState.h; path = Model/OBACurrentTravelModeState.h; sourceTree = "<group>"; };
+		D67C7F96135B4FEE00781E3B /* OBACurrentTravelModeState.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBACurrentTravelModeState.m; path = Model/OBACurrentTravelModeState.m; sourceTree = "<group>"; };
 		D68CDC330FCB53F000EE6BDF /* OBABookmarksViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBABookmarksViewController.h; path = View/OBABookmarksViewController.h; sourceTree = "<group>"; };
 		D68CDC340FCB53F000EE6BDF /* OBABookmarksViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBABookmarksViewController.m; path = View/OBABookmarksViewController.m; sourceTree = "<group>"; };
+		D68DEC051370632D002EE5D2 /* OBACurrentVehicleEstimateV2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OBACurrentVehicleEstimateV2.h; sourceTree = "<group>"; };
+		D68DEC061370632D002EE5D2 /* OBACurrentVehicleEstimateV2.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OBACurrentVehicleEstimateV2.m; sourceTree = "<group>"; };
 		D690BAF013466BFC00CD12EF /* OBATripSummaryTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBATripSummaryTableViewCell.h; path = View/TableViewCells/OBATripSummaryTableViewCell.h; sourceTree = "<group>"; };
 		D690BAF113466BFC00CD12EF /* OBATripSummaryTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBATripSummaryTableViewCell.m; path = View/TableViewCells/OBATripSummaryTableViewCell.m; sourceTree = "<group>"; };
 		D69264C31344E9A200756F22 /* OBALabelAndSwitchTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBALabelAndSwitchTableViewCell.h; path = View/OBALabelAndSwitchTableViewCell.h; sourceTree = "<group>"; };
@@ -1108,7 +1126,6 @@
 			children = (
 				D67C48BF0F7162F4001782D5 /* Model */,
 				D67C490B0F718701001782D5 /* Control */,
-				D67C49030F71707D001782D5 /* View */,
 				D616A12A0FC5153100631BCE /* OBAApplicationContext.h */,
 				D616A12B0FC5153100631BCE /* OBAApplicationContext.m */,
 				D65BA1CF0FDDC74D006A9568 /* OBANavigationTargetAware.h */,
@@ -1121,7 +1138,7 @@
 		19C28FACFE9D520D11CA2CBB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				1D6058910D05DD3D006BFB54 /* OneBusAway2.app */,
+				1D6058910D05DD3D006BFB54 /* OBA Blue.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1562,10 +1579,14 @@
 				D647A3CA134233620045A7CB /* OBAPlace.m */,
 				D647F37E1343822500A4CE84 /* OBATripState.h */,
 				D647F37F1343822500A4CE84 /* OBATripState.m */,
+				D6304CB313711BFE00A52835 /* OBAAlarmState.h */,
+				D6304CB413711BFE00A52835 /* OBAAlarmState.m */,
 				D6EC893D134BCAC500A9B16C /* OBATargetTime.h */,
 				D6EC893E134BCAC500A9B16C /* OBATargetTime.m */,
 				D6EC8948134BDD0D00A9B16C /* OBATripQuery.h */,
 				D6EC8949134BDD0D00A9B16C /* OBATripQuery.m */,
+				D67C7F95135B4FEE00781E3B /* OBACurrentTravelModeState.h */,
+				D67C7F96135B4FEE00781E3B /* OBACurrentTravelModeState.m */,
 			);
 			name = Model;
 			sourceTree = "<group>";
@@ -1596,6 +1617,8 @@
 				D6A7323A1344DE5700A34718 /* OBAPlaceAnnotationViewController.m */,
 				D657D6B81345326E00CD1BEB /* OBAMoreViewController.h */,
 				D657D6B91345326F00CD1BEB /* OBAMoreViewController.m */,
+				D6304CAD1371125800A52835 /* OBAStartTripViewController.h */,
+				D6304CAE1371125800A52835 /* OBAStartTripViewController.m */,
 			);
 			name = View;
 			sourceTree = "<group>";
@@ -1612,6 +1635,9 @@
 				D62BF9791343C5BA00667501 /* OBAPlaceDataSource.m */,
 				D62BF97B1343C72000667501 /* OBAPlaceModel.h */,
 				D62BF97C1343C72000667501 /* OBAPlaceModel.m */,
+				D67C7F92135B4F0F00781E3B /* OBACurrentTravelModeController.h */,
+				D67C7F93135B4F0F00781E3B /* OBACurrentTravelModeController.m */,
+				D67C49030F71707D001782D5 /* View */,
 			);
 			name = Control;
 			sourceTree = "<group>";
@@ -1657,6 +1683,8 @@
 				D69DDEA21346F9C800EDD847 /* OBAVehicleRideTableViewCell.m */,
 				D69DDEA41346FE0E00EDD847 /* OBAVehicleArrivalTableViewCell.h */,
 				D69DDEA51346FE0F00EDD847 /* OBAVehicleArrivalTableViewCell.m */,
+				D6304CB0137113E800A52835 /* OBAAlarmTableViewCellFactory.h */,
+				D6304CB1137113E800A52835 /* OBAAlarmTableViewCellFactory.m */,
 			);
 			name = TableViewCells;
 			sourceTree = "<group>";
@@ -1914,6 +1942,8 @@
 				D65D425513426F4B00F940B1 /* OBATransitLegV2.m */,
 				D65D425713426F6F00F940B1 /* OBAStreetLegV2.h */,
 				D65D425813426F6F00F940B1 /* OBAStreetLegV2.m */,
+				D68DEC051370632D002EE5D2 /* OBACurrentVehicleEstimateV2.h */,
+				D68DEC061370632D002EE5D2 /* OBACurrentVehicleEstimateV2.m */,
 			);
 			path = V2;
 			sourceTree = "<group>";
@@ -2091,7 +2121,7 @@
 			);
 			name = OneBusAway;
 			productName = org.onebusaway.iphone2;
-			productReference = 1D6058910D05DD3D006BFB54 /* OneBusAway2.app */;
+			productReference = 1D6058910D05DD3D006BFB54 /* OBA Blue.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -2599,6 +2629,12 @@
 				D6EC893F134BCAC500A9B16C /* OBATargetTime.m in Sources */,
 				D6EC894A134BDD0D00A9B16C /* OBATripQuery.m in Sources */,
 				D6EC894D134C2FE100A9B16C /* OBAPickTripViewController.m in Sources */,
+				D67C7F94135B4F0F00781E3B /* OBACurrentTravelModeController.m in Sources */,
+				D67C7F97135B4FEE00781E3B /* OBACurrentTravelModeState.m in Sources */,
+				D68DEC071370632D002EE5D2 /* OBACurrentVehicleEstimateV2.m in Sources */,
+				D6304CAF1371125900A52835 /* OBAStartTripViewController.m in Sources */,
+				D6304CB2137113E800A52835 /* OBAAlarmTableViewCellFactory.m in Sources */,
+				D6304CB513711BFE00A52835 /* OBAAlarmState.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2664,7 +2700,7 @@
 					"-weak_framework",
 					MapKit,
 				);
-				PRODUCT_NAME = OneBusAway2;
+				PRODUCT_NAME = "OBA Blue";
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
@@ -2694,7 +2730,7 @@
 					"-weak_framework",
 					MapKit,
 				);
-				PRODUCT_NAME = OneBusAway2;
+				PRODUCT_NAME = "OBA Blue";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;
@@ -2761,7 +2797,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Brian Ferris";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Brian Ferris (2FY7X4V97G)";
 				COPY_PHASE_STRIP = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -2773,8 +2809,8 @@
 					"-weak_framework",
 					MapKit,
 				);
-				PRODUCT_NAME = OneBusAway2;
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "26BEE153-C523-42B0-85C5-03EDA22D15D0";
+				PRODUCT_NAME = "OBA Blue";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "6B2A2AA7-6413-413F-A249-D09F1497625F";
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -2816,7 +2852,7 @@
 					"-weak_framework",
 					MapKit,
 				);
-				PRODUCT_NAME = OneBusAway2;
+				PRODUCT_NAME = "OBA Blue";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "078D5A45-AF53-4D32-A394-4E2BA29D318F";
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;

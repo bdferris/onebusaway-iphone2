@@ -18,6 +18,7 @@
 
 
 static NSString * kBookmarksKey = @"bookmarks";
+static NSString * kRecentPlacesKey = @"recentPlaces";
 static NSString * kMostRecentStopsKey = @"mostRecentStops";
 static NSString * kStopPreferencesKey = @"stopPreferences";
 static NSString * kMostRecentLocationKey = @"mostRecentLocation";
@@ -57,6 +58,30 @@ static NSString * kVisitedSituationIdsKey = @"hideFutureLocationWarnings";
 	NSMutableData * data = [NSMutableData data];
 	[self encodeObject:source forKey:kBookmarksKey toData:data];
 	[user setObject:data forKey:kBookmarksKey];
+}
+
+- (NSArray*) readRecentPlaces {
+    NSUserDefaults * user = [NSUserDefaults standardUserDefaults];
+	NSData * data = [user dataForKey:kRecentPlacesKey];
+	NSArray * recentPlaces = nil;
+	@try {
+		recentPlaces = [self decodeObjectForKey:kRecentPlacesKey fromData:data];
+	}
+	@catch (NSException * e) {
+		
+	}
+	
+	if( ! recentPlaces )
+		recentPlaces = [[NSArray alloc] init];
+	
+	return recentPlaces;
+}
+
+- (void) writeRecentPlaces:(NSArray*)source {
+	NSUserDefaults * user = [NSUserDefaults standardUserDefaults];
+	NSMutableData * data = [NSMutableData data];
+	[self encodeObject:source forKey:kRecentPlacesKey toData:data];
+	[user setObject:data forKey:kRecentPlacesKey];    
 }
 
 - (NSArray*) readMostRecentStops {

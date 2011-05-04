@@ -38,6 +38,7 @@
     
     OBAModelDAO * modelDao = _appContext.modelDao;
     NSArray * bookmarks = modelDao.bookmarks;
+    NSArray * recentPlaces = modelDao.recentPlaces;
     
     [_delegates perform:@selector(modelDidStartLoad:) withObject:self];
     
@@ -46,6 +47,11 @@
         [_places addObject:currentLocation];
         
     for( OBAPlace * place in bookmarks ) {
+        if( [self isPlace:place matchForSearch:text] )
+            [_places addObject:place];
+    }
+    
+    for( OBAPlace * place in recentPlaces ) {
         if( [self isPlace:place matchForSearch:text] )
             [_places addObject:place];
     }

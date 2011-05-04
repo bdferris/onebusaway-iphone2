@@ -17,6 +17,7 @@
 #import "OBAApplicationContext.h"
 #import "OBANavigationTargetAware.h"
 #import "OBAPlace.h"
+#import "OBACurrentTravelModeController.h"
 
 
 @protocol OBABookmarksViewControllerDelegate <NSObject>
@@ -25,20 +26,32 @@
 
 @end
 
+typedef enum {
+    OBABookmarksViewControllerModeBookmarks,
+    OBABookmarksViewControllerModeRecent,
+    OBABookmarksViewControllerModeContacts
+} OBABookmarksViewControllerMode;
 
-@interface OBABookmarksViewController : UITableViewController {
-	OBAApplicationContext * _appContext;	
+
+@interface OBABookmarksViewController : UITableViewController <OBACurrentTravelModeDelegate> {
+	OBAApplicationContext * _appContext;
+	OBABookmarksViewControllerMode _mode;
+    NSArray * _currentLocations;
 	NSArray * _bookmarks;
+    NSArray * _recents;
     BOOL _includeCurrentLocation;
-	UIBarButtonItem * _customEditButtonItem;
+	UIBarButtonItem * _bookmarkEditButton;
+    UIBarButtonItem * _recentClearButton;
+    UISegmentedControl * _segmented;
 }
+
++ (void) showBookmarksViewControllerWithAppContext:(OBAApplicationContext*)appContext parent:(UINavigationController*)parent delegate:(id<OBABookmarksViewControllerDelegate>)delegate includeCurrentLocation:(BOOL)includeCurrentLocation;
 
 - (id) initWithApplicationContext:(OBAApplicationContext*)appContext;
 
 @property (nonatomic,retain) IBOutlet OBAApplicationContext * appContext;
-@property (nonatomic,retain) IBOutlet UIBarButtonItem * customEditButtonItem;
 @property (nonatomic,retain) IBOutlet id<OBABookmarksViewControllerDelegate> delegate;
 @property (nonatomic) BOOL includeCurrentLocation;
-- (IBAction) onEditButton:(id)sender;
+@property (nonatomic) OBABookmarksViewControllerMode mode;
 
 @end

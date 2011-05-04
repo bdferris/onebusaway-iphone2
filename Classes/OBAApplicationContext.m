@@ -72,6 +72,7 @@ static const NSUInteger kTagSettingsView = 3;
 @synthesize modelService = _modelService;
 
 @synthesize tripController = _tripController;
+@synthesize currentTravelModeController = _currentTravelModeController;
 
 @synthesize stopIconFactory = _stopIconFactory;
 
@@ -108,7 +109,12 @@ static const NSUInteger kTagSettingsView = 3;
         _tripController = [[OBATripController alloc] init];
         _tripController.locationManager = _locationManager;
         _tripController.modelService = _modelService;
-		
+		_tripController.modelDao = _modelDao;
+        
+        _currentTravelModeController = [[OBACurrentTravelModeController alloc] init];
+        _currentTravelModeController.locationManager = _locationManager;
+        _currentTravelModeController.modelService = _modelService;
+            
 		[self refreshSettings];
 	}
 	return self;
@@ -122,12 +128,13 @@ static const NSUInteger kTagSettingsView = 3;
 	[_locationManager release];
     
     [_tripController release];
+    [_currentTravelModeController release];
 	
 	[_stopIconFactory release];
 	
 	[_window release];
 	[_navController release];
-	
+    
 	[super dealloc];
 }
 
@@ -177,9 +184,24 @@ static const NSUInteger kTagSettingsView = 3;
 	[_window addSubview:rootView];
 	[_window makeKeyAndVisible];
 	
+    [_locationManager addDelegate:_currentTravelModeController];
+    
     [_locationManager startUpdatingLocation];
+    [_currentTravelModeController start];
     
 	[self restoreState];
+    
+    UIRemoteNotificationType type = (UIRemoteNotificationTypeAlert|UIRemoteNotificationTypeSound|UIRemoteNotificationTypeBadge);
+    [application registerForRemoteNotificationTypes:type];
+}
+
+- (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
+    NSLog(@"Registered!");
+    _modelService.deviceToken = deviceToken;
+}
+
+- (void)application:(UIApplication *)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error {
+    OBALogWarningWithError(error, @"error registering for remote notifications");
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
@@ -215,6 +237,14 @@ static const NSUInteger kTagSettingsView = 3;
 
 - (void)applicationWillTerminate:(UIApplication *)application {
 	[self applicationDidEnterBackground:application]; // call for iOS < 4.0 devices
+}
+
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
+    NSLog(@"Remote Notification!");
+}
+
+- (void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification {
+    NSLog(@"Local Notification!");
 }
 
 #pragma mark UITabBarControllerDelegate Methods

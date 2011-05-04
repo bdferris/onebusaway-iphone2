@@ -24,10 +24,13 @@
 @interface OBATripViewController : UIViewController <UITableViewDataSource,UITableViewDelegate, MKMapViewDelegate,OBATripControllerDelegate,OBABookmarksViewControllerDelegate> {
     OBATripStateTableViewCellFactory * _tripStateTableViewCellFactory;    
     OBAItineraryV2 * _currentItinerary;
+    NSDateFormatter * _timeFormatter;
+    NSTimer * _uiRefreshTimer;
 }
 
 @property (nonatomic,retain) IBOutlet OBAApplicationContext * appContext;
 @property (nonatomic,retain) OBATripController * tripController;
+@property (nonatomic,retain) OBALocationManager * locationManager;
 
 @property (nonatomic,retain) IBOutlet UITableView * tableView;
 @property (nonatomic,retain) IBOutlet MKMapView * mapView;

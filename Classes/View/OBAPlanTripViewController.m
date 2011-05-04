@@ -167,7 +167,7 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
     [endLabel release];
     [startLabel release];
     
-    self.hidesBottomBarWhenPushed = TRUE;  
+    self.hidesBottomBarWhenPushed = TRUE;
 }
 
 - (void)viewDidUnload {
@@ -184,21 +184,13 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
 }
 
 -(IBAction) onStartTextFieldBookmarkButton:(id)sender {
-    OBABookmarksViewController * vc = [[OBABookmarksViewController alloc] initWithApplicationContext:self.appContext];
-    vc.delegate = self;
-    vc.includeCurrentLocation = TRUE;
     _currentContext = OBAPlanTripViewControllerContextStartLabel;
-    [self.navigationController pushViewController:vc animated:TRUE];
-    [vc release];
+    [OBABookmarksViewController showBookmarksViewControllerWithAppContext:self.appContext parent:self.navigationController delegate:self includeCurrentLocation:TRUE];
 }
 
 -(IBAction) onEndTextFieldBookmarkButton:(id)sender {
-    OBABookmarksViewController * vc = [[OBABookmarksViewController alloc] initWithApplicationContext:self.appContext];
-    vc.delegate = self;
-    vc.includeCurrentLocation = TRUE;
     _currentContext = OBAPlanTripViewControllerContextEndLabel;
-    [self.navigationController pushViewController:vc animated:TRUE];
-    [vc release];
+    [OBABookmarksViewController showBookmarksViewControllerWithAppContext:self.appContext parent:self.navigationController delegate:self includeCurrentLocation:TRUE];
 }
 
 -(IBAction) onDateTypeChanged:(id)sender {

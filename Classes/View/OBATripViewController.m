@@ -28,6 +28,9 @@
 
 @interface OBATripViewController (Private)
 
+- (void) refreshUI;
+- (void) clearRefreshUITimer;
+
 - (NSArray*) annotationsForTripState:(OBATripState*)state;
 - (NSArray*) overlaysForItinerary:(OBAItineraryV2*)itinerary;
     
@@ -38,6 +41,8 @@
 
 @synthesize appContext;
 @synthesize tripController;
+@synthesize locationManager;
+
 @synthesize tableView;
 @synthesize mapView;
 @synthesize refreshButton;
@@ -48,8 +53,8 @@
 
 -(void) dealloc {
     
-    _tripStateTableViewCellFactory = [NSObject releaseOld:_tripStateTableViewCellFactory retainNew:nil];
-    _currentItinerary = [NSObject releaseOld:_currentItinerary retainNew:nil];
+    [_tripStateTableViewCellFactory release];
+    [_currentItinerary release];
     
 	self.appContext = nil;
     self.mapView = nil;
@@ -58,21 +63,33 @@
     self.leftButton = nil;
     self.currentLocationButton = nil;
     self.rightButton = nil;
+    
+    [self clearRefreshUITimer];
+    [_timeFormatter release];
+    
     [super dealloc];
 }
 
 - (void) viewDidLoad {
 	[super viewDidLoad];
+    
+    self.locationManager = self.appContext.locationManager;
+    
     self.refreshButton.enabled = FALSE;
     self.leftButton.enabled = FALSE;
-    self.currentLocationButton.enabled = FALSE;
     self.rightButton.enabled = FALSE;
 
     self.tripController = self.appContext.tripController;
-    self.tripController.delegate = self;
     
     _tripStateTableViewCellFactory = [[OBATripStateTableViewCellFactory alloc] initWithAppContext:self.appContext navigationController:self.navigationController tableView:self.tableView];
     _currentItinerary = nil;
+    
+    _timeFormatter = [[NSDateFormatter alloc] init];
+    [_timeFormatter setDateStyle:NSDateFormatterNoStyle];
+    [_timeFormatter setTimeStyle:NSDateFormatterShortStyle];
+    
+    self.mapView.showsUserLocation = TRUE;
+
 }
 
 - (void)viewDidUnload {
@@ -81,13 +98,20 @@
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
+    
+    self.tripController.delegate = self;
+    
     NSIndexPath * indexPath = [self.tableView indexPathForSelectedRow];
     if( indexPath )
         [self.tableView deselectRowAtIndexPath:indexPath animated:FALSE];
+
+    [self clearRefreshUITimer];
+    _uiRefreshTimer = [[NSTimer scheduledTimerWithTimeInterval:15 target:self selector:@selector(refreshUI) userInfo:nil repeats:TRUE] retain];
 }
 
-- (void)viewWillDisappear:(BOOL)animated {
+- (void)viewWillDisappear:(BOOL)animated {    
 	[super viewWillDisappear:animated];
+    self.tripController.delegate = nil;
 }
 
 
@@ -95,6 +119,7 @@
 #pragma mark OBATripViewController
 
 -(IBAction) onRefreshButton:(id)sender {
+    self.refreshButton.enabled = FALSE;
     [self.tripController refresh];
 }
 
@@ -109,7 +134,18 @@
 }
 
 -(IBAction) onCrossHairsButton:(id)sender {
-    [self.tripController moveToCurrentState];
+    if( [self.tripController hasCurrentState] ) {
+        [self.tripController moveToCurrentState];
+    }
+    else {
+        CLLocation * location = self.locationManager.currentLocation;
+        if( location ) {
+            double radius = location.horizontalAccuracy;
+            MKCoordinateRegion region = [OBASphericalGeometryLibrary createRegionWithCenter:location.coordinate latRadius:radius lonRadius:radius];
+            [self.mapView setRegion:region animated:TRUE];            
+        }
+    }
+        
 }
 
 -(IBAction) onRightButton:(id)sender {
@@ -117,10 +153,7 @@
 }
 
 -(IBAction) onBookmakrButton:(id)sender {
-    OBABookmarksViewController * vc = [[OBABookmarksViewController alloc] initWithApplicationContext:self.appContext];
-    vc.delegate = self;
-    [self.navigationController pushViewController:vc animated:TRUE];
-    [vc release];
+    [OBABookmarksViewController showBookmarksViewControllerWithAppContext:self.appContext parent:self.navigationController delegate:self includeCurrentLocation:FALSE];
 }
 
 -(IBAction) onSettingsButton:(id)sender {
@@ -218,6 +251,17 @@
 
 #pragma mark OBATripControllerDelegate
 
+-(void) refreshingItineraries {
+    self.refreshButton.enabled = FALSE;
+    self.navigationItem.title = @"Updating...";
+}
+
+-(void) refreshingItinerariesFailed:(NSError*)error {
+    self.refreshButton.enabled = TRUE;
+    self.navigationItem.title = @"Error updating...";
+    OBALogDebugWithError(error, @"Error updating...");
+}
+
 -(void) chooseFromItineraries:(NSArray*)itineraries {
     OBAPickTripViewController * vc = [[OBAPickTripViewController alloc] initWithAppContext:self.appContext];
     [self.navigationController popToRootViewController];
@@ -226,6 +270,13 @@
 }
 
 -(void) refreshTripState:(OBATripState*)state {
+    
+    self.refreshButton.enabled = TRUE;
+    
+    if ( self.tripController.lastUpdate ) {
+        NSString * t = [_timeFormatter stringFromDate:self.tripController.lastUpdate];
+        self.navigationItem.title = [NSString stringWithFormat:@"Updated: %@",t];
+    }
     
     // Make sure our view controller is visible
     [self.navigationController popToRootViewController];
@@ -286,6 +337,16 @@
 
 
 @implementation OBATripViewController (Private)
+
+- (void) refreshUI {
+    [self.tableView reloadData];
+}
+
+- (void) clearRefreshUITimer {
+    [_uiRefreshTimer invalidate];
+    [_uiRefreshTimer release];
+    _uiRefreshTimer = nil;
+}
                              
 - (NSArray*) annotationsForTripState:(OBATripState*)state {
     

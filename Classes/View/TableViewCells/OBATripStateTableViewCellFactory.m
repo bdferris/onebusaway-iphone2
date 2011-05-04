@@ -7,7 +7,6 @@
 //
 
 #import "OBATripStateTableViewCellFactory.h"
-#import "OBAPlanTripViewController.h"
 #import "OBATripSummaryTableViewCell.h"
 #import "OBAStartTripTableViewCell.h"
 #import "OBAWalkToLocationTableViewCell.h"
@@ -16,6 +15,9 @@
 #import "OBAVehicleArrivalTableViewCell.h"
 #import "OBAStopIconFactory.h"
 #import "OBAPresentation.h"
+
+#import "OBAPlanTripViewController.h"
+#import "OBAStartTripViewController.h"
 
 
 
@@ -42,6 +44,7 @@ typedef enum {
 
 - (CellType) getCellTypeForTripState:(OBATripState*)state indexPath:(NSIndexPath*)indexPath;
 
+- (UITableViewCell*) createCellForPlanYourTrip;
 - (UITableViewCell*) createCellForPlanYourTrip;
 
 - (UITableViewCell*) createCellForStartTrip:(OBATripState*)state;
@@ -161,6 +164,11 @@ typedef enum {
         case CellTypeTripSummary: {
             [_appContext.tripController showItineraries];
             break;
+        }
+        case CellTypeStartTime: {
+            OBAStartTripViewController * vc = [[OBAStartTripViewController alloc] initWithApplicationContext:_appContext tripState:state];
+            [_navigationController pushViewController:vc animated:TRUE];
+            [vc release];
         }
         default:
             break;
@@ -290,7 +298,7 @@ typedef enum {
         cell.statusLabel.text = @"Should've started your trip at:";
         cell.minutesLabel.hidden = TRUE;
     }
-    else if( -50 <= mins && mins < 1 ) {
+    else if( -50 <= mins && mins < -1 ) {
         cell.timeLabel.text = [NSString stringWithFormat:@"%d", mins];
         cell.statusLabel.text = @"Should've started your trip mins ago:";
         cell.minutesLabel.hidden = FALSE;

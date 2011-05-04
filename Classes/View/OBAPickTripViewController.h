@@ -1,8 +1,9 @@
 #import "OBAApplicationContext.h"
 #import "OBATripStateTableViewCellFactory.h"
+#import "OBATripController.h"
 
 
-@interface OBAPickTripViewController : UITableViewController {
+@interface OBAPickTripViewController : UITableViewController <OBATripControllerDelegate> {
     OBAApplicationContext * _appContext;
     OBATripStateTableViewCellFactory * _tripStateTableViewCellFactory;
 }

@@ -38,6 +38,7 @@ const static int kMaxEntriesInMostRecentList = 10;
 	if( self ) {
 		_preferencesDao = [[OBAModelDAOUserPreferencesImpl alloc] init];
 		_bookmarks = [[NSMutableArray alloc] initWithArray:[_preferencesDao readBookmarks]];
+        _recentPlaces = [[NSMutableArray alloc] initWithArray:[_preferencesDao readRecentPlaces]];
 		_mostRecentStops = [[NSMutableArray alloc] initWithArray:[_preferencesDao readMostRecentStops]];
 		_stopPreferences = [[NSMutableDictionary alloc] initWithDictionary:[_preferencesDao readStopPreferences]];
 		_mostRecentLocation = [[_preferencesDao readMostRecentLocation] retain];
@@ -48,6 +49,7 @@ const static int kMaxEntriesInMostRecentList = 10;
 
 - (void) dealloc {
 	[_bookmarks release];
+    [_recentPlaces release];
 	[_mostRecentStops release];
 	[_stopPreferences release];
 	[_mostRecentLocation release];
@@ -57,6 +59,10 @@ const static int kMaxEntriesInMostRecentList = 10;
 
 - (NSArray*) bookmarks {
 	return _bookmarks;
+}
+
+- (NSArray*) recentPlaces {
+    return _recentPlaces;
 }
 
 - (NSArray*) mostRecentStops {
@@ -132,6 +138,40 @@ const static int kMaxEntriesInMostRecentList = 10;
 	[_bookmarks removeObject:bookmark];
 	[_preferencesDao writeBookmarks:_bookmarks];
 }
+
+- (void) addRecentPlace:(OBAPlace*)place {
+
+    /**
+     * Skip the 'Current Location' place and Bookmarks
+     */
+    if( place.useCurrentLocation || place.isBookmark)
+        return;
+    
+    /**
+     * Copy the place
+     */
+    place = [OBAPlace placeWithPlace:place];
+    
+    /**
+     * Remove any existing places with the same name
+     */
+    NSMutableIndexSet * indices = [[NSMutableIndexSet alloc] init];
+    
+    for( NSUInteger index=0; index <[_recentPlaces count]; index++ ) {
+        OBAPlace * recent = [_recentPlaces objectAtIndex:index];
+        if( [recent.name isEqualToString:place.name] )
+            [indices addIndex:index];
+    }
+    [_recentPlaces removeObjectsAtIndexes:indices];
+    
+    [_recentPlaces insertObject:place atIndex:0];
+	[_preferencesDao writeRecentPlaces:_recentPlaces];
+}
+
+- (void) clearRecentPlaces {
+    [_recentPlaces removeAllObjects];
+	[_preferencesDao writeRecentPlaces:_recentPlaces];
+}  
 
 - (OBAStopPreferencesV2*) stopPreferencesForStopWithId:(NSString*)stopId {
 	OBAStopPreferencesV2 * prefs = [_stopPreferences objectForKey:stopId];
