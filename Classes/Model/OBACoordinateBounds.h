@@ -38,4 +38,6 @@
 - (void) addLocation:(CLLocation*)location;
 - (void) addLocations:(NSArray*)locations;
 
+- (void) expandByRatio:(double)ratio;
+
 @end

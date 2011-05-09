@@ -85,4 +85,15 @@
 	}
 }
 
+- (void) expandByRatio:(double)ratio {
+    if( _empty )
+        return;
+    double latDelta = (_maxLatitude - _minLatitude) * ratio / 2;
+    double lonDelta = (_maxLongitude - _minLongitude) * ratio / 2;
+    _maxLatitude += latDelta;
+    _minLatitude -= latDelta;
+    _maxLongitude += lonDelta;
+    _minLongitude -= lonDelta;
+}
+
 @end

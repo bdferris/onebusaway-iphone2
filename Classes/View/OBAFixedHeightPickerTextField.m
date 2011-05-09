@@ -12,7 +12,7 @@
 @implementation OBAFixedHeightPickerTextField
 
 - (void)updateHeight {
-    NSLog(@"Nope...");
+    
 }
 
 - (void)doneAction {

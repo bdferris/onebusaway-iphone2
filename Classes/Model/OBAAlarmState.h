@@ -11,6 +11,7 @@
 @property (nonatomic,retain) OBAArrivalAndDepartureInstanceRef * instanceRef;
 @property (nonatomic) BOOL onArrival;
 @property (nonatomic) NSInteger alarmTimeOffset;
+@property (nonatomic) NSInteger userAlarmTimeOffset;
 @property (nonatomic,retain) NSDictionary * notificationOptions;
 
 @end

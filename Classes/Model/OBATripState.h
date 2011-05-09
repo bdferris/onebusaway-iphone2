@@ -10,6 +10,7 @@
 @property (nonatomic,retain) OBAPlace * placeTo;
 @property (nonatomic,retain) OBAItineraryV2 * itinerary;
 
+@property (nonatomic) BOOL noResultsFound;
 @property (nonatomic) BOOL showTripSummary;
 @property (nonatomic,retain) NSDate * startTime;
 @property (nonatomic) BOOL isLateStartTime;

@@ -7,16 +7,18 @@
 
 @protocol OBATripControllerDelegate <NSObject>
 @optional
--(void) refreshTripState:(OBATripState*)tripState;
--(void) chooseFromItineraries:(NSArray*)itineraries;
 -(void) refreshingItineraries;
 -(void) refreshingItinerariesCompleted;
 -(void) refreshingItinerariesFailed:(NSError*)error;
+-(void) refreshTripState:(OBATripState*)tripState;
 @end
 
 
 @interface OBATripController : NSObject <OBAModelServiceDelegate> {
+    id<OBATripControllerDelegate> _delegate;
+    NSInteger _queryIndex;
     OBATripQuery * _query;
+    id<OBAModelServiceRequest> _queryRequest;
     NSArray * _itineraries;
     NSDate * _lastUpdate;
     OBAItineraryV2 * _currentItinerary;
@@ -33,9 +35,9 @@
 
 - (void) planTripWithQuery:(OBATripQuery*)query;
 - (void) selectItinerary:(OBAItineraryV2*)itinerary;
-- (void) showItineraries;
 - (void) refresh;
 
+@property (nonatomic,readonly) NSInteger queryIndex;
 @property (nonatomic,readonly) OBATripQuery * query;
 @property (nonatomic,readonly) NSDate * lastUpdate;
 @property (nonatomic,readonly) NSArray * itineraries;
@@ -52,5 +54,7 @@
 
 - (void) updateAlarm:(BOOL)enabled forTripState:(OBATripState*)tripState alarmTimeOffset:(NSInteger)alertTimeOffest;
 - (BOOL) isAlarmEnabledForTripState:(OBATripState*)tripState;
+- (NSInteger) getAlarmTimeOffsetForTripState:(OBATripState*)tripState;
+- (void) handleAlarm:(NSString*)alarmId;
 
 @end

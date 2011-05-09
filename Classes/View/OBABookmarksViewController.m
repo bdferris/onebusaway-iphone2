@@ -177,7 +177,7 @@
     
     if (_includeCurrentLocation) {
         OBACurrentTravelModeController * controller = _appContext.currentTravelModeController;
-        [controller addDelegate:self];
+        controller.delegate = self;
     }
     
 	[self.tableView reloadData];
@@ -187,7 +187,7 @@
     [super viewDidDisappear:animated];
     if (_includeCurrentLocation) {
         OBACurrentTravelModeController * controller = _appContext.currentTravelModeController;
-        [controller removeDelegate:self];
+        controller.delegate = nil;
     }
 }
      

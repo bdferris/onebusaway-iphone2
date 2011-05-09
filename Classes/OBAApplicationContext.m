@@ -187,7 +187,6 @@ static const NSUInteger kTagSettingsView = 3;
     [_locationManager addDelegate:_currentTravelModeController];
     
     [_locationManager startUpdatingLocation];
-    [_currentTravelModeController start];
     
 	[self restoreState];
     
@@ -240,7 +239,11 @@ static const NSUInteger kTagSettingsView = 3;
 }
 
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
-    NSLog(@"Remote Notification!");
+    NSLog(@"Remote Notification: %@",[userInfo description]);
+    NSString * alarmId = [userInfo objectForKey:@"alarmId"];
+    if( alarmId ) {
+        [_tripController handleAlarm:alarmId];
+    }
 }
 
 - (void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification {

@@ -11,20 +11,17 @@
 
 
 @interface OBACurrentTravelModeController : NSObject <OBALocationManagerDelegate,OBAModelServiceDelegate> {
+    id<OBACurrentTravelModeDelegate> _delegate;
     NSMutableArray * _delegates;
     NSTimer * _timer;
     NSMutableArray * _locations;
     NSArray * _currentModes;
+    OBACurrentTravelModeState * _streetState;
 }
 
 @property (nonatomic,retain) OBALocationManager * locationManager;
 @property (nonatomic,retain) OBAModelService * modelService;
-
-- (void) start;
-- (void) stop;
-
-- (void) addDelegate:(id<OBACurrentTravelModeDelegate>)delegate;
-- (void) removeDelegate:(id<OBACurrentTravelModeDelegate>)delegate;
+@property (nonatomic,retain) id<OBACurrentTravelModeDelegate> delegate;
 
 - (NSArray*) currentModes;
 

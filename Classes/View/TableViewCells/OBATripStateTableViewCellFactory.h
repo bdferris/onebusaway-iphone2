@@ -2,6 +2,20 @@
 #import "OBATripState.h"
 
 
+
+typedef enum {
+    OBATripStateCellTypeTripSummary,
+    OBATripStateCellTypeNoResultsFound,
+    OBATripStateCellTypeStartTime,
+    OBATripStateCellTypeWalkToStop,
+    OBATripStateCellTypeWalkToPlace,
+    OBATripStateCellTypeDeparture,
+    OBATripStateCellTypeRide,
+    OBATripStateCellTypeArrival,
+    OBATripStateCellTypeNone
+} OBATripStateCellType;
+
+
 @interface OBATripStateTableViewCellFactory : NSObject {
     OBAApplicationContext * _appContext;
     UINavigationController * _navigationController;
@@ -16,6 +30,10 @@
 - (UITableViewCell*) getCellForState:(OBATripState*)state indexPath:(NSIndexPath*)indexPath;
 - (void) didSelectRowForState:(OBATripState*)state indexPath:(NSIndexPath*)indexPath;
 
+- (UITableViewCell*) createCellForNoResultsFound;
 - (UITableViewCell*) createCellForTripSummary:(OBAItineraryV2*)itinerary;
+- (UITableViewCell*) createCellForStartTrip:(OBATripState*)state includeDetail:(BOOL)includeDetail;
+- (UITableViewCell*) createCellForVehicleDeparture:(OBATransitLegV2*)transitLeg includeDetail:(BOOL)includeDetail;
+- (UITableViewCell*) createCellForVehicleArrival:(OBATransitLegV2*)transitLeg includeDetail:(BOOL)includeDetail;
 
 @end

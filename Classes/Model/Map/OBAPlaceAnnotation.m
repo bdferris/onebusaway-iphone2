@@ -4,6 +4,7 @@
 @implementation OBAPlaceAnnotation
 
 @synthesize place = _place;
+@synthesize animatesDrop;
 
 - (id) initWithPlace:(OBAPlace*)place {
     self = [super init];

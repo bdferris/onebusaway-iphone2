@@ -19,13 +19,25 @@
 #import "OBABookmarksViewController.h"
 #import "OBATripStateTableViewCellFactory.h"
 #import "OBAItineraryV2.h"
+#import "OBAMapRegionManager.h"
 
 
 @interface OBATripViewController : UIViewController <UITableViewDataSource,UITableViewDelegate, MKMapViewDelegate,OBATripControllerDelegate,OBABookmarksViewControllerDelegate> {
+
+    OBAMapRegionManager * _mapRegionManager;
+    
     OBATripStateTableViewCellFactory * _tripStateTableViewCellFactory;    
+
+    NSInteger _currentQueryIndex;
     OBAItineraryV2 * _currentItinerary;
+
     NSDateFormatter * _timeFormatter;
     NSTimer * _uiRefreshTimer;
+    
+    NSArray * _tripStateAnnotations;
+    NSArray * _tripStateOverlays;
+    
+    NSMutableArray * _droppedPinAnnotations;
 }
 
 @property (nonatomic,retain) IBOutlet OBAApplicationContext * appContext;

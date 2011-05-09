@@ -27,6 +27,9 @@
 - (NSArray*) readRecentPlaces;
 - (void) writeRecentPlaces:(NSArray*)source;
 
+- (NSArray*) readDroppedPins;
+- (void) writeDroppedPins:(NSArray*)source;
+
 - (NSArray*) readMostRecentStops;
 - (void) writeMostRecentStops:(NSArray*)source;
 

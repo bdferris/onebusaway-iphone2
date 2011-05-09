@@ -8,6 +8,7 @@
 @synthesize itinerary;
 
 @synthesize showTripSummary;
+@synthesize noResultsFound;
 @synthesize startTime;
 @synthesize isLateStartTime;
 @synthesize walkToStop;

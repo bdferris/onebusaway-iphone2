@@ -8,5 +8,6 @@
 - (id) initWithPlace:(OBAPlace*)place;
 
 @property (nonatomic,readonly) OBAPlace  * place;
+@property (nonatomic) BOOL animatesDrop;
 
 @end

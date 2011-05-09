@@ -1,9 +1,12 @@
 #import "OBAPlaceAnnotationViewController.h"
 #import "OBAEditBookmarkViewController.h"
+#import "OBATripQuery.h"
+#import "OBAPlanTripViewController.h"
 
 
 typedef enum {
     OBAPlaceAnnotationViewControllerSectionTitle,
+    OBAPlaceAnnotationViewControllerSectionDirections,
     OBAPlaceAnnotationViewControllerSectionActions,
     OBAPlaceAnnotationViewControllerSectionNone
 } OBAPlaceAnnotationViewControllerSection;
@@ -13,7 +16,11 @@ typedef enum {
 
 - (OBAPlaceAnnotationViewControllerSection) sectionForIndex:(NSInteger)sectionIndex;
 - (UITableViewCell *) titleCellForRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView;
+- (UITableViewCell *) directionsCellForRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView;
 - (UITableViewCell *) actionCellForRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView;
+
+- (void) didSelectDirectionsRowAtIndexPath:(NSIndexPath *)indexPath;
+- (void) didSelectActionsRowAtIndexPath:(NSIndexPath *)indexPath;
 
 @end
 
@@ -39,66 +46,17 @@ typedef enum {
     [super dealloc];
 }
 
-- (void)didReceiveMemoryWarning
-{
-    // Releases the view if it doesn't have a superview.
-    [super didReceiveMemoryWarning];
-    
-    // Release any cached data, images, etc that aren't in use.
-}
-
-#pragma mark - View lifecycle
-
-- (void)viewDidLoad
-{
-    [super viewDidLoad];
-
-    // Uncomment the following line to preserve selection between presentations.
-    // self.clearsSelectionOnViewWillAppear = NO;
- 
-    // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-    // self.navigationItem.rightBarButtonItem = self.editButtonItem;
-}
-
-- (void)viewDidUnload
-{
-    [super viewDidUnload];
-    // Release any retained subviews of the main view.
-    // e.g. self.myOutlet = nil;
-}
-
-- (void)viewWillAppear:(BOOL)animated
-{
-    [super viewWillAppear:animated];
-}
-
-- (void)viewDidAppear:(BOOL)animated
-{
-    [super viewDidAppear:animated];
-}
-
-- (void)viewWillDisappear:(BOOL)animated
-{
-    [super viewWillDisappear:animated];
-}
-
-- (void)viewDidDisappear:(BOOL)animated
-{
-    [super viewDidDisappear:animated];
-}
-
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    // Return YES for supported orientations
-    return (interfaceOrientation == UIInterfaceOrientationPortrait);
-}
-
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    // Return the number of sections.
-    return 2;
+    NSInteger c = 2; // Title + Directions
+    
+    if (! _place.isBookmark) {
+        c++;
+    }
+    
+    return c;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
@@ -107,8 +65,15 @@ typedef enum {
     switch (sectionType) {
         case OBAPlaceAnnotationViewControllerSectionTitle:
             return 1;
-        case OBAPlaceAnnotationViewControllerSectionActions:
-            return 1;
+        case OBAPlaceAnnotationViewControllerSectionDirections:
+            return 2;
+        case OBAPlaceAnnotationViewControllerSectionActions: {
+            NSInteger c = 1;
+            if (_place.isDroppedPin) {
+                c++;
+            }
+            return c;
+        }
         default:
             return 0;
     }
@@ -120,6 +85,8 @@ typedef enum {
     switch (sectionType) {
         case OBAPlaceAnnotationViewControllerSectionTitle:
             return [self titleCellForRowAtIndexPath:indexPath tableView:tableView];
+        case OBAPlaceAnnotationViewControllerSectionDirections:
+            return [self directionsCellForRowAtIndexPath:indexPath tableView:tableView];
         case OBAPlaceAnnotationViewControllerSectionActions:
             return [self actionCellForRowAtIndexPath:indexPath tableView:tableView];
         default:
@@ -133,20 +100,15 @@ typedef enum {
 {
     OBAPlaceAnnotationViewControllerSection sectionType = [self sectionForIndex:indexPath.section];
     switch (sectionType) {
-        case OBAPlaceAnnotationViewControllerSectionActions: {
-            if( indexPath.row == 0 ) {
-                OBAPlace * place = [OBAPlace placeWithPlace:_place];
-                OBAEditBookmarkViewController * vc = [[OBAEditBookmarkViewController alloc] initWithApplicationContext:_appContext bookmark:place editType:OBABookmarkEditNew];
-                [self.navigationController pushViewController:vc animated:TRUE];
-                [vc release];
-            }
+        case OBAPlaceAnnotationViewControllerSectionDirections:
+            [self didSelectDirectionsRowAtIndexPath:indexPath];
             break;
-        }
+        case OBAPlaceAnnotationViewControllerSectionActions:
+            [self didSelectActionsRowAtIndexPath:indexPath];
+            break;
         default:
             break;
     }
-
-    
 }
 
 @end
@@ -159,6 +121,8 @@ typedef enum {
         case 0:
             return OBAPlaceAnnotationViewControllerSectionTitle;
         case 1:
+            return OBAPlaceAnnotationViewControllerSectionDirections;            
+        case 2:
             return OBAPlaceAnnotationViewControllerSectionActions;
     }
     return OBAPlaceAnnotationViewControllerSectionNone;
@@ -170,12 +134,79 @@ typedef enum {
     return cell;
 }
 
-- (UITableViewCell *) actionCellForRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView {
-    UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView cellId:@"ActionCell"];    
-    cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-    cell.textLabel.text = @"Add Bookmark";
+- (UITableViewCell *) directionsCellForRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView {
+    
+    UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView cellId:@"DirectionsCell"];
+    if (indexPath.row == 0) {
+        cell.textLabel.text = @"Directions from";
+    }
+    else {
+        cell.textLabel.text = @"Directions to";
+    }
+    
+    cell.accessoryType = UITableViewCellAccessoryNone;
+    cell.selectionStyle = UITableViewCellSelectionStyleBlue;
+    cell.textLabel.textAlignment = UITextAlignmentCenter;
+    cell.textLabel.textColor = [UIColor colorWithRed:0.22 green:0.33 blue:0.53 alpha:1.0];
+    
     return cell;
 }
+
+- (UITableViewCell *) actionCellForRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView {
+    
+    UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView cellId:@"ActionCell"];    
+
+    if (indexPath.row == 0) {
+        cell.textLabel.text = @"Add Bookmark";
+    }
+    else if (indexPath.row == 1) {
+        cell.textLabel.text = @"Delete Pin";
+    }
+
+    cell.accessoryType = UITableViewCellAccessoryNone;
+    cell.selectionStyle = UITableViewCellSelectionStyleBlue;
+    cell.textLabel.textAlignment = UITextAlignmentCenter;
+    cell.textLabel.textColor = [UIColor colorWithRed:0.22 green:0.33 blue:0.53 alpha:1.0];
+
+    return cell;
+}
+
+- (void) didSelectDirectionsRowAtIndexPath:(NSIndexPath *)indexPath {
+    OBAPlace * currentLocation = [OBAPlace placeWithCurrentLocation];
+    switch (indexPath.row) {
+        case 0: {
+            OBATripQuery * query = [[OBATripQuery alloc] initWithPlaceFrom:_place placeTo:currentLocation time:[OBATargetTime timeNow]];
+            OBAPlanTripViewController * vc = [OBAPlanTripViewController viewControllerWithApplicationContext:_appContext];
+            [vc setTripQuery:query];
+            [self.navigationController pushViewController:vc animated:TRUE];
+            [query release];
+            break;
+        }
+        case 1: {
+            OBATripQuery * query = [[OBATripQuery alloc] initWithPlaceFrom:currentLocation placeTo:_place time:[OBATargetTime timeNow]];
+            OBAPlanTripViewController * vc = [OBAPlanTripViewController viewControllerWithApplicationContext:_appContext];
+            [vc setTripQuery:query];
+            [self.navigationController pushViewController:vc animated:TRUE];
+            [query release];
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+- (void) didSelectActionsRowAtIndexPath:(NSIndexPath *)indexPath {
+    if( indexPath.row == 0 ) {
+        OBAPlace * place = [OBAPlace placeWithPlace:_place];
+        OBAEditBookmarkViewController * vc = [[OBAEditBookmarkViewController alloc] initWithApplicationContext:_appContext bookmark:place editType:OBABookmarkEditNew];
+        [self.navigationController pushViewController:vc animated:TRUE];
+        [vc release];
+    }
+    else if (indexPath.row == 1) {
+        [_appContext.modelDao removeDroppedPin:_place];
+        [self.navigationController popToRootViewControllerAnimated:TRUE];
+    }
+} 
 
 @end
 

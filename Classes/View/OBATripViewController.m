@@ -28,6 +28,8 @@
 
 @interface OBATripViewController (Private)
 
+- (void) showNoTripsFoundWarning;
+
 - (void) refreshUI;
 - (void) clearRefreshUITimer;
 
@@ -53,8 +55,17 @@
 
 -(void) dealloc {
     
+    [self clearRefreshUITimer];
+
+    [_mapRegionManager release];
     [_tripStateTableViewCellFactory release];
+
     [_currentItinerary release];
+    
+    [_timeFormatter release];
+    [_tripStateOverlays release];
+    [_tripStateAnnotations release];
+    [_droppedPinAnnotations release];
     
 	self.appContext = nil;
     self.mapView = nil;
@@ -63,9 +74,6 @@
     self.leftButton = nil;
     self.currentLocationButton = nil;
     self.rightButton = nil;
-    
-    [self clearRefreshUITimer];
-    [_timeFormatter release];
     
     [super dealloc];
 }
@@ -81,7 +89,12 @@
 
     self.tripController = self.appContext.tripController;
     
+    _mapRegionManager = [[OBAMapRegionManager alloc] initWithMapView:self.mapView];
+    _mapRegionManager.lastRegionChangeWasProgramatic = TRUE;
+    
     _tripStateTableViewCellFactory = [[OBATripStateTableViewCellFactory alloc] initWithAppContext:self.appContext navigationController:self.navigationController tableView:self.tableView];
+    
+    _currentQueryIndex = self.tripController.queryIndex - 1;
     _currentItinerary = nil;
     
     _timeFormatter = [[NSDateFormatter alloc] init];
@@ -90,6 +103,16 @@
     
     self.mapView.showsUserLocation = TRUE;
 
+    
+    UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc]
+                                                      initWithTarget:self 
+                                                      action:@selector(handleMapLongPressGesture:)];
+    longPressGesture.minimumPressDuration = 1.0;
+    
+    [self.mapView addGestureRecognizer:longPressGesture];
+    [longPressGesture release];
+    
+    _droppedPinAnnotations = [[NSMutableArray alloc] init];
 }
 
 - (void)viewDidUnload {
@@ -107,11 +130,26 @@
 
     [self clearRefreshUITimer];
     _uiRefreshTimer = [[NSTimer scheduledTimerWithTimeInterval:15 target:self selector:@selector(refreshUI) userInfo:nil repeats:TRUE] retain];
+    
+    OBAModelDAO * modelDao = self.appContext.modelDao;
+    for( OBAPlace * place in modelDao.droppedPins ) {
+        OBAPlaceAnnotation * annotation = [[OBAPlaceAnnotation alloc] initWithPlace:place];
+        [_droppedPinAnnotations addObject:annotation];        
+    }
+    [self.mapView addAnnotations:_droppedPinAnnotations];
+     
+    [modelDao addObserver:self forKeyPath:@"droppedPins" options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld context:nil];
 }
 
 - (void)viewWillDisappear:(BOOL)animated {    
 	[super viewWillDisappear:animated];
     self.tripController.delegate = nil;
+    
+    OBAModelDAO * modelDao = self.appContext.modelDao;
+    [modelDao removeObserver:self forKeyPath:@"droppedPins"];
+    
+    [self.mapView removeAnnotations:_droppedPinAnnotations];
+    [_droppedPinAnnotations removeAllObjects];
 }
 
 
@@ -130,10 +168,14 @@
 }
 
 -(IBAction) onLeftButton:(id)sender {
+    _mapRegionManager.lastRegionChangeWasProgramatic = TRUE;
     [self.tripController moveToPrevState];
 }
 
 -(IBAction) onCrossHairsButton:(id)sender {
+    
+    _mapRegionManager.lastRegionChangeWasProgramatic = TRUE;
+    
     if( [self.tripController hasCurrentState] ) {
         [self.tripController moveToCurrentState];
     }
@@ -142,13 +184,14 @@
         if( location ) {
             double radius = location.horizontalAccuracy;
             MKCoordinateRegion region = [OBASphericalGeometryLibrary createRegionWithCenter:location.coordinate latRadius:radius lonRadius:radius];
-            [self.mapView setRegion:region animated:TRUE];            
+            [_mapRegionManager setRegion:region];
         }
     }
         
 }
 
 -(IBAction) onRightButton:(id)sender {
+    _mapRegionManager.lastRegionChangeWasProgramatic = TRUE;
     [self.tripController moveToNextState];
 }
 
@@ -160,6 +203,21 @@
     OBAMoreViewController * vc = [[OBAMoreViewController alloc] initWithAppContext:self.appContext];
     [self.navigationController pushViewController:vc animated:TRUE];
     [vc release];
+}
+
+-(IBAction) handleMapLongPressGesture:(UILongPressGestureRecognizer*)sender {
+    if( sender.state != UIGestureRecognizerStateBegan )
+        return;
+
+    CGPoint touchPoint = [sender locationInView:self.mapView];   
+    CLLocationCoordinate2D c = [self.mapView convertPoint:touchPoint toCoordinateFromView:self.mapView];
+
+    CLLocation * location = [[CLLocation alloc] initWithLatitude:c.latitude longitude:c.longitude];
+    
+    OBAModelDAO * modelDao = self.appContext.modelDao;
+    [modelDao addDroppedPin:location];
+    
+    [location release];
 }
 
 
@@ -183,8 +241,20 @@
 
 #pragma mark MKMapViewDelegate Methods
 
+- (void)mapView:(MKMapView *)mv regionWillChangeAnimated:(BOOL)animated {
+    [_mapRegionManager mapView:mv regionWillChangeAnimated:animated];
+}
+
+- (void)mapView:(MKMapView *)mv regionDidChangeAnimated:(BOOL)animated {
+    [_mapRegionManager mapView:mv regionDidChangeAnimated:animated];
+}
+
 - (MKAnnotationView *)mapView:(MKMapView *)mv viewForAnnotation:(id<MKAnnotation>)annotation {    
 	if( [annotation isKindOfClass:[OBAPlaceAnnotation class]] ) {
+        
+        OBAPlaceAnnotation * placeAnnotation = annotation;
+        OBAPlace * place = placeAnnotation.place;
+        
 		MKPinAnnotationView * view = (MKPinAnnotationView*)[mv dequeueReusableAnnotationViewWithIdentifier:@"OBAPlaceAnnotation"];
 		if( view == nil ) {
 			view = [[[MKPinAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:@"OBAPlaceAnnotation"] autorelease];
@@ -192,6 +262,12 @@
 		view.canShowCallout = TRUE;
 		view.rightCalloutAccessoryView = [UIButton buttonWithType:UIButtonTypeDetailDisclosure];
         view.pinColor = MKPinAnnotationColorGreen;
+        view.animatesDrop = placeAnnotation.animatesDrop;
+        
+        if (place.isDroppedPin) {
+            view.pinColor = MKPinAnnotationColorPurple;
+        }
+            
 		return view;                                     
     }
     else if( [annotation isKindOfClass:[OBAStopV2 class]] ) {
@@ -256,6 +332,24 @@
     self.navigationItem.title = @"Updating...";
 }
 
+-(void) refreshingItinerariesCompleted {
+    
+    self.refreshButton.enabled = TRUE;
+    
+    if ( self.tripController.lastUpdate ) {
+        NSString * t = [_timeFormatter stringFromDate:self.tripController.lastUpdate];
+        self.navigationItem.title = [NSString stringWithFormat:@"Updated: %@",t];
+    }
+
+    if ([self.tripController.itineraries count] == 0 )
+        [self showNoTripsFoundWarning];
+    
+    if (_currentQueryIndex != self.tripController.queryIndex) {
+        _currentQueryIndex = self.tripController.queryIndex;
+        _mapRegionManager.lastRegionChangeWasProgramatic = TRUE;
+    }
+}
+
 -(void) refreshingItinerariesFailed:(NSError*)error {
     self.refreshButton.enabled = TRUE;
     self.navigationItem.title = @"Error updating...";
@@ -271,13 +365,11 @@
 
 -(void) refreshTripState:(OBATripState*)state {
     
-    self.refreshButton.enabled = TRUE;
-    
     if ( self.tripController.lastUpdate ) {
         NSString * t = [_timeFormatter stringFromDate:self.tripController.lastUpdate];
         self.navigationItem.title = [NSString stringWithFormat:@"Updated: %@",t];
     }
-    
+
     // Make sure our view controller is visible
     [self.navigationController popToRootViewController];
     
@@ -291,6 +383,9 @@
     double maxY = CGRectGetMaxY(mapFrame);
     mapFrame.origin.y = CGRectGetMaxY(tableFrame) + 1;
     mapFrame.size.height = maxY - mapFrame.origin.y;
+ 
+    // We record this here, since the animated map frame resizing will wipe out the value
+    BOOL lastRegionChangeWasProgramatic  = _mapRegionManager.lastRegionChangeWasProgramatic;
 
     [UIView animateWithDuration:0.25 animations:^{
         self.tableView.frame = tableFrame;
@@ -307,18 +402,26 @@
     self.rightButton.enabled = tc.hasNextState;
     
     // We only need to update overlays and annotations if the itinerary has changed
-    if( _currentItinerary != state.itinerary ) {
+    if( _currentItinerary != state.itinerary || state.itinerary == nil) {
         NSArray * annotations = [self annotationsForTripState:state];
-        NSArray* overlays = [self overlaysForItinerary:state.itinerary];        
-        [mv removeOverlays:mv.overlays];
-        [mv removeAnnotations:mv.annotations];
-        [mv addOverlays:overlays];
-        [mv addAnnotations:annotations];
+        NSArray* overlays = [self overlaysForItinerary:state.itinerary];
+        
+        if( _tripStateOverlays )
+            [mv removeOverlays:_tripStateOverlays];
+        _tripStateOverlays = [NSObject releaseOld:_tripStateOverlays retainNew:overlays];
+        [mv addOverlays:_tripStateOverlays];
+        
+        if( _tripStateAnnotations )
+            [mv removeAnnotations:_tripStateAnnotations];
+        _tripStateAnnotations = [NSObject releaseOld:_tripStateAnnotations retainNew:annotations];        
+        [mv addAnnotations:_tripStateAnnotations];
     }
     
     _currentItinerary = [NSObject releaseOld:_currentItinerary retainNew:state.itinerary];
     
-    [mv setRegion:state.region animated:TRUE];
+    if (lastRegionChangeWasProgramatic) {
+        [_mapRegionManager setRegion:state.region];
+    }
 }
 
 #pragma mark OBABookmarkViewControllerDelegate
@@ -329,6 +432,32 @@
     query.automaticallyPickBestItinerary = TRUE;
     [self.tripController planTripWithQuery:query];
     [query release];
+}
+
+#pragma mark Key-Value Observing
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
+    NSLog(@"Hey!");
+    NSNumber * kind = [change objectForKey:NSKeyValueChangeKindKey];
+    switch ([kind intValue]) {
+        case NSKeyValueChangeInsertion: {
+            NSArray * newDroppedPins = [change objectForKey:NSKeyValueChangeNewKey];
+            for (OBAPlace * place in newDroppedPins) {
+                OBAPlaceAnnotation * annotation = [[OBAPlaceAnnotation alloc] initWithPlace:place];
+                annotation.animatesDrop = TRUE;
+                [self.mapView addAnnotation:annotation];
+                [annotation release];
+            }
+            break;
+        }
+        case NSKeyValueChangeRemoval: {
+            NSArray * newDroppedPins = [change objectForKey:NSKeyValueChangeOldKey];
+            NSLog(@"What?");
+            break;
+        }            
+        default:
+            break;
+    }
 }
 
 @end
@@ -352,28 +481,36 @@
     
     NSMutableArray * annotations = [NSMutableArray array];
     
-    OBAPlaceAnnotation * placeFromAnnotation = [[OBAPlaceAnnotation alloc] initWithPlace:state.placeFrom];
-    OBAPlaceAnnotation * placeToAnnotation = [[OBAPlaceAnnotation alloc] initWithPlace:state.placeTo];
-    [annotations addObject:placeFromAnnotation];
-    [annotations addObject:placeToAnnotation];
-    [placeFromAnnotation release];
-    [placeToAnnotation release];
+    if( ! state.placeFrom.isDroppedPin ) {
+        OBAPlaceAnnotation * placeFromAnnotation = [[OBAPlaceAnnotation alloc] initWithPlace:state.placeFrom];
+        [annotations addObject:placeFromAnnotation];
+        [placeFromAnnotation release];
+    }
+    
+    if( ! state.placeTo.isDroppedPin ) {
+        OBAPlaceAnnotation * placeToAnnotation = [[OBAPlaceAnnotation alloc] initWithPlace:state.placeTo];
+        [annotations addObject:placeToAnnotation];
+        [placeToAnnotation release];
+    }
     
     OBAItineraryV2 * itinerary = state.itinerary;
-    NSMutableSet * stopIds = [NSMutableSet set];
     
-    for( OBALegV2 * leg in itinerary.legs ) {
-        if( leg.transitLeg ) {
-            OBATransitLegV2 * transitLeg = leg.transitLeg;
-            OBAStopV2 * fromStop = transitLeg.fromStop;
-            OBAStopV2 * toStop = transitLeg.toStop;
-            if( fromStop && ! [stopIds containsObject:fromStop.stopId]) {
-                [annotations addObject:fromStop];
-                [stopIds addObject:fromStop.stopId];
-            }
-            if( toStop && ! [stopIds containsObject:toStop.stopId] ) {
-                [annotations addObject:toStop];
-                [stopIds addObject:toStop.stopId];
+    if( itinerary ) {
+        NSMutableSet * stopIds = [NSMutableSet set];
+        
+        for( OBALegV2 * leg in itinerary.legs ) {
+            if( leg.transitLeg ) {
+                OBATransitLegV2 * transitLeg = leg.transitLeg;
+                OBAStopV2 * fromStop = transitLeg.fromStop;
+                OBAStopV2 * toStop = transitLeg.toStop;
+                if( fromStop && ! [stopIds containsObject:fromStop.stopId]) {
+                    [annotations addObject:fromStop];
+                    [stopIds addObject:fromStop.stopId];
+                }
+                if( toStop && ! [stopIds containsObject:toStop.stopId] ) {
+                    [annotations addObject:toStop];
+                    [stopIds addObject:toStop.stopId];
+                }
             }
         }
     }
@@ -411,6 +548,16 @@
     }
     
     return list;
+}
+
+- (void) showNoTripsFoundWarning {
+    UIAlertView * view = [[UIAlertView alloc] init];
+    view.title = @"No Trips Found";
+    view.message = @"We could not find any trips for your search request.";
+    [view addButtonWithTitle:@"Dismiss"];
+    view.cancelButtonIndex = 0;
+    [view show];
+    [view release];
 }
 
 @end

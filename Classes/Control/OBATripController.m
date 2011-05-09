@@ -9,6 +9,8 @@
 
 
 static const NSString * kCancelAlarm = @"cancelAlarm";
+static const NSInteger kRefreshInterval = 30;
+static const double kRegionExpansionRatio = 0.1;
 
 @interface OBAItineraryMapping : NSObject {
 
@@ -38,12 +40,15 @@ static const NSString * kCancelAlarm = @"cancelAlarm";
 
 @interface OBATripController (Private)
 
+- (void) clearQueryRequest;
+
 - (void) clearRefreshTimer;
 - (void) setRefreshTimer;
 
 - (void) refreshLocationForPlace:(OBAPlace*)place;
 - (void) refreshTripState;
 
+- (void) clearSelectedItinerary;
 - (void) selectItinerary:(OBAItineraryV2*)itinerary matchPreviousItinerary:(BOOL)matchPreviousItinerary;
 - (NSInteger) matchBestIndexForTripState:(OBATripState*)state;
 - (NSInteger) computeMatchScoreForTripStateA:(OBATripState*)stateA tripStateB:(OBATripState*)stateB;
@@ -61,6 +66,7 @@ static const NSString * kCancelAlarm = @"cancelAlarm";
 
 - (void)alarmRequestDidFinishWithAlarm:(OBAAlarmState*)alarmState alarmId:(NSString*)alarmId;
 
+- (MKCoordinateRegion) computeRegionForQuery;
 - (MKCoordinateRegion) computeRegionForItinerary;
 - (MKCoordinateRegion) computeRegionForLeg:(OBALegV2*)leg;
 - (MKCoordinateRegion) computeRegionForStartOfLeg:(OBALegV2*)leg;
@@ -75,8 +81,8 @@ static const NSString * kCancelAlarm = @"cancelAlarm";
 @synthesize locationManager;
 @synthesize modelService;
 @synthesize modelDao;
-@synthesize delegate;
 
+@synthesize queryIndex = _queryIndex;
 @synthesize query = _query;
 @synthesize lastUpdate = _lastUpdate;
 @synthesize itineraries = _itineraries;
@@ -88,11 +94,14 @@ static const NSString * kCancelAlarm = @"cancelAlarm";
         _currentStates = [[NSMutableArray alloc] init];
         _itineraries = [[NSArray alloc] init];
         _currentAlarms = [[NSMutableArray alloc] init];
+        _queryIndex = -1;
     }
     return self;
 }
 
 - (void) dealloc {
+    [self clearQueryRequest];
+    [self clearRefreshTimer];
     [_currentStates release];
     [_itineraries release];
     [_currentAlarms release];
@@ -100,35 +109,66 @@ static const NSString * kCancelAlarm = @"cancelAlarm";
     [super dealloc];
 }
 
+- (id<OBATripControllerDelegate>) delegate {
+    return _delegate;
+}
+
+- (void) setDelegate:(id<OBATripControllerDelegate>)delegate {
+    
+    _delegate = [NSObject releaseOld:_delegate retainNew:delegate];
+
+    if( _delegate ) {
+        // We have an active delegate, so start refreshing as appropriate
+        if (_currentItinerary) {
+            NSTimeInterval interval = [_lastUpdate timeIntervalSinceNow];
+
+            // Only kick off a direct refresh if it's been a while since our last refresh            
+            if( -interval >= kRefreshInterval ) {
+                [self refresh];
+            }
+            else {
+                [self setRefreshTimer];
+            }
+        }
+            
+    }
+    else {
+        /**
+         * We don't refresh when no delegate is listening
+         */
+        [self clearRefreshTimer];
+    }
+
+}
+
 - (void) planTripWithQuery:(OBATripQuery*)query {
     
     [self clearRefreshTimer];
+    _lastUpdate = [NSObject releaseOld:_lastUpdate retainNew:nil];
 
     [self.modelDao addRecentPlace:query.placeFrom];
     [self.modelDao addRecentPlace:query.placeTo];
+    
+    _queryIndex++;
     
     _query = [NSObject releaseOld:_query retainNew:query];
     _itineraries = [NSObject releaseOld:_itineraries retainNew:nil];
     _currentItinerary = [NSObject releaseOld:_currentItinerary retainNew:nil];
     [_currentStates removeAllObjects];
     _currentStateIndex = -1;
-    [self refresh];
     [self cancelAllAlarms];
+    [self refresh];
 }
 
 - (void) selectItinerary:(OBAItineraryV2*)itinerary {
     [self selectItinerary:itinerary matchPreviousItinerary:FALSE];
 }
 
-- (void) showItineraries {
-    if ([self.delegate respondsToSelector:@selector(chooseFromItineraries:)]) {
-        [self.delegate chooseFromItineraries:_itineraries];
-    }
-}
-
 - (void) refresh {
     
+    
     [self clearRefreshTimer];
+    [self clearQueryRequest];
     
     if( ! _query )
         return;
@@ -171,7 +211,7 @@ static const NSString * kCancelAlarm = @"cancelAlarm";
 }
 
 - (BOOL) hasCurrentState {
-    return [_currentStates count] > 1;
+    return [_currentStates count] > 0;
 }
 
 - (BOOL) hasNextState {
@@ -193,16 +233,20 @@ static const NSString * kCancelAlarm = @"cancelAlarm";
 }
 
 - (void) moveToCurrentState {
-    if( [_currentStates count] > 1) {
+    NSUInteger c = [_currentStates count];
+    if (c == 0)
+        return;
+    _currentStateIndex = 0;
+    if( c > 1) {
         _currentStateIndex = 1;
-        [self refreshTripState];
     }
+    [self refreshTripState];
 }
 
 - (void) updateAlarm:(BOOL)enabled forTripState:(OBATripState*)tripState alarmTimeOffset:(NSInteger)alarmTimeOffset {
     if( enabled ) {
         OBAAlarmState * alarmState = [self getAlarmStateForTripState:tripState create:TRUE];
-        alarmState.alarmTimeOffset = alarmTimeOffset;
+        alarmState.userAlarmTimeOffset = alarmTimeOffset;
         [self registerAlarm:alarmState];
     }
     else {
@@ -215,6 +259,25 @@ static const NSString * kCancelAlarm = @"cancelAlarm";
 - (BOOL) isAlarmEnabledForTripState:(OBATripState*)tripState {
     OBAAlarmState * alarmState = [self getAlarmStateForTripState:tripState create:FALSE];
     return alarmState != nil;
+}
+
+- (NSInteger) getAlarmTimeOffsetForTripState:(OBATripState*)tripState {
+    OBAAlarmState * alarmState = [self getAlarmStateForTripState:tripState create:FALSE];
+    if( alarmState )
+        return alarmState.userAlarmTimeOffset;
+    else
+        return 60;
+}
+
+- (void) handleAlarm:(NSString*)alarmId {
+    NSMutableIndexSet * indexSet = [NSMutableIndexSet indexSet];
+    NSUInteger index = 0;
+    for( OBAAlarmState * as in _currentAlarms ) {
+        if( [alarmId isEqualToString:as.alarmId] )
+            [indexSet addIndex:index];
+        index++;
+    }
+    [_currentAlarms removeObjectsAtIndexes:indexSet];
 }
 
 #pragma mark OBAModelServiceDelegate
@@ -230,15 +293,15 @@ static const NSString * kCancelAlarm = @"cancelAlarm";
         return;
     }
     
-    if ([self.delegate respondsToSelector:@selector(refreshingItinerariesCompleted)]) {
-        [self.delegate refreshingItinerariesCompleted];
-    }
-
     OBAEntryWithReferencesV2 * entry = obj;
     OBAItinerariesV2 * itineraries = entry.entry;
     
     _itineraries = [NSObject releaseOld:_itineraries retainNew:itineraries.itineraries];
     _lastUpdate = [NSObject releaseOld:_lastUpdate retainNew:[NSDate date]];
+    
+    if ([self.delegate respondsToSelector:@selector(refreshingItinerariesCompleted)]) {
+        [self.delegate refreshingItinerariesCompleted];
+    }
     
     for (OBAItineraryV2 * itinerary in _itineraries ) {
         if( itinerary.selected ) { 
@@ -248,15 +311,13 @@ static const NSString * kCancelAlarm = @"cancelAlarm";
         }
     }
     
-    NSInteger n = [_itineraries count];
-    if ( n == 1 || (n > 1 && _query.automaticallyPickBestItinerary) ) {
+    if( [_itineraries count] > 0 ) {
         [self selectItinerary:[itineraries.itineraries objectAtIndex:0] matchPreviousItinerary:FALSE];
+        [self setRefreshTimer];
     }
     else {
-        [self showItineraries];
+        [self clearSelectedItinerary];
     }
-
-    [self setRefreshTimer];
 }
 
 - (void)requestDidFinish:(id<OBAModelServiceRequest>)request withCode:(NSInteger)code context:(id)context {
@@ -294,6 +355,14 @@ static const NSString * kCancelAlarm = @"cancelAlarm";
 
 @implementation OBATripController (Private)
 
+- (void) clearQueryRequest {
+    if (_queryRequest) {
+        [_queryRequest cancel];
+        [_queryRequest release];
+        _queryRequest = nil;
+    }
+}
+
 - (void) clearRefreshTimer {
     [_refreshTimer invalidate];
     [_refreshTimer release];
@@ -301,12 +370,12 @@ static const NSString * kCancelAlarm = @"cancelAlarm";
 }
 
 - (void) setRefreshTimer {
-    NSTimeInterval interval = 30;
+    NSTimeInterval interval = kRefreshInterval;
     _refreshTimer = [[NSTimer scheduledTimerWithTimeInterval:interval target:self selector:@selector(refresh) userInfo:nil repeats:FALSE] retain];
 }
 
 - (void) refreshLocationForPlace:(OBAPlace*)place {
-    if( place.useCurrentLocation )
+    if( place.isCurrentLocation )
         place.location = locationManager.currentLocation;
 }
 
@@ -314,6 +383,20 @@ static const NSString * kCancelAlarm = @"cancelAlarm";
     if ([self.delegate respondsToSelector:@selector(refreshTripState:)]) {
         [self.delegate refreshTripState:[_currentStates objectAtIndex:_currentStateIndex]];
     }
+}
+
+- (void) clearSelectedItinerary {
+    _currentItinerary = [NSObject releaseOld:_currentItinerary retainNew:nil];
+    _currentStateIndex = 0;
+    
+    [_currentStates removeAllObjects];
+    
+    OBATripState * state = [self createTripState];
+    state.noResultsFound = TRUE;
+    state.region = [self computeRegionForQuery];
+    [_currentStates addObject:state];
+    
+    [self refreshTripState];
 }
 
 - (void) selectItinerary:(OBAItineraryV2*)itinerary matchPreviousItinerary:(BOOL)matchPreviousItinerary {
@@ -479,6 +562,7 @@ static const NSString * kCancelAlarm = @"cancelAlarm";
 - (MKCoordinateRegion) computeRegionForLeg:(OBALegV2*)leg {
     OBACoordinateBounds * bounds = [OBACoordinateBounds bounds];
     [self computeBounds:bounds forLeg:leg];
+    [bounds expandByRatio:kRegionExpansionRatio]; 
     return bounds.region;
 }
 
@@ -498,6 +582,7 @@ static const NSString * kCancelAlarm = @"cancelAlarm";
     }
     if( [bounds empty] )
         return [self computeRegionForItinerary];
+    [bounds expandByRatio:kRegionExpansionRatio];
     return bounds.region;
 }
 
@@ -517,6 +602,7 @@ static const NSString * kCancelAlarm = @"cancelAlarm";
     }
     if( [bounds empty] )
         return [self computeRegionForItinerary];
+    [bounds expandByRatio:kRegionExpansionRatio];
     return bounds.region;
 }
 
@@ -541,7 +627,12 @@ static const NSString * kCancelAlarm = @"cancelAlarm";
 - (void) populateAlarmState:(OBAAlarmState*)alarmState {
     
     OBATripState * tripState = alarmState.tripState;
-
+    
+    NSMutableDictionary * notificationOptions = [[NSMutableDictionary alloc] init];
+    alarmState.notificationOptions = notificationOptions;
+    
+    [notificationOptions setObject:@"default" forKey:@"sound"];
+    
     if( tripState.startTime ) {
         OBAItineraryV2 * itinerary = tripState.itinerary;
         OBALegV2 * leg = [itinerary firstTransitLeg];
@@ -552,22 +643,24 @@ static const NSString * kCancelAlarm = @"cancelAlarm";
             NSTimeInterval interval = [legTime timeIntervalSinceDate:startTime];
             alarmState.instanceRef = transitLeg.departureInstanceRef;
             alarmState.onArrival = FALSE;
-            alarmState.alarmTimeOffset += interval;
-            alarmState.notificationOptions = [NSDictionary dictionaryWithObject:@"Time to start your trip!" forKey:@"alertBody"];
+            alarmState.alarmTimeOffset = interval;
+            [notificationOptions setObject:@"Time to start your trip!" forKey:@"alertBody"];
         }        
     }
     else if( tripState.departure ) {
         OBATransitLegV2 * departure = tripState.departure;
         alarmState.instanceRef = departure.departureInstanceRef;
         alarmState.onArrival = FALSE;
-        alarmState.notificationOptions = [NSDictionary dictionaryWithObject:@"Your departure is coming up!" forKey:@"alertBody"];
+        [notificationOptions setObject:@"Your departure is coming up!" forKey:@"alertBody"];
     }
     else if( tripState.arrival ) {
         OBATransitLegV2 * arrival = tripState.arrival;
         alarmState.instanceRef = arrival.arrivalInstanceRef;
         alarmState.onArrival = TRUE;
-        alarmState.notificationOptions = [NSDictionary dictionaryWithObject:@"Your arrival is coming up!" forKey:@"alertBody"];
+        [notificationOptions setObject:@"Your arrival is coming up!" forKey:@"alertBody"];
     }
+    
+    [notificationOptions release];
 }
 
 - (void) registerAlarm:(OBAAlarmState*)alarmState {
@@ -577,7 +670,7 @@ static const NSString * kCancelAlarm = @"cancelAlarm";
     
     OBAArrivalAndDepartureInstanceRef * ref = alarmState.instanceRef;
     BOOL onArrival = alarmState.onArrival;
-    NSInteger alarmTimeOffset = alarmState.alarmTimeOffset;
+    NSInteger alarmTimeOffset = alarmState.alarmTimeOffset + alarmState.userAlarmTimeOffset;
     NSDictionary * notificationOptions = alarmState.notificationOptions;
     
     [self.modelService registerAlarmForArrivalAndDepartureAtStop:ref onArrival:onArrival alarmTimeOffset:alarmTimeOffset notificationOptions:notificationOptions withDelegate:self withContext:alarmState];
@@ -648,6 +741,14 @@ static const NSString * kCancelAlarm = @"cancelAlarm";
 
 - (void)alarmRequestDidFinishWithAlarm:(OBAAlarmState*)alarmState alarmId:(NSString*)alarmId {
     alarmState.alarmId = alarmId;
+}
+
+- (MKCoordinateRegion) computeRegionForQuery {
+    OBACoordinateBounds * bounds = [OBACoordinateBounds bounds];
+    [bounds addLocation:_query.placeFrom.location];
+    [bounds addLocation:_query.placeTo.location];
+    [bounds expandByRatio:kRegionExpansionRatio];
+    return bounds.region;
 }
          
 - (MKCoordinateRegion) computeRegionForItinerary {

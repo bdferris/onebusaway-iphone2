@@ -1,4 +1,5 @@
 #import "OBAPlanTripViewController.h"
+#import "OBAPlacesMapViewController.h"
 #import "OBAItinerariesV2.h"
 #import "OBAPresentation.h"
 #import "OBAPlaceDataSource.h"
@@ -68,7 +69,7 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
     OBATargetTime * time = query.time;
     
     if( placeFrom ) {        
-        if( placeFrom.useCurrentLocation || placeFrom.isBookmark) {
+        if( ! placeFrom.isPlain ) {
             TTTableItem *item = [TTTableTextItem itemWithText:placeFrom.name URL:nil];
             item.userInfo = placeFrom;
             [_startTextField addCellWithObject:item];
@@ -77,7 +78,7 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
         }
     }
     if( placeTo ) {
-        if( placeTo.useCurrentLocation || placeTo.isBookmark) {
+        if( ! placeTo.isPlain ) {
             TTTableItem *item = [TTTableTextItem itemWithText:placeTo.name URL:nil];
             item.userInfo = placeTo;
             [_endTextField addCellWithObject:item];
@@ -234,7 +235,24 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
             [self ensurePlacesAreSet];
         }
         else {
+
+            NSMutableArray * places = [[NSMutableArray alloc] init];
+            for( OBAPlacemark * placemark in placemarks ) {
+                OBAPlace * place = [OBAPlace placeWithName:placemark.address coordinate:placemark.coordinate];
+                [places addObject:place];
+            }
             
+            OBAPlacesMapViewController * vc = [[OBAPlacesMapViewController alloc] initWithPlaces:places];
+            
+            vc.target = self;
+            vc.action = (context == kContextPlaceStart) ? @selector(setFromPlaceFromPlacemark:) : @selector(setToPlaceFromPlacemark:);
+            
+            [self.navigationController pushViewController:vc animated:TRUE];
+            [vc release];
+            
+            
+            
+            [places release];
         }    
     }
 }
@@ -277,7 +295,6 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
 @implementation OBAPlanTripViewController (Private)
 
 - (BOOL) ensurePlacesAreSet {
-
     
     _placeFrom = [NSObject releaseOld:_placeFrom retainNew:[self ensurePlaceIsSet:_placeFrom textField:_startTextField]];
 
@@ -297,6 +314,7 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
     
     OBATargetTime * t = [self getTargetTime];
     
+    [self.navigationController popToRootViewController];    
     
     OBATripQuery * query = [[OBATripQuery alloc] initWithPlaceFrom:_placeFrom placeTo:_placeTo time:t];
     [self.tripController planTripWithQuery:query];
@@ -315,10 +333,14 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
         }
     }
     
-    if( ! place ) {
-        NSString * text = textField.text;
-        if( [text length] > 0 ) {
+    NSString * text = textField.text;
+    if( [text length] > 0 ) {
+        if (! place) {
             place = [OBAPlace placeWithName:text];
+        }
+        else if ( place.isPlain && ! [text isEqualToString:place.name]) {
+            place.name = text;
+            place.location = nil;
         }
     }
     
@@ -327,7 +349,7 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
 
 - (BOOL) ensurePlaceLocationIsSet:(OBAPlace*)place context:(id)context {
 
-    if( place.useCurrentLocation ) {                
+    if( place.isCurrentLocation ) {                
         OBALocationManager * locationManager = self.appContext.locationManager;
         place.location = locationManager.currentLocation;
         return TRUE;
@@ -360,6 +382,36 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
         return _placeTo;
     }
     return nil;
+}
+
+- (void) setFromPlaceFromPlacemark:(OBAPlace*)place {
+    
+    place = [OBAPlace placeWithBookmarkName:place.name location:place.location];
+    _placeFrom = [NSObject releaseOld:_placeFrom retainNew:place];
+    
+    [_startTextField removeAllCells];
+    _startTextField.text = @"";
+    
+    TTTableItem *item = [TTTableTextItem itemWithText:place.name URL:nil];
+    item.userInfo = place;
+    [_startTextField addCellWithObject:item];
+    
+    [self ensurePlacesAreSet];
+}
+
+- (void) setToPlaceFromPlacemark:(OBAPlace*)place {
+    
+    place = [OBAPlace placeWithBookmarkName:place.name location:place.location];
+    _placeTo = [NSObject releaseOld:_placeTo retainNew:place];
+    
+    [_endTextField removeAllCells];
+    _endTextField.text = @"";
+    
+    TTTableItem *item = [TTTableTextItem itemWithText:place.name URL:nil];
+    item.userInfo = place;
+    [_endTextField addCellWithObject:item];
+    
+    [self ensurePlacesAreSet];
 }
 
 - (OBATargetTime*) getTargetTime {

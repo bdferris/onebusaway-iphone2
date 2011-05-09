@@ -17,8 +17,8 @@
 #import "OBAPresentation.h"
 
 #import "OBAPlanTripViewController.h"
-#import "OBAStartTripViewController.h"
-
+#import "OBAPickTripViewController.h"
+#import "OBAAlarmViewController.h"
 
 
 typedef struct  {
@@ -29,30 +29,16 @@ typedef struct  {
     BOOL isNow;
 } OBATimeStruct;
 
-typedef enum {
-    CellTypeTripSummary,
-    CellTypeStartTime,
-    CellTypeWalkToStop,
-    CellTypeWalkToPlace,
-    CellTypeDeparture,
-    CellTypeRide,
-    CellTypeArrival,
-    CellTypeNone
-} CellType;
 
 @interface OBATripStateTableViewCellFactory (Private)
 
-- (CellType) getCellTypeForTripState:(OBATripState*)state indexPath:(NSIndexPath*)indexPath;
+- (OBATripStateCellType) getCellTypeForTripState:(OBATripState*)state indexPath:(NSIndexPath*)indexPath;
 
 - (UITableViewCell*) createCellForPlanYourTrip;
-- (UITableViewCell*) createCellForPlanYourTrip;
 
-- (UITableViewCell*) createCellForStartTrip:(OBATripState*)state;
 - (UITableViewCell*) createCellForWalkToStop:(OBAStopV2*)stop;
 - (UITableViewCell*) createCellForWalkToPlace:(OBAPlace*)place;
-- (UITableViewCell*) createCellForVehicleDeparture:(OBATransitLegV2*)transitLeg;
 - (UITableViewCell*) createCellForVehicleRide:(OBATransitLegV2*)transitLeg;
-- (UITableViewCell*) createCellForVehicleArrival:(OBATransitLegV2*)transitLeg;
 
 - (OBATimeStruct) getTimeForPredictedTime:(long long)predictedTime scheduledTime:(long long)scheduledTime;
 - (NSString*) getMinutesLabelForTime:(OBATimeStruct)t;
@@ -107,6 +93,8 @@ typedef enum {
     NSInteger rows = 0;
     if( state.showTripSummary )
         rows++;
+    if( state.noResultsFound )
+        rows++;
     if( state.startTime )
         rows++;
     if( state.walkToStop )
@@ -128,23 +116,25 @@ typedef enum {
     if( state == nil )
         return [self createCellForPlanYourTrip];
 
-    CellType cellType = [self getCellTypeForTripState:state indexPath:indexPath];
+    OBATripStateCellType cellType = [self getCellTypeForTripState:state indexPath:indexPath];
 
     switch (cellType) {
-        case CellTypeTripSummary:
+        case OBATripStateCellTypeTripSummary:
             return [self createCellForTripSummary:state.itinerary];
-        case CellTypeStartTime:
-            return [self createCellForStartTrip:state];
-        case CellTypeWalkToStop:
+        case OBATripStateCellTypeNoResultsFound:
+            return [self createCellForNoResultsFound];
+        case OBATripStateCellTypeStartTime:
+            return [self createCellForStartTrip:state includeDetail:TRUE];
+        case OBATripStateCellTypeWalkToStop:
             return [self createCellForWalkToStop:state.walkToStop];
-        case CellTypeWalkToPlace:
+        case OBATripStateCellTypeWalkToPlace:
             return [self createCellForWalkToPlace:state.walkToPlace];
-        case CellTypeDeparture:
-            return [self createCellForVehicleDeparture:state.departure];
-        case CellTypeRide:
+        case OBATripStateCellTypeDeparture:
+            return [self createCellForVehicleDeparture:state.departure includeDetail:TRUE];
+        case OBATripStateCellTypeRide:
             return [self createCellForVehicleRide:state.ride];
-        case CellTypeArrival:
-            return [self createCellForVehicleArrival:state.arrival];
+        case OBATripStateCellTypeArrival:
+            return [self createCellForVehicleArrival:state.arrival includeDetail:TRUE];
         default:
             return [UITableViewCell getOrCreateCellForTableView:_tableView];
     }
@@ -158,21 +148,40 @@ typedef enum {
         return;
     }
     
-    CellType cellType = [self getCellTypeForTripState:state indexPath:indexPath];
+    OBATripStateCellType cellType = [self getCellTypeForTripState:state indexPath:indexPath];
     
     switch (cellType) {
-        case CellTypeTripSummary: {
-            [_appContext.tripController showItineraries];
+        case OBATripStateCellTypeTripSummary: {
+            OBAPickTripViewController * vc = [[OBAPickTripViewController alloc] initWithAppContext:_appContext];
+            [_navigationController pushViewController:vc animated:TRUE];
+            [vc release];             
             break;
         }
-        case CellTypeStartTime: {
-            OBAStartTripViewController * vc = [[OBAStartTripViewController alloc] initWithApplicationContext:_appContext tripState:state];
+        case OBATripStateCellTypeNoResultsFound: {
+            OBAPlanTripViewController * vc = [OBAPlanTripViewController viewControllerWithApplicationContext:_appContext];
+            [vc setTripQuery:_appContext.tripController.query];
+            [_navigationController pushViewController:vc animated:TRUE];
+            break;
+        }
+        case OBATripStateCellTypeStartTime:
+        case OBATripStateCellTypeDeparture:
+        case OBATripStateCellTypeArrival:
+        {
+            OBAAlarmViewController * vc = [[OBAAlarmViewController alloc] initWithAppContext:_appContext tripState:state cellType:cellType ];
             [_navigationController pushViewController:vc animated:TRUE];
             [vc release];
         }
         default:
             break;
     }
+}
+
+- (UITableViewCell*) createCellForNoResultsFound {
+    UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:_tableView cellId:@"NoResultsFound"];
+    cell.textLabel.text = @"No results found";
+    cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+    cell.selectionStyle = UITableViewCellSelectionStyleBlue;
+    return cell;
 }
 
 - (UITableViewCell*) createCellForTripSummary:(OBAItineraryV2*)itinerary {
@@ -221,66 +230,7 @@ typedef enum {
     return cell;
 }
 
-@end
-
-
-
-@implementation OBATripStateTableViewCellFactory (Private)
-
-- (CellType) getCellTypeForTripState:(OBATripState*)state indexPath:(NSIndexPath*)indexPath {
-   
-    NSInteger index = 0;
-    
-    if( state.showTripSummary ) {
-        if( indexPath.row == index )
-            return CellTypeTripSummary;
-        index++;
-    }
-    
-    if( state.startTime ) {
-        if( indexPath.row == index )
-            return CellTypeStartTime;
-        index++;
-    }
-    
-    if( state.walkToStop ) {
-        if( indexPath.row == index )
-            return CellTypeWalkToStop;
-        index++;
-    }
-    
-    if( state.walkToPlace ) {
-        if( indexPath.row == index )
-            return CellTypeWalkToPlace;
-        index++;
-    }
-    
-    if( state.departure ) {
-        if( indexPath.row == index )
-            return CellTypeDeparture;
-        index++;
-    }
-    
-    if( state.ride ) {
-        if( indexPath.row == index )
-            return CellTypeRide;
-        index++;
-    }
-    
-    if( state.arrival ) {
-        if( indexPath.row == index )
-            return CellTypeArrival;
-        index++;
-    }
-    
-    return CellTypeNone;
-}
-
-- (UITableViewCell*) createCellForPlanYourTrip {
-    return [self getOrCreateCellFromNibNamed:@"OBAPlanYourTripTableViewCell"];	
-}
-
-- (UITableViewCell*) createCellForStartTrip:(OBATripState*)state {
+- (UITableViewCell*) createCellForStartTrip:(OBATripState*)state includeDetail:(BOOL)includeDetail {
     
     NSDate * startTime = state.startTime;
     
@@ -288,11 +238,16 @@ typedef enum {
     NSTimeInterval interval = [startTime timeIntervalSinceNow];
     NSInteger mins = interval / 60;
     
+    if( includeDetail )
+        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+    else
+        cell.accessoryType = UITableViewCellAccessoryNone;
+    
     if( state.isLateStartTime )
         cell.backgroundColor = [UIColor yellowColor];
     else
-        cell.backgroundColor = [UIColor clearColor];
-
+        cell.backgroundColor = [UIColor whiteColor];
+    
     if( mins < -50 ) {
         cell.timeLabel.text = [_timeFormatter stringFromDate:startTime];
         cell.statusLabel.text = @"Should've started your trip at:";
@@ -318,8 +273,115 @@ typedef enum {
         cell.statusLabel.text = @"Start your trip at:";
         cell.minutesLabel.hidden = TRUE;
     }
+    
+    return cell;
+}
+
+- (UITableViewCell*) createCellForVehicleDeparture:(OBATransitLegV2*)transitLeg includeDetail:(BOOL)includeDetail {
+    
+    OBAVehicleDepartureTableViewCell * cell = [self getOrCreateCellFromNibNamed:@"OBAVehicleDepartureTableViewCell"];
+    
+    OBATimeStruct t = [self getTimeForPredictedTime:transitLeg.predictedDepartureTime scheduledTime:transitLeg.scheduledDepartureTime];
+    
+	cell.destinationLabel.text = [OBAPresentation getTripHeadsignForTransitLeg:transitLeg];
+	cell.routeLabel.text = [OBAPresentation getRouteShortNameForTransitLeg:transitLeg];
+	cell.statusLabel.text = [self getStatusLabelForTransitLeg:transitLeg time:t];
+    
+    cell.timeLabel.text = [self getMinutesLabelForTime:t];
+    cell.timeLabel.textColor = [self getMinutesColorForTime:t];    
+    cell.minutesLabel.hidden = t.isNow;
+    
+    if( includeDetail )
+        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+    else
+        cell.accessoryType = UITableViewCellAccessoryNone;
+	
+    return cell;
+}
+
+- (UITableViewCell*) createCellForVehicleArrival:(OBATransitLegV2*)transitLeg includeDetail:(BOOL)includeDetail {
+    OBAVehicleArrivalTableViewCell * cell = [self getOrCreateCellFromNibNamed:@"OBAVehicleArrivalTableViewCell"];
+    
+    OBATimeStruct t = [self getTimeForPredictedTime:transitLeg.predictedArrivalTime scheduledTime:transitLeg.scheduledArrivalTime];
+    
+	cell.destinationLabel.text = transitLeg.toStop.name;
+	cell.statusLabel.text = [self getStatusLabelForTransitLeg:transitLeg time:t];
+    
+    cell.timeLabel.text = [self getMinutesLabelForTime:t];
+    cell.timeLabel.textColor = [self getMinutesColorForTime:t];
+    cell.minutesLabel.hidden = t.isNow;
+	
+    if( includeDetail )
+        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+    else
+        cell.accessoryType = UITableViewCellAccessoryNone;
 
     return cell;
+}
+
+@end
+
+
+
+@implementation OBATripStateTableViewCellFactory (Private)
+
+- (OBATripStateCellType) getCellTypeForTripState:(OBATripState*)state indexPath:(NSIndexPath*)indexPath {
+   
+    NSInteger index = 0;
+    
+    if( state.noResultsFound ) {
+        if (indexPath.row == index )
+            return OBATripStateCellTypeNoResultsFound;
+        index++;
+    }
+    
+    if( state.showTripSummary ) {
+        if( indexPath.row == index )
+            return OBATripStateCellTypeTripSummary;
+        index++;
+    }
+    
+    if( state.startTime ) {
+        if( indexPath.row == index )
+            return OBATripStateCellTypeStartTime;
+        index++;
+    }
+    
+    if( state.walkToStop ) {
+        if( indexPath.row == index )
+            return OBATripStateCellTypeWalkToStop;
+        index++;
+    }
+    
+    if( state.walkToPlace ) {
+        if( indexPath.row == index )
+            return OBATripStateCellTypeWalkToPlace;
+        index++;
+    }
+    
+    if( state.departure ) {
+        if( indexPath.row == index )
+            return OBATripStateCellTypeDeparture;
+        index++;
+    }
+    
+    if( state.ride ) {
+        if( indexPath.row == index )
+            return OBATripStateCellTypeRide;
+        index++;
+    }
+    
+    if( state.arrival ) {
+        if( indexPath.row == index )
+            return OBATripStateCellTypeArrival;
+        index++;
+    }
+    
+    return OBATripStateCellTypeNone;
+}
+
+- (UITableViewCell*) createCellForPlanYourTrip {
+    return [self getOrCreateCellFromNibNamed:@"OBAPlanYourTripTableViewCell"];	
 }
 
 - (UITableViewCell*) createCellForWalkToStop:(OBAStopV2*)stop {
@@ -343,23 +405,6 @@ typedef enum {
     return cell;
 }
 
-- (UITableViewCell*) createCellForVehicleDeparture:(OBATransitLegV2*)transitLeg {
-
-    OBAVehicleDepartureTableViewCell * cell = [self getOrCreateCellFromNibNamed:@"OBAVehicleDepartureTableViewCell"];
-    
-    OBATimeStruct t = [self getTimeForPredictedTime:transitLeg.predictedDepartureTime scheduledTime:transitLeg.scheduledDepartureTime];
-    
-	cell.destinationLabel.text = [OBAPresentation getTripHeadsignForTransitLeg:transitLeg];
-	cell.routeLabel.text = [OBAPresentation getRouteShortNameForTransitLeg:transitLeg];
-	cell.statusLabel.text = [self getStatusLabelForTransitLeg:transitLeg time:t];
-    
-    cell.timeLabel.text = [self getMinutesLabelForTime:t];
-    cell.timeLabel.textColor = [self getMinutesColorForTime:t];    
-    cell.minutesLabel.hidden = t.isNow;
-	
-    return cell;
-}
-
 - (UITableViewCell*) createCellForVehicleRide:(OBATransitLegV2*)transitLeg {
     OBAVehicleRideTableViewCell * cell = [self getOrCreateCellFromNibNamed:@"OBAVehicleRideTableViewCell"];
     
@@ -367,21 +412,6 @@ typedef enum {
 	cell.routeLabel.text = [OBAPresentation getRouteShortNameForTransitLeg:transitLeg];
     cell.statusLabel.text = @"What do we say here?";
     
-    return cell;
-}
-
-- (UITableViewCell*) createCellForVehicleArrival:(OBATransitLegV2*)transitLeg {
-    OBAVehicleArrivalTableViewCell * cell = [self getOrCreateCellFromNibNamed:@"OBAVehicleArrivalTableViewCell"];
-    
-    OBATimeStruct t = [self getTimeForPredictedTime:transitLeg.predictedArrivalTime scheduledTime:transitLeg.scheduledArrivalTime];
-    
-	cell.destinationLabel.text = transitLeg.toStop.name;
-	cell.statusLabel.text = [self getStatusLabelForTransitLeg:transitLeg time:t];
-    
-    cell.timeLabel.text = [self getMinutesLabelForTime:t];
-    cell.timeLabel.textColor = [self getMinutesColorForTime:t];
-    cell.minutesLabel.hidden = t.isNow;
-	
     return cell;
 }
 

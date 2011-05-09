@@ -35,22 +35,18 @@ static const NSUInteger kMaxLocationReadingAge = 240;
 - (id) init {
     self = [super init];
     if( self ) {
-        _delegates = [[NSMutableArray alloc] init];
         _locations = [[NSMutableArray alloc] init];
-        _currentModes = [[NSArray alloc] init];
-        
-        //OBACurrentTravelModeState * streetState = [[OBACurrentTravelModeState alloc] init];
-        //streetState.label = @"On foot";
-        //[currentModes addObject:streetState];
-        //[streetState release];
+        _streetState = [[OBACurrentTravelModeState alloc] init];
+        _streetState.label = @"On foot";
+        _currentModes = [[NSArray alloc] initWithObjects:_streetState, nil];
 
     }
     return self;
 }
 
 - (void) dealloc {
-    [self clearTimer];
-    [_delegates release];
+    [self clearTimer];    
+    [_delegate release];
     [_locations release];
     [_currentModes release];
     self.locationManager = nil;
@@ -58,20 +54,18 @@ static const NSUInteger kMaxLocationReadingAge = 240;
     [super dealloc];
 }
 
-- (void) start {
-    //_timer = [[NSTimer scheduledTimerWithTimeInterval:30 target:self selector:@selector(refresh) userInfo:nil repeats:TRUE] retain];
+- (void) setDelegate:(id<OBACurrentTravelModeDelegate>)delegate {
+    _delegate = [NSObject releaseOld:_delegate retainNew:delegate];
+    if( _delegate == nil ) {
+        [self clearTimer];
+    }
+    else {
+        _timer = [[NSTimer scheduledTimerWithTimeInterval:30 target:self selector:@selector(refresh) userInfo:nil repeats:TRUE] retain];
+    }
 }
 
-- (void) stop {
-    
-}
-
-- (void) addDelegate:(id<OBACurrentTravelModeDelegate>)delegate {
-    [_delegates addObject:delegate];
-}
-
-- (void) removeDelegate:(id<OBACurrentTravelModeDelegate>)delegate {
-    [_delegates removeObject:delegate];
+- (id<OBACurrentTravelModeDelegate>) delegate {
+    return _delegate;
 }
 
 - (NSArray*) currentModes {
@@ -128,6 +122,7 @@ static const NSUInteger kMaxLocationReadingAge = 240;
     OBAListWithRangeAndReferencesV2 * entry = obj;
     NSMutableArray * currentModes = [[NSMutableArray alloc] init];
     
+    [currentModes addObject:_streetState];
     
     NSArray * values = [entry.values sortedArrayUsingComparator:^(id a, id b) {
         OBACurrentVehicleEstimateV2 * v1 = a;
@@ -175,8 +170,8 @@ static const NSUInteger kMaxLocationReadingAge = 240;
     [_currentModes release];
     _currentModes = currentModes;
     
-    for( id<OBACurrentTravelModeDelegate> delegate in _delegates ) {
-        [delegate didUpdateCurrentTravelModes:_currentModes controller:self];
+    if (_delegate) {
+        [_delegate didUpdateCurrentTravelModes:_currentModes controller:self];
     }
 }
 

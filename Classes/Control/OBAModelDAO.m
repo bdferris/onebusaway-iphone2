@@ -39,6 +39,7 @@ const static int kMaxEntriesInMostRecentList = 10;
 		_preferencesDao = [[OBAModelDAOUserPreferencesImpl alloc] init];
 		_bookmarks = [[NSMutableArray alloc] initWithArray:[_preferencesDao readBookmarks]];
         _recentPlaces = [[NSMutableArray alloc] initWithArray:[_preferencesDao readRecentPlaces]];
+        _droppedPins = [[NSMutableArray alloc] initWithArray:[_preferencesDao readDroppedPins]];
 		_mostRecentStops = [[NSMutableArray alloc] initWithArray:[_preferencesDao readMostRecentStops]];
 		_stopPreferences = [[NSMutableDictionary alloc] initWithDictionary:[_preferencesDao readStopPreferences]];
 		_mostRecentLocation = [[_preferencesDao readMostRecentLocation] retain];
@@ -50,6 +51,7 @@ const static int kMaxEntriesInMostRecentList = 10;
 - (void) dealloc {
 	[_bookmarks release];
     [_recentPlaces release];
+    [_droppedPins release];
 	[_mostRecentStops release];
 	[_stopPreferences release];
 	[_mostRecentLocation release];
@@ -63,6 +65,10 @@ const static int kMaxEntriesInMostRecentList = 10;
 
 - (NSArray*) recentPlaces {
     return _recentPlaces;
+}
+
+- (NSArray*) droppedPins {
+    return _droppedPins;
 }
 
 - (NSArray*) mostRecentStops {
@@ -114,15 +120,20 @@ const static int kMaxEntriesInMostRecentList = 10;
 	[existingEvent release];
 }
 
-- (void) addNewBookmark:(OBAPlace*)bookmark error:(NSError**)error {
-    bookmark.isBookmark = TRUE;
+- (void) addNewBookmark:(OBAPlace*)place error:(NSError**)error {
+    OBAPlace * bookmark = [OBAPlace placeWithBookmarkName:place.name location:place.location];
+    
+    /**
+     * If the place is a dropped pin, we remove it upon conversion to a bookmark
+     */
+    if (place.isDroppedPin)
+        [self removeDroppedPin:place];
 	[_bookmarks addObject:bookmark];
 	[_preferencesDao writeBookmarks:_bookmarks];
 }
 
 - (void) saveExistingBookmark:(OBAPlace*)bookmark error:(NSError**)error {
-    bookmark.isBookmark = TRUE;
-	[_preferencesDao writeBookmarks:_bookmarks];
+    [_preferencesDao writeBookmarks:_bookmarks];
 }
 
 - (void) moveBookmark:(NSInteger)startIndex to:(NSInteger)endIndex error:(NSError**)error {
@@ -142,9 +153,9 @@ const static int kMaxEntriesInMostRecentList = 10;
 - (void) addRecentPlace:(OBAPlace*)place {
 
     /**
-     * Skip the 'Current Location' place and Bookmarks
+     * Skip non-plain recent places
      */
-    if( place.useCurrentLocation || place.isBookmark)
+    if( ! place.isPlain)
         return;
     
     /**
@@ -171,7 +182,38 @@ const static int kMaxEntriesInMostRecentList = 10;
 - (void) clearRecentPlaces {
     [_recentPlaces removeAllObjects];
 	[_preferencesDao writeRecentPlaces:_recentPlaces];
-}  
+}
+
+- (OBAPlace*) addDroppedPin:(CLLocation*)location {
+
+    /**
+     * Create the place
+     */
+    OBAPlace * place = [OBAPlace placeWithDroppedPinLocation:location];
+
+    NSIndexSet * indexSet = [NSIndexSet indexSetWithIndex:[_droppedPins count]];
+    [self willChange:NSKeyValueChangeInsertion valuesAtIndexes:indexSet forKey:@"droppedPins"];
+    
+    [_droppedPins addObject:place];
+	[_preferencesDao writeDroppedPins:_droppedPins];
+    
+    [self didChange:NSKeyValueChangeInsertion valuesAtIndexes:indexSet forKey:@"droppedPins"];
+    
+    return place;
+}
+
+- (void) removeDroppedPin:(OBAPlace*)place {
+    NSUInteger index = [_droppedPins indexOfObject:place];
+    if (index == NSNotFound) {
+        return;
+    }
+    NSIndexSet * indexSet = [NSIndexSet indexSetWithIndex:index];
+    [self willChange:NSKeyValueChangeRemoval valuesAtIndexes:indexSet forKey:@"droppedPins"];
+    [_droppedPins removeObjectsAtIndexes:indexSet];
+	[_preferencesDao writeDroppedPins:_droppedPins];    
+    [self didChange:NSKeyValueChangeRemoval valuesAtIndexes:indexSet forKey:@"droppedPins"];
+}
+
 
 - (OBAStopPreferencesV2*) stopPreferencesForStopWithId:(NSString*)stopId {
 	OBAStopPreferencesV2 * prefs = [_stopPreferences objectForKey:stopId];

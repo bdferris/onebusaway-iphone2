@@ -8,6 +8,7 @@
 @synthesize instanceRef;
 @synthesize onArrival;
 @synthesize alarmTimeOffset;
+@synthesize userAlarmTimeOffset;
 @synthesize notificationOptions;
 
 @end

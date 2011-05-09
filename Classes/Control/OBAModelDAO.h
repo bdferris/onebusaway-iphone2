@@ -27,6 +27,7 @@
 	OBAModelDAOUserPreferencesImpl * _preferencesDao;
 	NSMutableArray * _bookmarks;
     NSMutableArray * _recentPlaces;
+    NSMutableArray * _droppedPins;
 	NSMutableArray * _mostRecentStops;
 	NSMutableDictionary * _stopPreferences;
 	CLLocation * _mostRecentLocation;
@@ -35,16 +36,20 @@
 
 @property (nonatomic,readonly) NSArray * bookmarks;
 @property (nonatomic,readonly) NSArray * recentPlaces;
+@property (nonatomic,readonly) NSArray * droppedPins;
 @property (nonatomic,readonly) NSArray * mostRecentStops;
 @property (nonatomic,assign) CLLocation * mostRecentLocation;
 
-- (void) addNewBookmark:(OBAPlace*)bookmark error:(NSError**)error;
+- (void) addNewBookmark:(OBAPlace*)place error:(NSError**)error;
 - (void) saveExistingBookmark:(OBAPlace*)bookmark error:(NSError**)error;
 - (void) moveBookmark:(NSInteger)startIndex to:(NSInteger)endIndex error:(NSError**)error;
 - (void) removeBookmark:(OBAPlace*) bookmark error:(NSError**)error;
 
 - (void) addRecentPlace:(OBAPlace*)place;
 - (void) clearRecentPlaces;
+
+- (OBAPlace*) addDroppedPin:(CLLocation*)location;
+- (void) removeDroppedPin:(OBAPlace*)place;
 
 - (void) addStopAccessEvent:(OBAStopAccessEventV2*)event;
 

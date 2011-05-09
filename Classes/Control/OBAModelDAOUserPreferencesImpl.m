@@ -19,6 +19,7 @@
 
 static NSString * kBookmarksKey = @"bookmarks";
 static NSString * kRecentPlacesKey = @"recentPlaces";
+static NSString * kDroppedPinsKey = @"droppedPins";
 static NSString * kMostRecentStopsKey = @"mostRecentStops";
 static NSString * kStopPreferencesKey = @"stopPreferences";
 static NSString * kMostRecentLocationKey = @"mostRecentLocation";
@@ -82,6 +83,30 @@ static NSString * kVisitedSituationIdsKey = @"hideFutureLocationWarnings";
 	NSMutableData * data = [NSMutableData data];
 	[self encodeObject:source forKey:kRecentPlacesKey toData:data];
 	[user setObject:data forKey:kRecentPlacesKey];    
+}
+
+- (NSArray*) readDroppedPins {
+    NSUserDefaults * user = [NSUserDefaults standardUserDefaults];
+	NSData * data = [user dataForKey:kDroppedPinsKey];
+	NSArray * values = nil;
+	@try {
+		values = [self decodeObjectForKey:kDroppedPinsKey fromData:data];
+	}
+	@catch (NSException * e) {
+		
+	}
+	
+	if( ! values )
+		values = [[NSArray alloc] init];
+	
+	return values;
+}
+
+- (void) writeDroppedPins:(NSArray*)source {
+    NSUserDefaults * user = [NSUserDefaults standardUserDefaults];
+	NSMutableData * data = [NSMutableData data];
+	[self encodeObject:source forKey:kDroppedPinsKey toData:data];
+	[user setObject:data forKey:kDroppedPinsKey];    
 }
 
 - (NSArray*) readMostRecentStops {
