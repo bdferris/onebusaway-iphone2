@@ -329,6 +329,7 @@ static const double kRegionExpansionRatio = 0.1;
     for (OBAItineraryV2 * itinerary in _itineraries ) {
         if( itinerary.selected ) { 
             [self selectItinerary:itinerary matchPreviousItinerary:TRUE];
+            [self clearQueryRequest];
             [self setRefreshTimer];
             return;
         }
@@ -341,6 +342,8 @@ static const double kRegionExpansionRatio = 0.1;
     else {
         [self clearSelectedItinerary];
     }
+    
+    [self clearQueryRequest];
 }
 
 - (void)requestDidFinish:(id<OBAModelServiceRequest>)request withCode:(NSInteger)code context:(id)context {
@@ -352,6 +355,8 @@ static const double kRegionExpansionRatio = 0.1;
     if( [context isKindOfClass:[OBAAlarmState class]] ) {
         return;
     }
+    
+    [self clearQueryRequest];
 }
 
 - (void)requestDidFail:(id<OBAModelServiceRequest>)request withError:(NSError *)error context:(id)context {
@@ -363,6 +368,8 @@ static const double kRegionExpansionRatio = 0.1;
     if( [context isKindOfClass:[OBAAlarmState class]] ) {
         return;
     }
+    
+    [self clearQueryRequest];
 
     if([self.delegate respondsToSelector:@selector(refreshingItinerariesFailed:)])
        [self.delegate refreshingItinerariesFailed:error];
@@ -678,6 +685,14 @@ static const double kRegionExpansionRatio = 0.1;
     alarmState.notificationOptions = notificationOptions;
     
     [notificationOptions setObject:@"default" forKey:@"sound"];
+    
+#ifdef APS_ENVIRONMENT_SANDBOX
+    NSLog(@"Using the sandbox push notification server");
+    [notificationOptions setObject:@"false" forKey:@"production"];
+#else
+    NSLog(@"Using the production push notification server");    
+    [notificationOptions setObject:@"true" forKey:@"production"];
+#endif
     
     switch (alarmRef.alarmType) {
         case OBAAlarmTypeStart:
