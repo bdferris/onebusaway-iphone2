@@ -198,7 +198,9 @@ typedef enum {
 - (void) didSelectActionsRowAtIndexPath:(NSIndexPath *)indexPath {
     if( indexPath.row == 0 ) {
         OBAPlace * place = [OBAPlace placeWithPlace:_place];
-        OBAEditBookmarkViewController * vc = [[OBAEditBookmarkViewController alloc] initWithApplicationContext:_appContext bookmark:place editType:OBABookmarkEditNew];
+        OBAEditBookmarkViewController * vc = [[OBAEditBookmarkViewController alloc] initWithApplicationContext:_appContext bookmark:place editType:OBABookmarkEditNew];        
+        [vc setOnSuccessTarget:self action:@selector(onBookmarkSuccess:)];
+        vc.popToRootOnCompletion = TRUE;
         [self.navigationController pushViewController:vc animated:TRUE];
         [vc release];
     }
@@ -206,7 +208,13 @@ typedef enum {
         [_appContext.modelDao removeDroppedPin:_place];
         [self.navigationController popToRootViewControllerAnimated:TRUE];
     }
-} 
+}
+
+- (void) onBookmarkSuccess:(id)sender {
+    if (_place.isDroppedPin) {
+        [_appContext.modelDao removeDroppedPin:_place];
+    }
+}
 
 @end
 

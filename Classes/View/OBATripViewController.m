@@ -481,8 +481,14 @@
             break;
         }
         case NSKeyValueChangeRemoval: {
-            NSArray * newDroppedPins = [change objectForKey:NSKeyValueChangeOldKey];
-            NSLog(@"What: %d", [newDroppedPins count]);
+            NSArray * oldDroppedPins = [change objectForKey:NSKeyValueChangeOldKey];
+            for (OBAPlace * droppedPinToRemove in oldDroppedPins) {
+                for( OBAPlaceAnnotation * placeAnnotation in _droppedPinAnnotations ) {
+                    if (placeAnnotation.place == droppedPinToRemove )
+                        [self.mapView removeAnnotation:placeAnnotation];
+                        [_droppedPinAnnotations removeObject:placeAnnotation];
+                }
+            }
             break;
         }            
         default:

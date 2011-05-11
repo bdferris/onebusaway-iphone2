@@ -21,6 +21,8 @@
 
 @implementation OBAEditBookmarkViewController
 
+@synthesize popToRootOnCompletion;
+
 - (id) initWithApplicationContext:(OBAApplicationContext*)appContext bookmark:(OBAPlace*)bookmark editType:(OBABookmarkEditType)editType {
 
     self = [super initWithStyle:UITableViewStyleGrouped];
@@ -61,6 +63,8 @@
 	[_bookmark release];
 	[_stops release];
 	[_requests release];
+    [_onSuccessTarget release];
+    [_onCancelTarget release];
     [super dealloc];
 }
 
@@ -143,7 +147,14 @@
 }
 
 - (IBAction) onCancelButton:(id)sender {
-	[self.navigationController popViewControllerAnimated:TRUE];
+    
+    if (self.popToRootOnCompletion)
+        [self.navigationController popToRootViewControllerAnimated:TRUE];
+    else
+        [self.navigationController popViewControllerAnimated:TRUE];
+
+    if (_onCancelTarget && _onCancelAction)
+        [_onCancelTarget performSelector:_onCancelAction withObject:self];
 }
 
 - (IBAction) onSaveButton:(id)sender {
@@ -162,13 +173,28 @@
 			break;
 	}
 
-	[dao saveExistingBookmark:_bookmark error:&error];
-
 	if( error )
 		OBALogSevereWithError(error,@"Error saving bookmark: name=%@",_bookmark.name);
 	
-    [self.navigationController popViewControllerAnimated:TRUE];
+    if (self.popToRootOnCompletion)
+        [self.navigationController popToRootViewControllerAnimated:TRUE];
+    else
+        [self.navigationController popViewControllerAnimated:TRUE];
+
+    if (_onSuccessTarget && _onSuccessAction)
+        [_onSuccessTarget performSelector:_onSuccessAction withObject:self];
 }
+
+- (void) setOnSuccessTarget:(id)target action:(SEL)action {
+    _onSuccessTarget = [NSObject releaseOld:_onSuccessTarget retainNew:target];
+    _onSuccessAction = action;
+}
+
+- (void) setOnCancelTarget:(id)target action:(SEL)action {
+    _onCancelTarget = [NSObject releaseOld:_onCancelTarget retainNew:target];
+    _onCancelAction = action;
+}
+
 
 @end
 

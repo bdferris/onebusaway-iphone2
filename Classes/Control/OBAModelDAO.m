@@ -135,12 +135,6 @@ const static int kMaxEntriesInMostRecentList = 10;
 
 - (void) addNewBookmark:(OBAPlace*)place error:(NSError**)error {
     OBAPlace * bookmark = [OBAPlace placeWithBookmarkName:place.name location:place.location];
-    
-    /**
-     * If the place is a dropped pin, we remove it upon conversion to a bookmark
-     */
-    if (place.isDroppedPin)
-        [self removeDroppedPin:place];
 	[_bookmarks addObject:bookmark];
 	[_preferencesDao writeBookmarks:_bookmarks];
 }

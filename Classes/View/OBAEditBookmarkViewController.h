@@ -23,7 +23,6 @@ typedef enum {
 	OBABookmarkEditExisting=1
 } OBABookmarkEditType;
 
-
 @interface OBAEditBookmarkViewController : UITableViewController <OBAModelServiceDelegate> {
 	OBAApplicationContext * _appContext;
 	OBABookmarkEditType _editType;
@@ -31,6 +30,12 @@ typedef enum {
 	NSMutableArray * _requests;
 	NSMutableDictionary * _stops;
 	UITextField * _textField;
+    
+    id<NSObject> _onSuccessTarget;
+    SEL _onSuccessAction;
+    
+    id<NSObject> _onCancelTarget;
+    SEL _onCancelAction;
 }
 
 - (id) initWithApplicationContext:(OBAApplicationContext*)appContext bookmark:(OBAPlace*)bookmark editType:(OBABookmarkEditType)editType;
@@ -38,4 +43,10 @@ typedef enum {
 - (IBAction) onCancelButton:(id)sender;
 - (IBAction) onSaveButton:(id)sender;
 
+- (void) setOnSuccessTarget:(id<NSObject>)target action:(SEL)action;
+- (void) setOnCancelTarget:(id<NSObject>)target action:(SEL)action;
+
+@property (nonatomic) BOOL popToRootOnCompletion;
+
 @end
+
