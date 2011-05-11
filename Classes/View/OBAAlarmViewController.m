@@ -66,6 +66,7 @@ static const NSInteger kAlarmTimeOffsetValues[] = {0,1,2,3,4,5,6,7,8,9,10,15,20,
         _alarmTimeOffsetLabels = values;
         
         self.navigationItem.title = _alarmSet ? @"Alarm Set" : @"Set Alarm";
+        self.hidesBottomBarWhenPushed = TRUE;
     }
     return self;
 }
@@ -82,7 +83,7 @@ static const NSInteger kAlarmTimeOffsetValues[] = {0,1,2,3,4,5,6,7,8,9,10,15,20,
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 3;
+    return 4;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
@@ -101,6 +102,9 @@ static const NSInteger kAlarmTimeOffsetValues[] = {0,1,2,3,4,5,6,7,8,9,10,15,20,
     else if( section == 1 ) {
         return @"Alarm timing:";
     }
+    else if( section == 3) {
+        return @"Note: The alarm is NOT automatically adjusted if you change your current location.  Choosing a new itinerary resets any active alarms.";
+    }
     
     return nil;
 }
@@ -112,6 +116,8 @@ static const NSInteger kAlarmTimeOffsetValues[] = {0,1,2,3,4,5,6,7,8,9,10,15,20,
         case 1:
         case 2:
             return 1;
+        case 3:
+            return 0;
         default:
             break;
     }

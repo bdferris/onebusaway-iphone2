@@ -2718,7 +2718,7 @@
 					Libraries/three20/Build/Products/three20,
 				);
 				INFOPLIST_FILE = Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 3.1.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 4.0;
 				OTHER_LDFLAGS = (
 					"-ObjC",
 					"-weak_framework",
@@ -2748,7 +2748,7 @@
 					Libraries/three20/Build/Products/three20,
 				);
 				INFOPLIST_FILE = Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 3.1.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 4.0;
 				OTHER_LDFLAGS = (
 					"-ObjC",
 					"-weak_framework",
@@ -2821,20 +2821,22 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Brian Ferris (2FY7X4V97G)";
+				CODE_SIGN_IDENTITY = "iPhone Distribution: Brian Ferris";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Brian Ferris";
 				COPY_PHASE_STRIP = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = org_onebusaway_iphone2_Prefix.pch;
 				GCC_VERSION = com.apple.compilers.llvmgcc42;
 				INFOPLIST_FILE = Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 3.1.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 4.0;
 				OTHER_LDFLAGS = (
 					"-weak_framework",
 					MapKit,
 				);
 				PRODUCT_NAME = "OBA Blue";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "6B2A2AA7-6413-413F-A249-D09F1497625F";
+				PROVISIONING_PROFILE = "E99DC7BA-172A-4102-B86F-361D194C23C5";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "E99DC7BA-172A-4102-B86F-361D194C23C5";
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -2871,7 +2873,7 @@
 				GCC_PREFIX_HEADER = org_onebusaway_iphone2_Prefix.pch;
 				GCC_VERSION = com.apple.compilers.llvmgcc42;
 				INFOPLIST_FILE = Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 3.1.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 4.0;
 				OTHER_LDFLAGS = (
 					"-weak_framework",
 					MapKit,
