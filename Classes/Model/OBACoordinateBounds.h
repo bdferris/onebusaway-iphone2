@@ -17,7 +17,7 @@
 #import <Foundation/Foundation.h>
 
 
-@interface OBACoordinateBounds : NSObject {
+@interface OBACoordinateBounds : NSObject <NSCoding> {
 	BOOL _empty;	
 	double _minLatitude;
 	double _minLongitude;	
@@ -25,10 +25,15 @@
 	double _maxLongitude;
 }
 
-- (id) init;
+- (id) initWithBounds:(OBACoordinateBounds*)bounds;
+- (id) initWithRegion:(MKCoordinateRegion)region;
 + (id) bounds;
 
 @property (nonatomic,readonly) BOOL empty;
+@property (nonatomic) double minLatitude;
+@property (nonatomic) double maxLatitude;
+@property (nonatomic) double minLongitude;
+@property (nonatomic) double maxLongitude;
 @property (nonatomic,readonly) MKCoordinateRegion region;
 @property (nonatomic,readonly) CLLocationCoordinate2D center;
 @property (nonatomic,readonly) MKCoordinateSpan span;
@@ -37,6 +42,7 @@
 - (void) addCoordinate:(CLLocationCoordinate2D)coordinate;
 - (void) addLocation:(CLLocation*)location;
 - (void) addLocations:(NSArray*)locations;
+- (void) addRegion:(MKCoordinateRegion)region;
 
 - (void) expandByRatio:(double)ratio;
 

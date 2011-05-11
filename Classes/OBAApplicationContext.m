@@ -30,6 +30,8 @@
 #import "OBAStopIconFactory.h"
 
 #import "OBATripController.h"
+#import "OBATripViewController.h"
+
 
 #import "IASKAppSettingsViewController.h"
 
@@ -216,6 +218,15 @@ static const NSUInteger kTagSettingsView = 3;
     CLLocation * location = _locationManager.currentLocation;
 	if( location )
 		_modelDao.mostRecentLocation = location;
+    
+    NSArray * vcs = _navController.viewControllers;
+    if( vcs && [vcs count] > 0 ) {
+        OBATripViewController * vc = [vcs objectAtIndex:0];
+        MKMapView * mapView = vc.mapView;
+        OBACoordinateBounds * bounds = [[OBACoordinateBounds alloc] initWithRegion:mapView.region];
+        _modelDao.mostRecentMapBounds = bounds;
+        [bounds release];
+    }
 	
 	[self saveState];
 }

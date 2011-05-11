@@ -103,7 +103,10 @@
     
     self.mapView.showsUserLocation = TRUE;
 
-    
+    OBACoordinateBounds * bounds = self.appContext.modelDao.mostRecentMapBounds;
+    if( bounds && ! bounds.empty )
+        [_mapRegionManager setRegion:bounds.region];
+        
     UILongPressGestureRecognizer *longPressGesture = [[UILongPressGestureRecognizer alloc]
                                                       initWithTarget:self 
                                                       action:@selector(handleMapLongPressGesture:)];
@@ -132,12 +135,14 @@
     _uiRefreshTimer = [[NSTimer scheduledTimerWithTimeInterval:15 target:self selector:@selector(refreshUI) userInfo:nil repeats:TRUE] retain];
     
     OBAModelDAO * modelDao = self.appContext.modelDao;
+    
     for( OBAPlace * place in modelDao.droppedPins ) {
         OBAPlaceAnnotation * annotation = [[OBAPlaceAnnotation alloc] initWithPlace:place];
-        [_droppedPinAnnotations addObject:annotation];        
+        [_droppedPinAnnotations addObject:annotation];
+        [annotation release];
     }
     [self.mapView addAnnotations:_droppedPinAnnotations];
-     
+    
     [modelDao addObserver:self forKeyPath:@"droppedPins" options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld context:nil];
 }
 
@@ -147,6 +152,10 @@
     
     OBAModelDAO * modelDao = self.appContext.modelDao;
     [modelDao removeObserver:self forKeyPath:@"droppedPins"];
+    
+    OBACoordinateBounds * bounds = [[OBACoordinateBounds alloc] initWithRegion:mapView.region];
+    modelDao.mostRecentMapBounds = bounds;
+    [bounds release];
     
     [self.mapView removeAnnotations:_droppedPinAnnotations];
     [_droppedPinAnnotations removeAllObjects];
@@ -302,7 +311,7 @@
 - (MKOverlayView *)mapView:(MKMapView *)mapView viewForOverlay:(id)overlay {
 
     if( [overlay isKindOfClass:[MKPolyline class]] ) {
-        MKPolylineView * pv = [[MKPolylineView alloc] initWithPolyline:(MKPolyline*)overlay];
+        MKPolylineView * pv = [[[MKPolylineView alloc] initWithPolyline:(MKPolyline*)overlay] autorelease];
         pv.fillColor = [UIColor blackColor];
         pv.strokeColor = [UIColor blackColor];
         pv.lineWidth = 5;
@@ -310,7 +319,7 @@
 	}
     else if( [overlay isKindOfClass:[OBATripPolyline class]] ) {
         OBATripPolyline * tp = overlay;
-        MKPolylineView * pv = [[MKPolylineView alloc] initWithPolyline:tp.polyline];
+        MKPolylineView * pv = [[[MKPolylineView alloc] initWithPolyline:tp.polyline] autorelease];
         UIColor * color = ( tp.polylineType == OBATripPolylineTypeTransitLeg ) ? [UIColor blueColor] : [UIColor blackColor];
         pv.fillColor = color;
         pv.strokeColor = color;
@@ -437,7 +446,6 @@
 #pragma mark Key-Value Observing
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
-    NSLog(@"Hey!");
     NSNumber * kind = [change objectForKey:NSKeyValueChangeKindKey];
     switch ([kind intValue]) {
         case NSKeyValueChangeInsertion: {
@@ -446,13 +454,14 @@
                 OBAPlaceAnnotation * annotation = [[OBAPlaceAnnotation alloc] initWithPlace:place];
                 annotation.animatesDrop = TRUE;
                 [self.mapView addAnnotation:annotation];
+                [_droppedPinAnnotations addObject:annotation];
                 [annotation release];
             }
             break;
         }
         case NSKeyValueChangeRemoval: {
             NSArray * newDroppedPins = [change objectForKey:NSKeyValueChangeOldKey];
-            NSLog(@"What?");
+            NSLog(@"What: %d", [newDroppedPins count]);
             break;
         }            
         default:

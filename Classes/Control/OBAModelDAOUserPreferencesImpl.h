@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-//#import <Foundation/Foundation.h>
+#import "OBACoordinateBounds.h"
 
 
 @interface OBAModelDAOUserPreferencesImpl : NSObject  {
@@ -32,6 +32,9 @@
 
 - (NSArray*) readMostRecentStops;
 - (void) writeMostRecentStops:(NSArray*)source;
+
+- (OBACoordinateBounds*) readMostRecentMapBounds;
+- (void) writeMostRecentMapBounds:(OBACoordinateBounds*)mostRecentMapBounds;
 
 - (NSDictionary*) readStopPreferences;
 - (void) writeStopPreferences:(NSDictionary*)stopPreferences;

@@ -7,6 +7,7 @@
     OBAApplicationContext * _appContext;
     OBATripState * _tripState;
     OBATripStateCellType _cellType;
+    OBAAlarmType _alarmType;
     OBATripStateTableViewCellFactory * _cellFactory;
     BOOL _alarmSet;
     NSInteger _alarmTimeOffset;

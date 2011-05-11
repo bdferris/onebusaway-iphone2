@@ -1,12 +1,5 @@
-//
-//  OBAPickTripViewController.m
-//  org.onebusaway.iphone2
-//
-//  Created by Brian Ferris on 4/5/11.
-//  Copyright 2011 __MyCompanyName__. All rights reserved.
-//
-
 #import "OBAPickTripViewController.h"
+#import "OBAReportProblemWithPlannedTripViewController.h"
 
 
 @implementation OBAPickTripViewController
@@ -61,10 +54,7 @@
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
     NSArray * itineraries = _appContext.tripController.itineraries;
-    NSInteger count = [itineraries count];
-    if( count == 0 )
-        count++;
-    return count;
+    return [itineraries count] + 1;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -77,8 +67,19 @@
         return cell;
     }
     
-    OBAItineraryV2 * itinerary = [itineraries objectAtIndex:indexPath.row];
-    return [_tripStateTableViewCellFactory createCellForTripSummary:itinerary];
+    if ([itineraries count] == indexPath.row) {
+        UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView cellId:@"NoItineraries"];
+        cell.textLabel.text = @"Missing a trip?";
+        cell.textLabel.font = [UIFont systemFontOfSize:17.0];
+        cell.textLabel.textAlignment = UITextAlignmentLeft;
+        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        cell.selectionStyle = UITableViewCellSelectionStyleBlue;
+        return cell;
+    }
+    else {
+        OBAItineraryV2 * itinerary = [itineraries objectAtIndex:indexPath.row];
+        return [_tripStateTableViewCellFactory createCellForTripSummary:itinerary];
+    }
 }
 
 #pragma mark - Table view delegate
@@ -90,10 +91,16 @@
         return;
     }
     
-    [self.navigationController popToRootViewControllerAnimated:TRUE];
-    
-    OBAItineraryV2 * itinerary = [itineraries objectAtIndex:indexPath.row];
-    [_appContext.tripController selectItinerary:itinerary];
+    if ([itineraries count] == indexPath.row) {
+        OBAReportProblemWithPlannedTripViewController * vc = [[OBAReportProblemWithPlannedTripViewController alloc] initWithApplicationContext:_appContext];
+        [self.navigationController pushViewController:vc animated:TRUE];
+        [vc release];         
+    }
+    else {
+        [self.navigationController popToRootViewControllerAnimated:TRUE];
+        OBAItineraryV2 * itinerary = [itineraries objectAtIndex:indexPath.row];
+        [_appContext.tripController selectItinerary:itinerary];
+    }
 }
 
 #pragma mark OBATripControllerDelegate

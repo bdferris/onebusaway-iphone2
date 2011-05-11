@@ -19,6 +19,7 @@
 #import "OBAStopAccessEventV2.h"
 #import "OBAStopPreferencesV2.h"
 #import "OBAServiceAlertsModel.h"
+#import "OBACoordinateBounds.h"
 
 
 @class OBAModelDAOUserPreferencesImpl;
@@ -28,6 +29,7 @@
 	NSMutableArray * _bookmarks;
     NSMutableArray * _recentPlaces;
     NSMutableArray * _droppedPins;
+    OBACoordinateBounds * _mostRecentMapBounds;
 	NSMutableArray * _mostRecentStops;
 	NSMutableDictionary * _stopPreferences;
 	CLLocation * _mostRecentLocation;
@@ -37,8 +39,10 @@
 @property (nonatomic,readonly) NSArray * bookmarks;
 @property (nonatomic,readonly) NSArray * recentPlaces;
 @property (nonatomic,readonly) NSArray * droppedPins;
+@property (nonatomic,assign) OBACoordinateBounds * mostRecentMapBounds;
 @property (nonatomic,readonly) NSArray * mostRecentStops;
 @property (nonatomic,assign) CLLocation * mostRecentLocation;
+
 
 - (void) addNewBookmark:(OBAPlace*)place error:(NSError**)error;
 - (void) saveExistingBookmark:(OBAPlace*)bookmark error:(NSError**)error;

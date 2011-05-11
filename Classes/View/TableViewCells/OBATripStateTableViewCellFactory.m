@@ -185,13 +185,16 @@ typedef struct  {
 }
 
 - (UITableViewCell*) createCellForTripSummary:(OBAItineraryV2*)itinerary {
+    
     OBATripSummaryTableViewCell * cell = [self getOrCreateCellFromNibNamed:@"OBATripSummaryTableViewCell"];
     UIView * contentView = cell.contentView;
     double x = 7;
+    BOOL hasTransitLeg = FALSE;
+
     for( OBALegV2 * leg in itinerary.legs ) {
         OBATransitLegV2 * transitLeg = leg.transitLeg;
         
-        if( transitLeg ) {
+        if( transitLeg && transitLeg.fromStop) {
             
             OBAStopIconFactory * factory = _appContext.stopIconFactory;
             UIImage * img = [factory getModeIconForRoute:transitLeg.trip.route];
@@ -208,7 +211,18 @@ typedef struct  {
             [contentView addSubview:label];
             x = CGRectGetMaxX(label.frame) + 5;
             [label release];
+            
+            hasTransitLeg = TRUE;
         }
+    }
+    
+    if (! hasTransitLeg) {
+        UILabel * label = [[UILabel alloc] initWithFrame:CGRectMake(x, 8, 22, 15)];
+        label.text = @"Walk";
+        label.font = [UIFont boldSystemFontOfSize:12];
+        [label sizeToFit];
+        [contentView addSubview:label];
+        [label release];
     }
     
     NSString * startTime = [_timeFormatter stringFromDate:itinerary.startTime];

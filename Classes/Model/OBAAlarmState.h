@@ -1,15 +1,14 @@
-#import "OBATripState.h"
-#import "OBAArrivalAndDepartureInstanceRef.h"
+#import "OBAAlarmRef.h"
 
 
 @interface OBAAlarmState : NSObject {
-    
+    OBAAlarmRef * _alarmRef;
 }
 
-@property (nonatomic,retain) OBATripState * tripState;        
+- (id) initWithAlarmRef:(OBAAlarmRef*)alarmRef;
+
+@property (nonatomic,readonly) OBAAlarmRef * alarmRef;
 @property (nonatomic,retain) NSString * alarmId;
-@property (nonatomic,retain) OBAArrivalAndDepartureInstanceRef * instanceRef;
-@property (nonatomic) BOOL onArrival;
 @property (nonatomic) NSInteger alarmTimeOffset;
 @property (nonatomic) NSInteger userAlarmTimeOffset;
 @property (nonatomic,retain) NSDictionary * notificationOptions;

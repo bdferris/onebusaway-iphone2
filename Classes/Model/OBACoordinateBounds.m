@@ -20,11 +20,48 @@
 @implementation OBACoordinateBounds
 
 @synthesize empty = _empty;
+@synthesize minLatitude = _minLatitude;
+@synthesize maxLatitude = _maxLatitude;
+@synthesize minLongitude = _minLongitude;
+@synthesize maxLongitude = _maxLongitude;
 
 - (id) init {
     self = [super init];
 	if( self ) {
 		_empty = TRUE;
+	}
+	return self;
+}
+
+- (id) initWithBounds:(OBACoordinateBounds*)bounds {
+    self = [super init];
+    if (self) {
+        _empty = bounds.empty;
+        _minLatitude = bounds.minLatitude;
+        _maxLatitude = bounds.maxLatitude;
+        _minLongitude = bounds.minLongitude;
+        _maxLongitude = bounds.maxLongitude;
+    }
+    return self;
+}
+
+- (id) initWithRegion:(MKCoordinateRegion)region {
+    self = [super init];
+    if( self ) {
+        _empty = TRUE;
+        [self addRegion:region];
+    }
+    return self;
+}
+
+- (id) initWithCoder:(NSCoder*)coder {
+    self = [super init];
+	if( self ) {
+        _empty = [coder decodeBoolForKey:@"empty"];
+        _minLatitude = [coder decodeDoubleForKey:@"minLatitude"];
+        _maxLatitude = [coder decodeDoubleForKey:@"maxLatitude"];
+        _minLongitude = [coder decodeDoubleForKey:@"minLongitude"];
+        _maxLongitude = [coder decodeDoubleForKey:@"maxLongitude"];
 	}
 	return self;
 }
@@ -53,6 +90,13 @@
 		span.longitudeDelta = _maxLongitude - _minLongitude;
 	}
 	return span;
+}
+
+- (void) addRegion:(MKCoordinateRegion)region {
+    CLLocationCoordinate2D c = region.center;
+    MKCoordinateSpan span = region.span;
+    [self addLat:c.latitude-span.latitudeDelta/2 lon:c.longitude-span.longitudeDelta/2];
+    [self addLat:c.latitude+span.latitudeDelta/2 lon:c.longitude+span.longitudeDelta/2];
 }
 
 - (void) addLocations:(NSArray*)locations {
@@ -94,6 +138,20 @@
     _minLatitude -= latDelta;
     _maxLongitude += lonDelta;
     _minLongitude -= lonDelta;
+}
+
+- (NSString*) description {
+    return [NSString stringWithFormat:@"%f %f %f %f",_minLatitude,_minLongitude,_maxLatitude,_maxLongitude];
+}
+
+#pragma mark NSCoder Methods
+
+- (void) encodeWithCoder: (NSCoder *)coder {
+    [coder encodeBool:_empty forKey:@"empty"];
+    [coder encodeDouble:_minLatitude forKey:@"minLatitude"];
+    [coder encodeDouble:_maxLatitude forKey:@"maxLatitude"];
+    [coder encodeDouble:_minLongitude forKey:@"minLongitude"];
+    [coder encodeDouble:_maxLongitude forKey:@"maxLongitude"];
 }
 
 @end

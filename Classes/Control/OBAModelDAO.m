@@ -40,6 +40,7 @@ const static int kMaxEntriesInMostRecentList = 10;
 		_bookmarks = [[NSMutableArray alloc] initWithArray:[_preferencesDao readBookmarks]];
         _recentPlaces = [[NSMutableArray alloc] initWithArray:[_preferencesDao readRecentPlaces]];
         _droppedPins = [[NSMutableArray alloc] initWithArray:[_preferencesDao readDroppedPins]];
+        _mostRecentMapBounds = [[_preferencesDao readMostRecentMapBounds] retain];
 		_mostRecentStops = [[NSMutableArray alloc] initWithArray:[_preferencesDao readMostRecentStops]];
 		_stopPreferences = [[NSMutableDictionary alloc] initWithDictionary:[_preferencesDao readStopPreferences]];
 		_mostRecentLocation = [[_preferencesDao readMostRecentLocation] retain];
@@ -52,6 +53,7 @@ const static int kMaxEntriesInMostRecentList = 10;
 	[_bookmarks release];
     [_recentPlaces release];
     [_droppedPins release];
+    [_mostRecentMapBounds release];
 	[_mostRecentStops release];
 	[_stopPreferences release];
 	[_mostRecentLocation release];
@@ -82,6 +84,17 @@ const static int kMaxEntriesInMostRecentList = 10;
 - (void) setMostRecentLocation:(CLLocation*)location {
 	_mostRecentLocation = [NSObject releaseOld:_mostRecentLocation retainNew:location];
 	[_preferencesDao writeMostRecentLocation:location];
+}
+
+- (void) setMostRecentMapBounds:(OBACoordinateBounds *)mostRecentMapBounds {
+    mostRecentMapBounds = [[OBACoordinateBounds alloc] initWithBounds:mostRecentMapBounds];
+    _mostRecentMapBounds = [NSObject releaseOld:_mostRecentMapBounds retainNew:mostRecentMapBounds];
+    [_preferencesDao writeMostRecentMapBounds:mostRecentMapBounds];
+    [mostRecentMapBounds release];
+}
+
+- (OBACoordinateBounds*) mostRecentMapBounds {
+    return _mostRecentMapBounds;
 }
 
 - (void) addStopAccessEvent:(OBAStopAccessEventV2*)event {
@@ -174,6 +187,8 @@ const static int kMaxEntriesInMostRecentList = 10;
             [indices addIndex:index];
     }
     [_recentPlaces removeObjectsAtIndexes:indices];
+    
+    [indices release];
     
     [_recentPlaces insertObject:place atIndex:0];
 	[_preferencesDao writeRecentPlaces:_recentPlaces];

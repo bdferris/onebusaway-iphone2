@@ -26,10 +26,26 @@ static const NSInteger kAlarmTimeOffsetValues[] = {0,1,2,3,4,5,6,7,8,9,10,15,20,
         _tripState = [tripState retain];
         _cellType = cellType;
         
+        switch (cellType) {
+            case OBATripStateCellTypeStartTime:
+                _alarmType = OBAAlarmTypeStart;
+                break;
+            case OBATripStateCellTypeDeparture:
+                _alarmType = OBAAlarmTypeDeparture;
+                break;
+            case OBATripStateCellTypeArrival:
+                _alarmType = OBAAlarmTypeArrival;
+                break;
+            default:
+                NSLog(@"Unsupported cell type for alarm: %d", _cellType);
+                _alarmType = OBAAlarmTypeDeparture;
+                break;
+        }
+
         _cellFactory = [[OBATripStateTableViewCellFactory alloc] initWithAppContext:_appContext navigationController:self.navigationController tableView:self.tableView];
         
-        _alarmSet = [_appContext.tripController isAlarmEnabledForTripState:_tripState];
-        _alarmTimeOffset = [_appContext.tripController getAlarmTimeOffsetForTripState:_tripState];
+        _alarmSet = [_appContext.tripController isAlarmEnabledForType:_alarmType tripState:tripState];
+        _alarmTimeOffset = [_appContext.tripController getAlarmTimeOffsetForType:_alarmType tripState:tripState];
         
         NSMutableArray * values = [[NSMutableArray alloc] init];
         [values addObject:@"No offset"];
@@ -196,10 +212,14 @@ static const NSInteger kAlarmTimeOffsetValues[] = {0,1,2,3,4,5,6,7,8,9,10,15,20,
     cell.textLabel.font = [UIFont boldSystemFontOfSize:17.0];
     cell.textLabel.textAlignment = UITextAlignmentCenter;
     
-    if( _alarmSet ) 
+    if( _alarmSet ) {
         cell.textLabel.text = @"Delete this alarm";
-    else
+        cell.textLabel.textColor = [UIColor redColor];
+    }
+    else {
         cell.textLabel.text = @"Set alarm";
+        cell.textLabel.textColor = [UIColor colorWithRed:0.22 green:0.33 blue:0.53 alpha:1.0];
+    }
     
     return cell;
 }
@@ -230,7 +250,7 @@ static const NSInteger kAlarmTimeOffsetValues[] = {0,1,2,3,4,5,6,7,8,9,10,15,20,
 }
 
 - (void) didSelectActionRowAtIndexPath:(NSIndexPath*)indexPath {
-    [_appContext.tripController updateAlarm:!_alarmSet forTripState:_tripState alarmTimeOffset:_alarmTimeOffset];
+    [_appContext.tripController updateAlarm:!_alarmSet withType:_alarmType tripState:_tripState alarmTimeOffset:_alarmTimeOffset];
     [self.navigationController popViewControllerAnimated:TRUE];
 }
 

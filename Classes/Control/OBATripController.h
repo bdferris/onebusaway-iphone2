@@ -3,6 +3,7 @@
 #import "OBATripQuery.h"
 #import "OBAItinerariesV2.h"
 #import "OBATripState.h"
+#import "OBAAlarmState.h"
 
 
 @protocol OBATripControllerDelegate <NSObject>
@@ -12,7 +13,6 @@
 -(void) refreshingItinerariesFailed:(NSError*)error;
 -(void) refreshTripState:(OBATripState*)tripState;
 @end
-
 
 @interface OBATripController : NSObject <OBAModelServiceDelegate> {
     id<OBATripControllerDelegate> _delegate;
@@ -52,9 +52,9 @@
 - (void) moveToNextState;
 - (void) moveToCurrentState;
 
-- (void) updateAlarm:(BOOL)enabled forTripState:(OBATripState*)tripState alarmTimeOffset:(NSInteger)alertTimeOffest;
-- (BOOL) isAlarmEnabledForTripState:(OBATripState*)tripState;
-- (NSInteger) getAlarmTimeOffsetForTripState:(OBATripState*)tripState;
+- (BOOL) isAlarmEnabledForType:(OBAAlarmType)alarmType tripState:(OBATripState*)tripState;
+- (void) updateAlarm:(BOOL)enabled withType:(OBAAlarmType)alarmType tripState:(OBATripState*)tripState alarmTimeOffset:(NSInteger)alarmTimeOffset;
+- (NSInteger) getAlarmTimeOffsetForType:(OBAAlarmType)alarmType tripState:(OBATripState*)tripState;
 - (void) handleAlarm:(NSString*)alarmId;
 
 @end

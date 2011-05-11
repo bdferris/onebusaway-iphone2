@@ -56,10 +56,14 @@ static const double kRegionExpansionRatio = 0.1;
 - (OBATripState*) computeSummaryState;
 - (OBATripState*) createTripState;
 
-- (OBAAlarmState*) getAlarmStateForTripState:(OBATripState*)tripState create:(BOOL)create;
-- (void) populateAlarmState:(OBAAlarmState*)alarmState;
+- (OBAAlarmRef*) getAlarmRefForType:(OBAAlarmType)alarmType tripState:(OBATripState*)tripState;
+- (OBAAlarmState*) getAlarmStateForRef:(OBAAlarmRef*)alarmRef;
+- (OBAAlarmState*) createAlarmWithRef:(OBAAlarmRef*)alarmRef tripState:(OBATripState*)tripState alarmTimeOffset:(NSInteger)alarmTimeOffset;
 - (void) registerAlarm:(OBAAlarmState*)alarmState;
 - (void) updateAlarmsWithMatchPreviousItinerary:(BOOL)matchPreviousItinerary;
+- (BOOL) hasStartTripAlarmMatch:(OBAAlarmRef*)alarmRef;
+- (BOOL) hasDepartureAlarmMatch:(OBAAlarmRef*)alarmRef;
+- (BOOL) hasArrivalAlarmMatch:(OBAAlarmRef*)alarmRef;
 - (void) cancelAlarm:(OBAAlarmState*)alarmState;
 - (void) cancelAlarms:(NSArray*)alarms;
 - (void) cancelAllAlarms;
@@ -166,7 +170,6 @@ static const double kRegionExpansionRatio = 0.1;
 
 - (void) refresh {
     
-    
     [self clearRefreshTimer];
     [self clearQueryRequest];
     
@@ -195,8 +198,9 @@ static const double kRegionExpansionRatio = 0.1;
         NSString * json =[jsonFactory stringWithObject:_currentItinerary.rawData error:&error];
         if( json )
             [options setObject:json forKey:@"includeSelectedItinerary"];
+        [jsonFactory release];         
     }
-    [self.modelService planTripFrom:from.coordinate to:to.coordinate time:t arriveBy:arriveBy options:options delegate:self context:nil];
+    _queryRequest = [[self.modelService planTripFrom:from.coordinate to:to.coordinate time:t arriveBy:arriveBy options:options delegate:self context:[NSNumber numberWithInt:_queryIndex]] retain];
     [options release];
 }
 
@@ -243,30 +247,45 @@ static const double kRegionExpansionRatio = 0.1;
     [self refreshTripState];
 }
 
-- (void) updateAlarm:(BOOL)enabled forTripState:(OBATripState*)tripState alarmTimeOffset:(NSInteger)alarmTimeOffset {
+- (BOOL) isAlarmEnabledForType:(OBAAlarmType)alarmType tripState:(OBATripState*)tripState {
+    OBAAlarmRef * alarmRef = [self getAlarmRefForType:alarmType tripState:tripState];
+    OBAAlarmState * alarmState = [self getAlarmStateForRef:alarmRef];
+    return alarmState != nil;
+}
+
+- (void) updateAlarm:(BOOL)enabled withType:(OBAAlarmType)alarmType tripState:(OBATripState*)tripState alarmTimeOffset:(NSInteger)alarmTimeOffset {
+
+    OBAAlarmRef * alarmRef = [self getAlarmRefForType:alarmType tripState:tripState];
+    if (!alarmRef)
+        return;
+
     if( enabled ) {
-        OBAAlarmState * alarmState = [self getAlarmStateForTripState:tripState create:TRUE];
-        alarmState.userAlarmTimeOffset = alarmTimeOffset;
-        [self registerAlarm:alarmState];
+        OBAAlarmState * alarmState = [self getAlarmStateForRef:alarmRef];
+        // You can't update an existing alarm
+        if (! alarmState) {
+            OBAAlarmState * alarmState = [self createAlarmWithRef:alarmRef tripState:tripState alarmTimeOffset:alarmTimeOffset];
+            [_currentAlarms addObject:alarmState];
+            [self registerAlarm:alarmState];
+        }
     }
     else {
-        OBAAlarmState * alarmState = [self getAlarmStateForTripState:tripState create:FALSE];
+        OBAAlarmState * alarmState = [self getAlarmStateForRef:alarmRef];
         if( alarmState )
             [self cancelAlarm:alarmState];        
     }
 }
 
-- (BOOL) isAlarmEnabledForTripState:(OBATripState*)tripState {
-    OBAAlarmState * alarmState = [self getAlarmStateForTripState:tripState create:FALSE];
-    return alarmState != nil;
-}
+- (NSInteger) getAlarmTimeOffsetForType:(OBAAlarmType)alarmType tripState:(OBATripState*)tripState {
+    
+    OBAAlarmRef * alarmRef = [self getAlarmRefForType:alarmType tripState:tripState];
+    
+    if (alarmRef) {
+        OBAAlarmState * alarmState = [self getAlarmStateForRef:alarmRef];
+        if( alarmState )
+            return alarmState.userAlarmTimeOffset;
+    }
 
-- (NSInteger) getAlarmTimeOffsetForTripState:(OBATripState*)tripState {
-    OBAAlarmState * alarmState = [self getAlarmStateForTripState:tripState create:FALSE];
-    if( alarmState )
-        return alarmState.userAlarmTimeOffset;
-    else
-        return 60;
+    return 60;
 }
 
 - (void) handleAlarm:(NSString*)alarmId {
@@ -403,6 +422,8 @@ static const double kRegionExpansionRatio = 0.1;
     
     OBATripState * prevState = nil;
     if (matchPreviousItinerary) {
+        if (_currentStateIndex < 0 || _currentStateIndex >= [_currentStates count] )
+            NSLog(@"bad: %d", _currentStateIndex);
         prevState = [_currentStates objectAtIndex:_currentStateIndex];
         [prevState retain];
     }
@@ -605,62 +626,83 @@ static const double kRegionExpansionRatio = 0.1;
     [bounds expandByRatio:kRegionExpansionRatio];
     return bounds.region;
 }
+                                      
+- (OBAAlarmRef*) getAlarmRefForType:(OBAAlarmType)alarmType tripState:(OBATripState*)tripState {
 
-- (OBAAlarmState*) getAlarmStateForTripState:(OBATripState*)tripState create:(BOOL)create {
-
-    for( OBAAlarmState * alarmState in _currentAlarms ) {
-        if( alarmState.tripState == tripState )
-            return alarmState;
-    }
-    
-    if( create ) {
-        OBAAlarmState * alarmState = [[[OBAAlarmState alloc] init] autorelease];
-        alarmState.tripState = tripState;
-        [self populateAlarmState:alarmState];        
-        [_currentAlarms addObject:alarmState];
-        return alarmState;
+    switch (alarmType) {
+        case OBAAlarmTypeStart: {
+            OBAItineraryV2 * itinerary = tripState.itinerary;
+            OBALegV2 * leg = [itinerary firstTransitLeg];
+            if( leg ) {
+                OBATransitLegV2 * transitLeg = leg.transitLeg;
+                return [[[OBAAlarmRef alloc] initWithType:alarmType instanceRef:transitLeg.departureInstanceRef] autorelease];
+            } 
+            
+            return nil;
+        }
+        case OBAAlarmTypeDeparture: {
+            OBATransitLegV2 * departure = tripState.departure;
+            return [[[OBAAlarmRef alloc] initWithType:alarmType instanceRef:departure.departureInstanceRef] autorelease];
+        }
+        case OBAAlarmTypeArrival: {
+            OBATransitLegV2 * arrival = tripState.arrival;
+            return [[[OBAAlarmRef alloc] initWithType:alarmType instanceRef:arrival.arrivalInstanceRef] autorelease];
+        }
+        default:
+            break;
     }
     
     return nil;
 }
 
-- (void) populateAlarmState:(OBAAlarmState*)alarmState {
+- (OBAAlarmState*) getAlarmStateForRef:(OBAAlarmRef*)alarmRef {
     
-    OBATripState * tripState = alarmState.tripState;
+    for( OBAAlarmState * alarmState in _currentAlarms ) {
+        if( [alarmState.alarmRef isEqualToAlarmRef:alarmRef] )
+            return alarmState;
+    }
+    
+    return nil;
+}
+
+- (OBAAlarmState*) createAlarmWithRef:(OBAAlarmRef*)alarmRef tripState:(OBATripState*)tripState alarmTimeOffset:(NSInteger)alarmTimeOffset {
+    
+    OBAAlarmState * alarmState = [[[OBAAlarmState alloc] initWithAlarmRef:alarmRef] autorelease];
+    alarmState.userAlarmTimeOffset = alarmTimeOffset;
     
     NSMutableDictionary * notificationOptions = [[NSMutableDictionary alloc] init];
     alarmState.notificationOptions = notificationOptions;
     
     [notificationOptions setObject:@"default" forKey:@"sound"];
     
-    if( tripState.startTime ) {
+    switch (alarmRef.alarmType) {
+        case OBAAlarmTypeStart:
+            [notificationOptions setObject:@"Time to start your trip!" forKey:@"alertBody"];
+            break;
+        case OBAAlarmTypeDeparture:
+            [notificationOptions setObject:@"Your departure is coming up!" forKey:@"alertBody"];
+            break;
+        case OBAAlarmTypeArrival:
+            [notificationOptions setObject:@"Your arrival is coming up!" forKey:@"alertBody"];
+            break;
+        default:
+            break;
+    }
+    
+    if( alarmRef.alarmType == OBAAlarmTypeStart ) {
         OBAItineraryV2 * itinerary = tripState.itinerary;
         OBALegV2 * leg = [itinerary firstTransitLeg];
         if( leg ) {
-            OBATransitLegV2 * transitLeg = leg.transitLeg;
             NSDate * startTime = itinerary.startTime;
             NSDate * legTime = leg.startTime;
             NSTimeInterval interval = [legTime timeIntervalSinceDate:startTime];
-            alarmState.instanceRef = transitLeg.departureInstanceRef;
-            alarmState.onArrival = FALSE;
             alarmState.alarmTimeOffset = interval;
-            [notificationOptions setObject:@"Time to start your trip!" forKey:@"alertBody"];
         }        
-    }
-    else if( tripState.departure ) {
-        OBATransitLegV2 * departure = tripState.departure;
-        alarmState.instanceRef = departure.departureInstanceRef;
-        alarmState.onArrival = FALSE;
-        [notificationOptions setObject:@"Your departure is coming up!" forKey:@"alertBody"];
-    }
-    else if( tripState.arrival ) {
-        OBATransitLegV2 * arrival = tripState.arrival;
-        alarmState.instanceRef = arrival.arrivalInstanceRef;
-        alarmState.onArrival = TRUE;
-        [notificationOptions setObject:@"Your arrival is coming up!" forKey:@"alertBody"];
     }
     
     [notificationOptions release];
+    
+    return alarmState;
 }
 
 - (void) registerAlarm:(OBAAlarmState*)alarmState {
@@ -668,8 +710,9 @@ static const double kRegionExpansionRatio = 0.1;
     if( alarmState.alarmId )
         return;
     
-    OBAArrivalAndDepartureInstanceRef * ref = alarmState.instanceRef;
-    BOOL onArrival = alarmState.onArrival;
+    OBAAlarmRef * alarmRef = alarmState.alarmRef;
+    OBAArrivalAndDepartureInstanceRef * ref = alarmRef.instanceRef;
+    BOOL onArrival = alarmRef.alarmType == OBAAlarmTypeArrival;
     NSInteger alarmTimeOffset = alarmState.alarmTimeOffset + alarmState.userAlarmTimeOffset;
     NSDictionary * notificationOptions = alarmState.notificationOptions;
     
@@ -681,13 +724,26 @@ static const double kRegionExpansionRatio = 0.1;
     NSMutableArray * alarmsToKeep = [[NSMutableArray alloc] init];
     NSMutableArray * alarmsToCancel = [[NSMutableArray alloc] init];
 
-    if (matchPreviousItinerary) {
+    if (matchPreviousItinerary && _currentItinerary) {
         for( OBAAlarmState * alarmState in _currentAlarms ) {
-            NSInteger index = [self matchBestIndexForTripState:alarmState.tripState];
-            if( 0 <= index && index < [_currentStates count] ) {
-                OBATripState * updatedState = [_currentStates objectAtIndex:index];
-                alarmState.tripState = updatedState;
-                [alarmsToKeep addObject:alarmState];                
+            
+            BOOL keepAlarm = FALSE;
+            switch (alarmState.alarmRef.alarmType) {
+                case OBAAlarmTypeStart:
+                    keepAlarm = [self hasStartTripAlarmMatch:alarmState.alarmRef];
+                    break;
+                case OBAAlarmTypeDeparture:
+                    keepAlarm = [self hasDepartureAlarmMatch:alarmState.alarmRef];
+                    break;
+                case OBAAlarmTypeArrival:
+                    keepAlarm = [self hasArrivalAlarmMatch:alarmState.alarmRef];
+                    break;
+                default:
+                    break;
+            }
+        
+            if (keepAlarm) {
+                [alarmsToKeep addObject:alarmState];
             }
             else {
                 [alarmsToCancel addObject:alarmState];
@@ -707,6 +763,36 @@ static const double kRegionExpansionRatio = 0.1;
     
     [alarmsToKeep release];
     [alarmsToCancel release];
+}
+
+- (BOOL) hasStartTripAlarmMatch:(OBAAlarmRef*)alarmRef {
+    return [self hasDepartureAlarmMatch:alarmRef];
+}
+
+- (BOOL) hasDepartureAlarmMatch:(OBAAlarmRef*)alarmRef {
+    for (OBALegV2 * leg in _currentItinerary.legs) {
+        if (!leg.transitLeg)
+            continue;
+        OBATransitLegV2 * transitLeg = leg.transitLeg;
+        if (!transitLeg.fromStop)
+            continue;
+        if ([alarmRef.instanceRef isEqualWithOptionalVehicleId:transitLeg.departureInstanceRef])
+            return TRUE;
+    }
+    return FALSE;
+}
+
+- (BOOL) hasArrivalAlarmMatch:(OBAAlarmRef*)alarmRef {
+    for (OBALegV2 * leg in _currentItinerary.legs) {
+        if (!leg.transitLeg)
+            continue;
+        OBATransitLegV2 * transitLeg = leg.transitLeg;
+        if (!transitLeg.toStop)
+            continue;
+        if ([alarmRef.instanceRef isEqualWithOptionalVehicleId:transitLeg.arrivalInstanceRef])
+            return TRUE;
+    }
+    return FALSE;
 }
 
 - (void) cancelAlarm:(OBAAlarmState*)alarmState {

@@ -20,6 +20,7 @@
 static NSString * kBookmarksKey = @"bookmarks";
 static NSString * kRecentPlacesKey = @"recentPlaces";
 static NSString * kDroppedPinsKey = @"droppedPins";
+static NSString * kMostRecentMapBounds = @"mostRecentMapBounds";
 static NSString * kMostRecentStopsKey = @"mostRecentStops";
 static NSString * kStopPreferencesKey = @"stopPreferences";
 static NSString * kMostRecentLocationKey = @"mostRecentLocation";
@@ -131,6 +132,26 @@ static NSString * kVisitedSituationIdsKey = @"hideFutureLocationWarnings";
 	NSMutableData * data = [NSMutableData data];
 	[self encodeObject:source forKey:kMostRecentStopsKey toData:data];
 	[user setObject:data forKey:kMostRecentStopsKey];
+}
+
+- (OBACoordinateBounds*) readMostRecentMapBounds {
+   	OBACoordinateBounds * bounds = nil;
+	@try {
+		NSUserDefaults * user = [NSUserDefaults standardUserDefaults];
+		NSData * data = [user dataForKey:kMostRecentMapBounds];
+		bounds = [self decodeObjectForKey:kMostRecentMapBounds fromData:data];
+	}
+	@catch (NSException * e) {
+	}
+	
+    return bounds;
+}
+
+- (void) writeMostRecentMapBounds:(OBACoordinateBounds*)mostRecentMapBounds {
+    NSUserDefaults * user = [NSUserDefaults standardUserDefaults];
+	NSMutableData * data = [NSMutableData data];
+	[self encodeObject:mostRecentMapBounds forKey:kMostRecentMapBounds toData:data];
+	[user setObject:data forKey:kMostRecentMapBounds];
 }
 
 - (NSDictionary*) readStopPreferences {
