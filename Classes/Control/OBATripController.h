@@ -39,6 +39,7 @@
 
 @property (nonatomic,readonly) NSInteger queryIndex;
 @property (nonatomic,readonly) OBATripQuery * query;
+@property (nonatomic,readonly) BOOL isRefreshingItineraries;
 @property (nonatomic,readonly) NSDate * lastUpdate;
 @property (nonatomic,readonly) NSArray * itineraries;
 @property (nonatomic,readonly) OBAItineraryV2 * currentItinerary;

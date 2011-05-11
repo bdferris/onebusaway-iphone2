@@ -46,6 +46,7 @@
 
 @property (nonatomic,retain) IBOutlet UITableView * tableView;
 @property (nonatomic,retain) IBOutlet MKMapView * mapView;
+@property (nonatomic,retain) IBOutlet UIActivityIndicatorView * activityIndicatorView;           
 
 @property (nonatomic,retain) IBOutlet UIBarButtonItem * refreshButton;
 @property (nonatomic,retain) IBOutlet UIBarButtonItem * editButton;

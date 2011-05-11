@@ -47,6 +47,7 @@
 
 @synthesize tableView;
 @synthesize mapView;
+@synthesize activityIndicatorView;
 @synthesize refreshButton;
 @synthesize editButton;
 @synthesize leftButton;
@@ -69,6 +70,7 @@
     
 	self.appContext = nil;
     self.mapView = nil;
+    self.activityIndicatorView = nil;
     self.refreshButton = nil;
     self.editButton = nil;
     self.leftButton = nil;
@@ -144,6 +146,10 @@
     [self.mapView addAnnotations:_droppedPinAnnotations];
     
     [modelDao addObserver:self forKeyPath:@"droppedPins" options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld context:nil];
+    
+    if (self.tripController.isRefreshingItineraries) {
+        [self refreshingItineraries];
+    }
 }
 
 - (void)viewWillDisappear:(BOOL)animated {    
@@ -338,13 +344,19 @@
 
 -(void) refreshingItineraries {
     self.refreshButton.enabled = FALSE;
+    self.leftButton.enabled = FALSE;
+    self.rightButton.enabled = FALSE;
+    [self.activityIndicatorView startAnimating];
     self.navigationItem.title = @"Updating...";
 }
 
 -(void) refreshingItinerariesCompleted {
     
     self.refreshButton.enabled = TRUE;
-    
+    self.leftButton.enabled = TRUE;
+    self.rightButton.enabled = TRUE;
+    [self.activityIndicatorView stopAnimating];
+
     if ( self.tripController.lastUpdate ) {
         NSString * t = [_timeFormatter stringFromDate:self.tripController.lastUpdate];
         self.navigationItem.title = [NSString stringWithFormat:@"Updated: %@",t];
@@ -361,6 +373,9 @@
 
 -(void) refreshingItinerariesFailed:(NSError*)error {
     self.refreshButton.enabled = TRUE;
+    self.leftButton.enabled = TRUE;
+    self.rightButton.enabled = TRUE;
+    [self.activityIndicatorView stopAnimating];
     self.navigationItem.title = @"Error updating...";
     OBALogDebugWithError(error, @"Error updating...");
 }
@@ -392,6 +407,8 @@
     double maxY = CGRectGetMaxY(mapFrame);
     mapFrame.origin.y = CGRectGetMaxY(tableFrame) + 1;
     mapFrame.size.height = maxY - mapFrame.origin.y;
+    
+    CGRect activityIndicatorFrame = CGRectMake(12,mapFrame.origin.y + 12, 37, 37);
  
     // We record this here, since the animated map frame resizing will wipe out the value
     BOOL lastRegionChangeWasProgramatic  = _mapRegionManager.lastRegionChangeWasProgramatic;
@@ -399,6 +416,7 @@
     [UIView animateWithDuration:0.25 animations:^{
         self.tableView.frame = tableFrame;
         self.mapView.frame = mapFrame;
+        self.activityIndicatorView.frame = activityIndicatorFrame;
     }];
     
     MKMapView * mv = self.mapView;
@@ -436,6 +454,9 @@
 #pragma mark OBABookmarkViewControllerDelegate
 
 - (void) placeBookmarkSelected:(OBAPlace*)place {
+    
+    [self refreshingItineraries];
+    
     OBAPlace * placeFrom = [OBAPlace placeWithCurrentLocation];
     OBATripQuery * query = [[OBATripQuery alloc] initWithPlaceFrom:placeFrom placeTo:place time:[OBATargetTime timeNow]];
     query.automaticallyPickBestItinerary = TRUE;

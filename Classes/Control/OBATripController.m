@@ -168,6 +168,10 @@ static const double kRegionExpansionRatio = 0.1;
     [self selectItinerary:itinerary matchPreviousItinerary:FALSE];
 }
 
+- (BOOL) isRefreshingItineraries {
+    return _queryRequest != nil;
+}
+
 - (void) refresh {
     
     [self clearRefreshTimer];
