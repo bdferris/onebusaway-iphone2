@@ -2728,6 +2728,7 @@
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
+				SKIP_INSTALL = NO;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Debug;
@@ -2757,6 +2758,7 @@
 				PRODUCT_NAME = "OBA Blue";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
+				SKIP_INSTALL = NO;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -2831,6 +2833,7 @@
 				INFOPLIST_FILE = Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 4.0;
 				OTHER_LDFLAGS = (
+					"-ObjC",
 					"-weak_framework",
 					MapKit,
 				);
@@ -2838,6 +2841,7 @@
 				PROVISIONING_PROFILE = "E99DC7BA-172A-4102-B86F-361D194C23C5";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "E99DC7BA-172A-4102-B86F-361D194C23C5";
 				SDKROOT = iphoneos;
+				SKIP_INSTALL = NO;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = AdHocDistribution;
@@ -2881,6 +2885,7 @@
 				PRODUCT_NAME = "OBA Blue";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "078D5A45-AF53-4D32-A394-4E2BA29D318F";
 				SDKROOT = iphoneos;
+				SKIP_INSTALL = NO;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = AppStoreDistribution;
