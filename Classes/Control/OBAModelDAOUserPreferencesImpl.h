@@ -15,6 +15,7 @@
  */
 
 #import "OBACoordinateBounds.h"
+#import "OBATripQuery.h"
 
 
 @interface OBAModelDAOUserPreferencesImpl : NSObject  {
@@ -47,5 +48,7 @@
 
 - (NSSet*) readVisistedSituationIds;
 - (void) writeVisistedSituationIds:(NSSet*)situationIds;
+
+- (OBATripQueryOptimizeForType) readDefaultTripQueryOptimizeForType;
 
 @end

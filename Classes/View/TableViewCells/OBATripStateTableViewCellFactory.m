@@ -143,8 +143,9 @@ typedef struct  {
 - (void) didSelectRowForState:(OBATripState*)state indexPath:(NSIndexPath*)indexPath {
 
     if( state == nil) {
-        OBAPlanTripViewController * vc = [OBAPlanTripViewController viewControllerWithApplicationContext:_appContext];
+        OBAPlanTripViewController * vc = [[OBAPlanTripViewController alloc] initWithAppContext:_appContext];
         [_navigationController pushViewController:vc animated:TRUE];
+        [vc release];
         return;
     }
     
@@ -158,9 +159,10 @@ typedef struct  {
             break;
         }
         case OBATripStateCellTypeNoResultsFound: {
-            OBAPlanTripViewController * vc = [OBAPlanTripViewController viewControllerWithApplicationContext:_appContext];
+            OBAPlanTripViewController * vc = [[OBAPlanTripViewController alloc] initWithAppContext:_appContext];
             [vc setTripQuery:_appContext.tripController.query];
             [_navigationController pushViewController:vc animated:TRUE];
+            [vc release];
             break;
         }
         case OBATripStateCellTypeStartTime:

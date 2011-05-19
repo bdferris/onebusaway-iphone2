@@ -172,22 +172,28 @@ typedef enum {
 }
 
 - (void) didSelectDirectionsRowAtIndexPath:(NSIndexPath *)indexPath {
+
     OBAPlace * currentLocation = [OBAPlace placeWithCurrentLocation];
+    OBAModelDAO * modelDao = _appContext.modelDao;
+    OBATripQueryOptimizeForType optimizeFor = modelDao.defaultTripQueryOptimizeForType;
+    
     switch (indexPath.row) {
         case 0: {
-            OBATripQuery * query = [[OBATripQuery alloc] initWithPlaceFrom:_place placeTo:currentLocation time:[OBATargetTime timeNow]];
-            OBAPlanTripViewController * vc = [OBAPlanTripViewController viewControllerWithApplicationContext:_appContext];
+            OBATripQuery * query = [[OBATripQuery alloc] initWithPlaceFrom:_place placeTo:currentLocation time:[OBATargetTime timeNow] optimizeFor:optimizeFor];
+            OBAPlanTripViewController * vc = [[OBAPlanTripViewController alloc] initWithAppContext:_appContext];
             [vc setTripQuery:query];
             [self.navigationController pushViewController:vc animated:TRUE];
             [query release];
+            [vc release];
             break;
         }
         case 1: {
-            OBATripQuery * query = [[OBATripQuery alloc] initWithPlaceFrom:currentLocation placeTo:_place time:[OBATargetTime timeNow]];
-            OBAPlanTripViewController * vc = [OBAPlanTripViewController viewControllerWithApplicationContext:_appContext];
+            OBATripQuery * query = [[OBATripQuery alloc] initWithPlaceFrom:currentLocation placeTo:_place time:[OBATargetTime timeNow] optimizeFor:optimizeFor];
+            OBAPlanTripViewController * vc = [[OBAPlanTripViewController alloc] initWithAppContext:_appContext];
             [vc setTripQuery:query];
             [self.navigationController pushViewController:vc animated:TRUE];
             [query release];
+            [vc release];
             break;
         }
         default:

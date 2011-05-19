@@ -4,14 +4,26 @@
 #import "OBAPresentation.h"
 #import "OBAPlaceDataSource.h"
 #import "OBAFixedHeightPickerTextField.h"
-
+#import "OBAListSelectionViewController.h"
+#import "OBAPickTimeViewController.h"
 
 
 static const NSString * kContextPlaceStart = @"kContextPlaceStart";
 static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
 
+typedef enum {
+    OBASectionTypeNone,
+    OBASectionTypeStartAndEnd,
+    OBASectionTypeOptimizeFor,
+    OBASectionTypeTime,
+    OBASectionTypePlanTrip
+} OBASectionType;
+
 
 @interface OBAPlanTripViewController (Private)
+
+- (OBASectionType) getSectionTypeForSectionIndex:(NSInteger)sectionIndex;
+- (NSInteger) getSectionIndexForSectionType:(OBASectionType)sectionType;
 
 - (BOOL) ensurePlacesAreSet;
 - (OBAPlace*) ensurePlaceIsSet:(OBAPlace*)place textField:(TTPickerTextField*)textField;
@@ -19,7 +31,6 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
 
 - (TTPickerTextField*) getTextFieldForContext:(id)context;
 - (OBAPlace*) getPlaceForContext:(id)context;
-- (OBATargetTime*) getTargetTime;
 
 - (void) showLocationNotFound:(NSString*)locationName;
 - (void) showLocationLookupError:(NSString*)locationName;
@@ -30,31 +41,30 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
 
 @implementation OBAPlanTripViewController
 
-@synthesize appContext;
-@synthesize tripController;
-@synthesize datePicker;
-@synthesize dateTypePicker;
-
-+ (OBAPlanTripViewController*) viewControllerWithApplicationContext:(OBAApplicationContext*)appContext {
-    NSArray* wired = [[NSBundle mainBundle] loadNibNamed:@"OBAPlanTripViewController" owner:appContext options:nil];
-    OBAPlanTripViewController* vc = [wired objectAtIndex:0];
-    vc.appContext = appContext;
-    vc.tripController = appContext.tripController;
-    return vc;
+- (id) initWithAppContext:(OBAApplicationContext*)appContext {
+    self = [super initWithStyle:UITableViewStyleGrouped];
+    if (self) {
+        _appContext = [appContext retain];
+        _optimizeFor = [appContext.modelDao defaultTripQueryOptimizeForType];
+        _targetTime = [[OBATargetTime timeNow] retain];        
+    }
+    return self;
 }
 
 - (void)dealloc
 {
+    [_appContext release];
+    
+    [_startAndEndTableViewCell release];
     [_startTextField release];
     [_endTextField release];
     
     [_placeFrom release];
     [_placeTo release];
     
-    self.appContext = nil;
-    self.tripController = nil;
-    self.dateTypePicker = nil;
-    self.datePicker = nil;
+    [_targetTime release];
+    [_optimizeForLabels release];
+    [_timeFormatter release];
     
     [super dealloc];
 }
@@ -90,22 +100,7 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
     }
     
     if( time ) {
-        UISegmentedControl * dateTypePickerControl = self.dateTypePicker;
-        UIDatePicker * datePickerControl = self.datePicker;
-        switch (time.type) {
-            case OBATargetTimeTypeNow:
-                dateTypePickerControl.selectedSegmentIndex = 0;
-                datePickerControl.date = [NSDate date];
-                break;
-            case OBATargetTimeTypeDepartBy:
-                dateTypePickerControl.selectedSegmentIndex = 1;
-                datePickerControl.date = time.time;
-                break;
-            case OBATargetTimeTypeArriveBy:
-                dateTypePickerControl.selectedSegmentIndex = 2;
-                datePickerControl.date = time.time;
-                break;                
-        }
+        _targetTime = [NSObject releaseOld:_targetTime retainNew:time];
     }
 }
 
@@ -113,6 +108,10 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    _startAndEndTableViewCell = [[UITableViewCell getOrCreateCellForTableView:self.tableView cellId:@"StartAndEnd"] retain];
+    _startAndEndTableViewCell.selectionStyle = UITableViewCellSelectionStyleBlue;
+    _startAndEndTableViewCell.accessoryType = UITableViewCellAccessoryNone;
     
     UILabel * startLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 45, 20)];
     startLabel.text = @"Start:";
@@ -136,8 +135,10 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
     [endBookmarkButton setImage:bookmarkImage forState:UIControlStateNormal];
     [endBookmarkButton addTarget:self action:@selector(onEndTextFieldBookmarkButton:) forControlEvents:UIControlEventTouchUpInside];
 
-    _startTextField = [[OBAFixedHeightPickerTextField alloc] initWithFrame:CGRectMake(10, 10, CGRectGetWidth(self.view.bounds) - 20, 40)];
-    _startTextField.dataSource = [[[OBAPlaceDataSource alloc] initWithAppContext:self.appContext] autorelease];;
+    static const int kCellMargin = 18;
+    
+    _startTextField = [[OBAFixedHeightPickerTextField alloc] initWithFrame:CGRectMake(kCellMargin, 10, CGRectGetWidth(self.view.bounds) - 2 * kCellMargin, 40)];
+    _startTextField.dataSource = [[[OBAPlaceDataSource alloc] initWithAppContext:_appContext] autorelease];;
     _startTextField.searchesAutomatically = TRUE;
     _startTextField.borderStyle = UITextBorderStyleRoundedRect;
     _startTextField.leftView = startLabel;
@@ -148,8 +149,8 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
     _startTextField.autocapitalizationType = UITextAutocapitalizationTypeNone;
     _startTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
     
-    _endTextField = [[OBAFixedHeightPickerTextField alloc] initWithFrame:CGRectMake(10, 60, CGRectGetWidth(self.view.bounds) - 20, 40)];
-    _endTextField.dataSource = [[[OBAPlaceDataSource alloc] initWithAppContext:self.appContext] autorelease];;
+    _endTextField = [[OBAFixedHeightPickerTextField alloc] initWithFrame:CGRectMake(kCellMargin, 60, CGRectGetWidth(self.view.bounds) - 2 * kCellMargin, 40)];
+    _endTextField.dataSource = [[[OBAPlaceDataSource alloc] initWithAppContext:_appContext] autorelease];;
     _endTextField.searchesAutomatically = TRUE;
     _endTextField.borderStyle = UITextBorderStyleRoundedRect;
     _endTextField.leftView = endLabel;
@@ -160,16 +161,14 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
     _endTextField.autocapitalizationType = UITextAutocapitalizationTypeNone;
     _endTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
 
-    [self.view addSubview:_startTextField];
-    [self.view addSubview:_endTextField];
-    
-    self.dateTypePicker.selectedSegmentIndex = 0;    
-    self.datePicker.enabled = FALSE;
-    self.datePicker.date = [NSDate date];
+    [_startAndEndTableViewCell addSubview:_startTextField];
+    [_startAndEndTableViewCell addSubview:_endTextField];
     
     [endLabel release];
     [startLabel release];
     
+    self.navigationItem.title = @"Plan Your Trip";
+    self.navigationItem.backBarButtonItem.title = @"Cancel";
     self.hidesBottomBarWhenPushed = TRUE;
     
     /**
@@ -180,6 +179,12 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
     item.userInfo = place;
     [_startTextField removeAllCells];
     [_startTextField addCellWithObject:item];
+    
+    _optimizeForLabels = [[NSArray alloc] initWithObjects:@"Prefer best route", @"Prefer fastest route", @"Prefer fewer transfers", @"Prefer less walking", nil];
+    
+    _timeFormatter = [[NSDateFormatter alloc] init];
+    [_timeFormatter setDateStyle:NSDateFormatterNoStyle];
+    [_timeFormatter setTimeStyle:NSDateFormatterShortStyle];
 }
 
 - (void)viewDidUnload {
@@ -197,34 +202,158 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
 
 -(IBAction) onStartTextFieldBookmarkButton:(id)sender {
     _currentContext = OBAPlanTripViewControllerContextStartLabel;
-    [OBABookmarksViewController showBookmarksViewControllerWithAppContext:self.appContext parent:self.navigationController delegate:self includeCurrentLocation:TRUE];
+    [OBABookmarksViewController showBookmarksViewControllerWithAppContext:_appContext parent:self.navigationController delegate:self includeCurrentLocation:TRUE];
 }
 
 -(IBAction) onEndTextFieldBookmarkButton:(id)sender {
     _currentContext = OBAPlanTripViewControllerContextEndLabel;
-    [OBABookmarksViewController showBookmarksViewControllerWithAppContext:self.appContext parent:self.navigationController delegate:self includeCurrentLocation:TRUE];
+    [OBABookmarksViewController showBookmarksViewControllerWithAppContext:_appContext parent:self.navigationController delegate:self includeCurrentLocation:TRUE];
 }
 
--(IBAction) onDateTypeChanged:(id)sender {
+- (IBAction) onOptimizeForChagned:(id)sender {
+    
+    NSIndexPath * path = sender;
+    _optimizeFor = path.row;
 
-    UISegmentedControl * dateTypePickerControl = self.dateTypePicker;
-    UIDatePicker * datePickerControl = self.datePicker;
-    
-    NSInteger index = [dateTypePickerControl selectedSegmentIndex];
-    
-    switch (index) {
-        case 1:
-        case 2:
-            datePickerControl.enabled = TRUE;
-            break;
+    NSIndexSet * sections = [NSIndexSet indexSetWithIndex:[self getSectionIndexForSectionType:OBASectionTypeOptimizeFor]];
+    [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationNone];
+}
+
+- (IBAction) onTargetTimeChanged:(id)sender {
+    _targetTime = [NSObject releaseOld:_targetTime retainNew:sender];
+    NSIndexSet * sections = [NSIndexSet indexSetWithIndex:[self getSectionIndexForSectionType:OBASectionTypeTime]];
+    [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationNone];
+}
+
+#pragma mark - Table view data source
+
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+    return 4;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    OBASectionType sectionType = [self getSectionTypeForSectionIndex:section];
+
+    switch (sectionType) {
+        case OBASectionTypeStartAndEnd:
+        case OBASectionTypeOptimizeFor:
+        case OBASectionTypeTime:
+        case OBASectionTypePlanTrip:
+            return 1;
         default:
-            datePickerControl.enabled = FALSE;
-            break;
+            return 0;
     }
 }
 
-- (IBAction) onTimeChanged:(id)sender {
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    OBASectionType sectionType = [self getSectionTypeForSectionIndex:indexPath.section];
     
+    switch (sectionType) {
+        case OBASectionTypeStartAndEnd:
+            return _startAndEndTableViewCell;
+        case OBASectionTypeOptimizeFor: {
+            UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView];
+            switch (_optimizeFor) {
+                case OBATripQueryOptimizeForTypeDefault:
+                    cell.textLabel.text = @"Prefer best route";
+                    break;
+                case OBATripQueryOptimizeForTypeMinimizeTime:
+                    cell.textLabel.text = @"Prefer fastest route";
+                    break;
+                case OBATripQueryOptimizeForTypeMinimizeTransfers:
+                    cell.textLabel.text = @"Prefer fewer transfers";
+                    break;
+                case OBATripQueryOptimizeForTypeMinimizeWalking:
+                    cell.textLabel.text = @"Prefer less walking";
+                    break;
+            }
+            cell.selectionStyle = UITableViewCellSelectionStyleBlue;
+            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+            return cell;
+        }
+        case OBASectionTypeTime: {
+            
+            UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView];
+            
+            NSString * t = [_timeFormatter stringFromDate:_targetTime.time];
+            
+            switch(_targetTime.type) {
+                case OBATargetTimeTypeNow:
+                    cell.textLabel.text = @"Depart Now";
+                    break;
+                case OBATargetTimeTypeDepartBy:
+                    cell.textLabel.text = [NSString stringWithFormat:@"Depart at %@",t];
+                    break;
+                case OBATargetTimeTypeArriveBy:
+                    cell.textLabel.text = [NSString stringWithFormat:@"Arrive by %@",t];
+                    break;
+            }
+            
+            cell.selectionStyle = UITableViewCellSelectionStyleBlue;
+            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+            return cell;
+        }
+        case OBASectionTypePlanTrip: {
+            UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView cellId:@"Plan Trip"];
+            cell.textLabel.text = @"Plan Trip";
+            cell.textLabel.textAlignment = UITextAlignmentCenter;
+            cell.textLabel.textColor = [UIColor colorWithRed:0.22 green:0.33 blue:0.53 alpha:1.0];
+            cell.selectionStyle = UITableViewCellSelectionStyleNone;
+            cell.accessoryType = UITableViewCellAccessoryNone;
+            return cell;
+        }
+            
+        default:
+            return nil;
+    }
+}
+
+#pragma mark - Table view delegate
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    OBASectionType sectionType = [self getSectionTypeForSectionIndex:indexPath.section];
+    if (sectionType == OBASectionTypeStartAndEnd )
+        return 110;
+    return 44;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    OBASectionType sectionType = [self getSectionTypeForSectionIndex:indexPath.section];
+
+    switch (sectionType) {
+    
+        case OBASectionTypeOptimizeFor: {
+            NSIndexPath * p = [NSIndexPath indexPathForRow:_optimizeFor inSection:0];
+            OBAListSelectionViewController * vc = [[OBAListSelectionViewController alloc] initWithValues:_optimizeForLabels selectedIndex:p];
+            vc.exitOnSelection = TRUE;
+            vc.target = self;
+            vc.action = @selector(onOptimizeForChagned:);
+            [self.navigationController pushViewController:vc animated:TRUE];
+            [vc release];
+            break;
+        }
+            
+        case OBASectionTypeTime: {
+            OBAPickTimeViewController * vc = [OBAPickTimeViewController viewController];
+            vc.targetTime = _targetTime;
+            vc.target = self;
+            vc.action = @selector(onTargetTimeChanged:);
+            [self.navigationController pushViewController:vc animated:TRUE];
+            break;
+        }
+            
+            
+        case OBASectionTypePlanTrip:
+            [self ensurePlacesAreSet];
+            break;
+            
+        default:
+            break;
+    }
 }
 
 #pragma mark OBAModelServiceDelegate
@@ -260,8 +389,6 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
             
             [self.navigationController pushViewController:vc animated:TRUE];
             [vc release];
-            
-            
             
             [places release];
         }    
@@ -305,6 +432,37 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
 
 @implementation OBAPlanTripViewController (Private)
 
+- (OBASectionType) getSectionTypeForSectionIndex:(NSInteger)sectionIndex {
+    
+    switch (sectionIndex) {
+        case 0:
+            return OBASectionTypeStartAndEnd;
+        case 1:
+            return OBASectionTypeOptimizeFor;
+        case 2:
+            return OBASectionTypeTime;
+        case 3:
+            return OBASectionTypePlanTrip;
+        default:
+            return OBASectionTypeNone;
+    }
+}
+                             
+- (NSInteger) getSectionIndexForSectionType:(OBASectionType)sectionType {
+    switch (sectionType) {
+        case OBASectionTypeStartAndEnd:
+            return 0;
+        case OBASectionTypeOptimizeFor:
+            return 1;
+        case OBASectionTypeTime:
+            return 2;
+        case OBASectionTypePlanTrip:
+            return 3;
+        default:
+            return -1;
+    }
+}
+
 - (BOOL) ensurePlacesAreSet {
     
     _placeFrom = [NSObject releaseOld:_placeFrom retainNew:[self ensurePlaceIsSet:_placeFrom textField:_startTextField]];
@@ -323,12 +481,10 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
     if( ! [self ensurePlaceLocationIsSet:_placeTo context:kContextPlaceEnd] )
         return FALSE;
     
-    OBATargetTime * t = [self getTargetTime];
-    
     [self.navigationController popToRootViewController];    
     
-    OBATripQuery * query = [[OBATripQuery alloc] initWithPlaceFrom:_placeFrom placeTo:_placeTo time:t];
-    [self.tripController planTripWithQuery:query];
+    OBATripQuery * query = [[OBATripQuery alloc] initWithPlaceFrom:_placeFrom placeTo:_placeTo time:_targetTime optimizeFor:_optimizeFor];
+    [_appContext.tripController planTripWithQuery:query];
     [query release];
     
     return TRUE;
@@ -361,13 +517,13 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
 - (BOOL) ensurePlaceLocationIsSet:(OBAPlace*)place context:(id)context {
 
     if( place.isCurrentLocation ) {                
-        OBALocationManager * locationManager = self.appContext.locationManager;
+        OBALocationManager * locationManager = _appContext.locationManager;
         place.location = locationManager.currentLocation;
         return TRUE;
     }
     
     if (! place.location) {
-        OBAModelService * modelService = self.appContext.modelService;
+        OBAModelService * modelService = _appContext.modelService;
         [modelService placemarksForAddress:place.name withDelegate:self withContext:context];
         return FALSE;
     }
@@ -423,24 +579,6 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
     [_endTextField addCellWithObject:item];
     
     [self ensurePlacesAreSet];
-}
-
-- (OBATargetTime*) getTargetTime {
-    
-    UISegmentedControl * dateTypePickerControl = self.dateTypePicker;
-    NSInteger index = [dateTypePickerControl selectedSegmentIndex];
-
-    UIDatePicker * datePickerControl = self.datePicker;
-    NSDate * time = [datePickerControl date];    
-    
-    switch (index) {
-        case 1:
-            return [OBATargetTime timeDepartBy:time];
-        case 2:
-            return [OBATargetTime timeArriveBy:time];
-        default:
-            return [OBATargetTime timeNow];
-    }
 }
 
 - (void) showLocationNotFound:(NSString*)locationName {

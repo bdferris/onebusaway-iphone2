@@ -240,7 +240,14 @@ static NSString * kVisitedSituationIdsKey = @"hideFutureLocationWarnings";
 	[user setObject:data forKey:kVisitedSituationIdsKey];
 }
 
-
+- (OBATripQueryOptimizeForType) readDefaultTripQueryOptimizeForType {
+    NSUserDefaults * userDefaults = [NSUserDefaults standardUserDefaults];
+    NSNumber * optimizeForValue = [userDefaults objectForKey:@"oba_optimize_for"];
+    if (optimizeForValue) {
+        return [optimizeForValue intValue];
+    }
+    return OBATripQueryOptimizeForTypeDefault;
+}
 
 @end
 

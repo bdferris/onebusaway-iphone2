@@ -20,6 +20,7 @@
 #import "OBAStopPreferencesV2.h"
 #import "OBAServiceAlertsModel.h"
 #import "OBACoordinateBounds.h"
+#import "OBATripQuery.h"
 
 
 @class OBAModelDAOUserPreferencesImpl;
@@ -33,6 +34,7 @@
 	NSMutableArray * _mostRecentStops;
 	NSMutableDictionary * _stopPreferences;
 	CLLocation * _mostRecentLocation;
+    OBATripQueryOptimizeForType _defaultTripQueryOptimizeForType;
 	NSMutableSet * _visitedSituationIds;
 }
 
@@ -42,7 +44,7 @@
 @property (nonatomic,assign) OBACoordinateBounds * mostRecentMapBounds;
 @property (nonatomic,readonly) NSArray * mostRecentStops;
 @property (nonatomic,assign) CLLocation * mostRecentLocation;
-
+@property (nonatomic,readonly) OBATripQueryOptimizeForType defaultTripQueryOptimizeForType;
 
 - (void) addNewBookmark:(OBAPlace*)place error:(NSError**)error;
 - (void) saveExistingBookmark:(OBAPlace*)bookmark error:(NSError**)error;
@@ -70,5 +72,7 @@
  */
 - (BOOL) hideFutureLocationWarnings;
 - (void) setHideFutureLocationWarnings:(BOOL)hideFutureLocationWarnings;
+
+- (void) refreshSettings;
 
 @end

@@ -167,6 +167,8 @@ static const NSUInteger kTagSettingsView = 3;
 	[googleMapsDataSourceConfig release];
 	
 	[userDefaults setObject:appVersion forKey:@"oba_application_version"];
+    
+    [_modelDao refreshSettings];
 }
 
 #pragma mark UIApplicationDelegate Methods
@@ -303,6 +305,7 @@ static const NSUInteger kTagSettingsView = 3;
 
 - (void)settingsViewControllerDidEnd:(IASKAppSettingsViewController*)sender {
 	[self refreshSettings];
+    [self.navController popViewControllerAnimated:TRUE];
 }
 
 @end

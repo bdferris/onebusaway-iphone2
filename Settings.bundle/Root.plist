@@ -14,15 +14,15 @@
 			<key>DefaultValue</key>
 			<integer>0</integer>
 			<key>Key</key>
-			<string>oba_show_on_start_preference</string>
+			<string>oba_optimize_for</string>
 			<key>Title</key>
-			<string>Show on start</string>
+			<string>Prefer</string>
 			<key>Titles</key>
 			<array>
-				<string>Map</string>
-				<string>Bookmarks</string>
-				<string>Recent Stops</string>
-				<string>Search</string>
+				<string>Best Route</string>
+				<string>Fastest Route</string>
+				<string>Fewer Transfers</string>
+				<string>Less Walking</string>
 			</array>
 			<key>Type</key>
 			<string>PSMultiValueSpecifier</string>

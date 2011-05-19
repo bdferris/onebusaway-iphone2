@@ -177,9 +177,10 @@
 }
 
 -(IBAction) onEditButton:(id)sender {
-    OBAPlanTripViewController * vc = [OBAPlanTripViewController viewControllerWithApplicationContext:self.appContext];
+    OBAPlanTripViewController * vc = [[OBAPlanTripViewController alloc] initWithAppContext:self.appContext];
     [vc setTripQuery:self.tripController.query];
     [self.navigationController pushViewController:vc animated:TRUE];
+    [vc release];
 }
 
 -(IBAction) onLeftButton:(id)sender {
@@ -457,8 +458,10 @@
     
     [self refreshingItineraries];
     
+    OBAModelDAO * modelDao = self.appContext.modelDao;
+    OBATripQueryOptimizeForType optimizeFor = modelDao.defaultTripQueryOptimizeForType;
     OBAPlace * placeFrom = [OBAPlace placeWithCurrentLocation];
-    OBATripQuery * query = [[OBATripQuery alloc] initWithPlaceFrom:placeFrom placeTo:place time:[OBATargetTime timeNow]];
+    OBATripQuery * query = [[OBATripQuery alloc] initWithPlaceFrom:placeFrom placeTo:place time:[OBATargetTime timeNow] optimizeFor:optimizeFor];
     query.automaticallyPickBestItinerary = TRUE;
     [self.tripController planTripWithQuery:query];
     [query release];

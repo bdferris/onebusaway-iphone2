@@ -13,21 +13,21 @@ typedef enum {
 } OBAPlanTripViewControllerContext;
 
 
-@interface OBAPlanTripViewController : UIViewController <OBAModelServiceDelegate,OBAModelServiceDelegate,OBABookmarksViewControllerDelegate,UITextFieldDelegate> {
+@interface OBAPlanTripViewController : UITableViewController <OBAModelServiceDelegate,OBAModelServiceDelegate,OBABookmarksViewControllerDelegate,UITextFieldDelegate> {
+    OBAApplicationContext * _appContext;
     OBAPlanTripViewControllerContext _currentContext;
+    UITableViewCell * _startAndEndTableViewCell;
     TTPickerTextField * _startTextField;
     TTPickerTextField * _endTextField;
     OBAPlace * _placeFrom;
     OBAPlace * _placeTo;
+    OBATripQueryOptimizeForType _optimizeFor;
+    OBATargetTime * _targetTime;
+    NSArray * _optimizeForLabels;
+    NSDateFormatter * _timeFormatter;
 }
 
-+ (OBAPlanTripViewController*) viewControllerWithApplicationContext:(OBAApplicationContext*)appContext;
-
-@property (nonatomic,retain) IBOutlet OBAApplicationContext * appContext;
-@property (nonatomic,retain) OBATripController * tripController;
-
-@property (nonatomic,retain) IBOutlet UISegmentedControl * dateTypePicker;
-@property (nonatomic,retain) IBOutlet UIDatePicker * datePicker;
+- (id) initWithAppContext:(OBAApplicationContext*)appContext;
 
 - (void) setTripQuery:(OBATripQuery*)query;
 
@@ -35,8 +35,5 @@ typedef enum {
 
 -(IBAction) onStartTextFieldBookmarkButton:(id)sender;
 -(IBAction) onEndTextFieldBookmarkButton:(id)sender;
-
--(IBAction) onDateTypeChanged:(id)sender;
--(IBAction) onTimeChanged:(id)sender;
 
 @end

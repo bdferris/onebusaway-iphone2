@@ -45,6 +45,7 @@ const static int kMaxEntriesInMostRecentList = 10;
 		_stopPreferences = [[NSMutableDictionary alloc] initWithDictionary:[_preferencesDao readStopPreferences]];
 		_mostRecentLocation = [[_preferencesDao readMostRecentLocation] retain];
 		_visitedSituationIds = [[NSMutableSet alloc] initWithSet:[_preferencesDao readVisistedSituationIds]];
+        _defaultTripQueryOptimizeForType = [_preferencesDao readDefaultTripQueryOptimizeForType];
 	}
 	return self;
 }
@@ -95,6 +96,10 @@ const static int kMaxEntriesInMostRecentList = 10;
 
 - (OBACoordinateBounds*) mostRecentMapBounds {
     return _mostRecentMapBounds;
+}
+
+- (OBATripQueryOptimizeForType) defaultTripQueryOptimizeForType {
+    return _defaultTripQueryOptimizeForType;
 }
 
 - (void) addStopAccessEvent:(OBAStopAccessEventV2*)event {
@@ -297,6 +302,9 @@ const static int kMaxEntriesInMostRecentList = 10;
 	}
 }
 
+- (void) refreshSettings {
+    _defaultTripQueryOptimizeForType = [_preferencesDao readDefaultTripQueryOptimizeForType];
+}
 
 @end
 
