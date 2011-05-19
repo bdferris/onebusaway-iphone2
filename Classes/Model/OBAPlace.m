@@ -95,6 +95,10 @@
     return self.type == OBAPlaceTypeDroppedPin;
 }
 
+- (BOOL) isRecent {
+    return self.type == OBAPlaceTypeRecent;
+}
+
 #pragma mark NSCoder Methods
 
 - (void) encodeWithCoder: (NSCoder *)coder {

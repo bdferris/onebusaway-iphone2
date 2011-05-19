@@ -169,6 +169,7 @@ const static int kMaxEntriesInMostRecentList = 10;
      * Copy the place
      */
     place = [OBAPlace placeWithPlace:place];
+    place.type = OBAPlaceTypeRecent;
     
     /**
      * Remove any existing places with the same name

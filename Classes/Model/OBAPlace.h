@@ -2,7 +2,8 @@ typedef enum {
     OBAPlaceTypePlain=0,
     OBAPlaceTypeCurrentLocation=1,
     OBAPlaceTypeBookmark=2,
-    OBAPlaceTypeDroppedPin=3
+    OBAPlaceTypeDroppedPin=3,
+    OBAPlaceTypeRecent=4
 } OBAPlaceType;
 
 @interface OBAPlace : NSObject {
@@ -27,6 +28,7 @@ typedef enum {
 @property (nonatomic,readonly) BOOL isCurrentLocation;
 @property (nonatomic,readonly) BOOL isBookmark;
 @property (nonatomic,readonly) BOOL isDroppedPin;
+@property (nonatomic,readonly) BOOL isRecent;
 
 @property (nonatomic,retain) NSArray * stopIds;
 

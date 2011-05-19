@@ -72,6 +72,7 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
         if( ! placeFrom.isPlain ) {
             TTTableItem *item = [TTTableTextItem itemWithText:placeFrom.name URL:nil];
             item.userInfo = placeFrom;
+            [_startTextField removeAllCells];
             [_startTextField addCellWithObject:item];
         } else {
             _startTextField.text = placeFrom.name;
@@ -81,6 +82,7 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
         if( ! placeTo.isPlain ) {
             TTTableItem *item = [TTTableTextItem itemWithText:placeTo.name URL:nil];
             item.userInfo = placeTo;
+            [_endTextField removeAllCells];
             [_endTextField addCellWithObject:item];
         } else {
             _endTextField.text = placeTo.name;
@@ -169,6 +171,15 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
     [startLabel release];
     
     self.hidesBottomBarWhenPushed = TRUE;
+    
+    /**
+     * We default to showing the current location in the start field
+     */ 
+    OBAPlace * place = [OBAPlace placeWithCurrentLocation];
+    TTTableItem *item = [TTTableTextItem itemWithText:place.name URL:nil];
+    item.userInfo = place;
+    [_startTextField removeAllCells];
+    [_startTextField addCellWithObject:item];
 }
 
 - (void)viewDidUnload {
