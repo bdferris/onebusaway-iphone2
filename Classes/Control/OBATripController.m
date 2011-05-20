@@ -204,6 +204,21 @@ static const double kRegionExpansionRatio = 0.1;
             [options setObject:json forKey:@"includeSelectedItinerary"];
         [jsonFactory release];         
     }
+    
+    OBATripQueryOptimizeForType optimizeFor = _query.optimizeFor;
+    switch (optimizeFor) {
+        case OBATripQueryOptimizeForTypeMinimizeTime:
+            [options setObject:@"min_time" forKey:@"optimizeFor"];
+            break;
+        case OBATripQueryOptimizeForTypeMinimizeTransfers:
+            [options setObject:@"min_transfers" forKey:@"optimizeFor"];
+            break;
+        case OBATripQueryOptimizeForTypeMinimizeWalking:
+            [options setObject:@"min_walking" forKey:@"optimizeFor"];
+            break;
+        default:
+            break;
+    }
     _queryRequest = [[self.modelService planTripFrom:from.coordinate to:to.coordinate time:t arriveBy:arriveBy options:options delegate:self context:[NSNumber numberWithInt:_queryIndex]] retain];
     [options release];
 }

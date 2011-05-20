@@ -19,6 +19,7 @@ typedef enum {
     UITableViewCell * _startAndEndTableViewCell;
     TTPickerTextField * _startTextField;
     TTPickerTextField * _endTextField;
+    OBATripQuery * _sourceQuery;
     OBAPlace * _placeFrom;
     OBAPlace * _placeTo;
     OBATripQueryOptimizeForType _optimizeFor;

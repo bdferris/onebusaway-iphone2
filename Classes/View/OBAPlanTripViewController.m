@@ -25,6 +25,8 @@ typedef enum {
 - (OBASectionType) getSectionTypeForSectionIndex:(NSInteger)sectionIndex;
 - (NSInteger) getSectionIndexForSectionType:(OBASectionType)sectionType;
 
+- (void) refreshFromSourceQuery;
+
 - (BOOL) ensurePlacesAreSet;
 - (OBAPlace*) ensurePlaceIsSet:(OBAPlace*)place textField:(TTPickerTextField*)textField;
 - (BOOL) ensurePlaceLocationIsSet:(OBAPlace*)place context:(id)context;
@@ -59,6 +61,7 @@ typedef enum {
     [_startTextField release];
     [_endTextField release];
     
+    [_sourceQuery release];
     [_placeFrom release];
     [_placeTo release];
     
@@ -71,43 +74,17 @@ typedef enum {
 
 - (void) setTripQuery:(OBATripQuery*)query {
     
-    if( ! query )
-        return;
-    
-    OBAPlace * placeFrom = query.placeFrom;
-    OBAPlace * placeTo = query.placeTo;
-    OBATargetTime * time = query.time;
-    
-    if( placeFrom ) {        
-        if( ! placeFrom.isPlain ) {
-            TTTableItem *item = [TTTableTextItem itemWithText:placeFrom.name URL:nil];
-            item.userInfo = placeFrom;
-            [_startTextField removeAllCells];
-            [_startTextField addCellWithObject:item];
-        } else {
-            _startTextField.text = placeFrom.name;
-        }
-    }
-    if( placeTo ) {
-        if( ! placeTo.isPlain ) {
-            TTTableItem *item = [TTTableTextItem itemWithText:placeTo.name URL:nil];
-            item.userInfo = placeTo;
-            [_endTextField removeAllCells];
-            [_endTextField addCellWithObject:item];
-        } else {
-            _endTextField.text = placeTo.name;
-        }
-    }
-    
-    if( time ) {
-        _targetTime = [NSObject releaseOld:_targetTime retainNew:time];
-    }
+    NSLog(@"Set trip query");
+    _sourceQuery = [NSObject releaseOld:_sourceQuery retainNew:query];
+    [self refreshFromSourceQuery];
 }
 
 #pragma mark - View lifecycle
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    NSLog(@"View did load...");
     
     _startAndEndTableViewCell = [[UITableViewCell getOrCreateCellForTableView:self.tableView cellId:@"StartAndEnd"] retain];
     _startAndEndTableViewCell.selectionStyle = UITableViewCellSelectionStyleBlue;
@@ -185,6 +162,8 @@ typedef enum {
     _timeFormatter = [[NSDateFormatter alloc] init];
     [_timeFormatter setDateStyle:NSDateFormatterNoStyle];
     [_timeFormatter setTimeStyle:NSDateFormatterShortStyle];
+    
+    [self refreshFromSourceQuery];
 }
 
 - (void)viewDidUnload {
@@ -460,6 +439,41 @@ typedef enum {
             return 3;
         default:
             return -1;
+    }
+}
+
+- (void) refreshFromSourceQuery {
+    
+    if( ! _sourceQuery )
+        return;
+    
+    OBAPlace * placeFrom = _sourceQuery.placeFrom;
+    OBAPlace * placeTo = _sourceQuery.placeTo;
+    OBATargetTime * time = _sourceQuery.time;
+    
+    if( placeFrom ) {        
+        if( ! placeFrom.isPlain ) {
+            TTTableItem *item = [TTTableTextItem itemWithText:placeFrom.name URL:nil];
+            item.userInfo = placeFrom;
+            [_startTextField removeAllCells];
+            [_startTextField addCellWithObject:item];
+        } else {
+            _startTextField.text = placeFrom.name;
+        }
+    }
+    if( placeTo ) {
+        if( ! placeTo.isPlain ) {
+            TTTableItem *item = [TTTableTextItem itemWithText:placeTo.name URL:nil];
+            item.userInfo = placeTo;
+            [_endTextField removeAllCells];
+            [_endTextField addCellWithObject:item];
+        } else {
+            _endTextField.text = placeTo.name;
+        }
+    }
+    
+    if( time ) {
+        _targetTime = [NSObject releaseOld:_targetTime retainNew:time];
     }
 }
 
