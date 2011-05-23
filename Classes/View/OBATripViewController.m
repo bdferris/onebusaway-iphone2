@@ -127,6 +127,8 @@
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     
+    OBALogDebug(@"viewWillAppear");
+    
     self.tripController.delegate = self;
     
     NSIndexPath * indexPath = [self.tableView indexPathForSelectedRow];
@@ -147,6 +149,8 @@
     
     [modelDao addObserver:self forKeyPath:@"droppedPins" options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld context:nil];
     
+    [self.tableView reloadData];
+    
     if (self.tripController.isRefreshingItineraries) {
         [self refreshingItineraries];
     }
@@ -154,6 +158,9 @@
 
 - (void)viewWillDisappear:(BOOL)animated {    
 	[super viewWillDisappear:animated];
+    
+    OBALogDebug(@"viewWillDisappear");
+
     self.tripController.delegate = nil;
     
     OBAModelDAO * modelDao = self.appContext.modelDao;
@@ -344,6 +351,7 @@
 #pragma mark OBATripControllerDelegate
 
 -(void) refreshingItineraries {
+    OBALogDebug(@"refreshingItineraries");
     self.refreshButton.enabled = FALSE;
     self.leftButton.enabled = FALSE;
     self.rightButton.enabled = FALSE;
@@ -352,6 +360,8 @@
 }
 
 -(void) refreshingItinerariesCompleted {
+    
+    OBALogDebug(@"refreshingItinerariesCompleted");
     
     self.refreshButton.enabled = TRUE;
     self.leftButton.enabled = TRUE;
@@ -389,6 +399,8 @@
 }
 
 -(void) refreshTripState:(OBATripState*)state {
+    
+    OBALogDebug(@"refreshTripState");
     
     if ( self.tripController.lastUpdate ) {
         NSString * t = [_timeFormatter stringFromDate:self.tripController.lastUpdate];
@@ -430,7 +442,7 @@
     self.rightButton.enabled = tc.hasNextState;
     
     // We only need to update overlays and annotations if the itinerary has changed
-    if( _currentItinerary != state.itinerary || state.itinerary == nil) {
+    if( state == nil || state.itinerary == nil || _currentItinerary != state.itinerary ) {
         NSArray * annotations = [self annotationsForTripState:state];
         NSArray* overlays = [self overlaysForItinerary:state.itinerary];
         
@@ -447,7 +459,7 @@
     
     _currentItinerary = [NSObject releaseOld:_currentItinerary retainNew:state.itinerary];
     
-    if (lastRegionChangeWasProgramatic) {
+    if (lastRegionChangeWasProgramatic && state) {
         [_mapRegionManager setRegion:state.region];
     }
 }
@@ -485,13 +497,18 @@
         }
         case NSKeyValueChangeRemoval: {
             NSArray * oldDroppedPins = [change objectForKey:NSKeyValueChangeOldKey];
+            NSMutableIndexSet * indices = [NSMutableIndexSet indexSet];
             for (OBAPlace * droppedPinToRemove in oldDroppedPins) {
+                NSUInteger index = 0;
                 for( OBAPlaceAnnotation * placeAnnotation in _droppedPinAnnotations ) {
-                    if (placeAnnotation.place == droppedPinToRemove )
+                    if (placeAnnotation.place == droppedPinToRemove ) {
                         [self.mapView removeAnnotation:placeAnnotation];
-                        [_droppedPinAnnotations removeObject:placeAnnotation];
+                        [indices addIndex:index];
+                    }
+                    index++;
                 }
             }
+            [_droppedPinAnnotations removeObjectsAtIndexes:indices];
             break;
         }            
         default:
@@ -507,6 +524,7 @@
 @implementation OBATripViewController (Private)
 
 - (void) refreshUI {
+    OBALogDebug(@"refreshUI");
     [self.tableView reloadData];
 }
 

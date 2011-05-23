@@ -142,10 +142,13 @@ static const double kRegionExpansionRatio = 0.1;
          */
         [self clearRefreshTimer];
     }
-
+    
+    [self refreshTripState];
 }
 
 - (void) planTripWithQuery:(OBATripQuery*)query {
+    
+    OBALogDebug(@"planTripWithQuery");
     
     [self clearRefreshTimer];
     _lastUpdate = [NSObject releaseOld:_lastUpdate retainNew:nil];
@@ -161,6 +164,7 @@ static const double kRegionExpansionRatio = 0.1;
     [_currentStates removeAllObjects];
     _currentStateIndex = -1;
     [self cancelAllAlarms];
+    [self refreshTripState];
     [self refresh];
 }
 
@@ -173,6 +177,8 @@ static const double kRegionExpansionRatio = 0.1;
 }
 
 - (void) refresh {
+    
+    OBALogDebug(@"refresh");
     
     [self clearRefreshTimer];
     [self clearQueryRequest];
@@ -322,6 +328,8 @@ static const double kRegionExpansionRatio = 0.1;
 
 - (void)requestDidFinish:(id<OBAModelServiceRequest>)request withObject:(id)obj context:(id)context {
     
+    OBALogDebug(@"requestDidFinish");
+    
     if( context == kCancelAlarm ) {
         return;
     }
@@ -426,7 +434,10 @@ static const double kRegionExpansionRatio = 0.1;
 
 - (void) refreshTripState {
     if ([self.delegate respondsToSelector:@selector(refreshTripState:)]) {
-        [self.delegate refreshTripState:[_currentStates objectAtIndex:_currentStateIndex]];
+        OBATripState * state = nil;
+        if ([_currentStates count] > 0)
+            state = [_currentStates objectAtIndex:_currentStateIndex];
+        [self.delegate refreshTripState:state];
     }
 }
 

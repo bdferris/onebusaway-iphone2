@@ -74,7 +74,8 @@ typedef enum {
 
 - (void) setTripQuery:(OBATripQuery*)query {
     
-    NSLog(@"Set trip query");
+    OBALogDebug(@"Set trip query");
+    
     _sourceQuery = [NSObject releaseOld:_sourceQuery retainNew:query];
     [self refreshFromSourceQuery];
 }
@@ -84,7 +85,7 @@ typedef enum {
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    NSLog(@"View did load...");
+    OBALogDebug(@"View did load...");
     
     _startAndEndTableViewCell = [[UITableViewCell getOrCreateCellForTableView:self.tableView cellId:@"StartAndEnd"] retain];
     _startAndEndTableViewCell.selectionStyle = UITableViewCellSelectionStyleBlue;
