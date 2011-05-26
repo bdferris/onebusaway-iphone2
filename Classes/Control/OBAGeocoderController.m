@@ -79,8 +79,13 @@
         OBAPlacesMapViewController * vc = [[OBAPlacesMapViewController alloc] initWithPlaces:places];
         vc.target = self;
         vc.action = @selector(setPlaceFromMap:);
-        [_navigationController pushViewController:vc animated:TRUE];
+        vc.cancelAction = @selector(cancelPlaceSelection);
+        
+        UINavigationController * nc =[[UINavigationController alloc] initWithRootViewController:vc];
+        [_navigationController presentModalViewController:nc animated:TRUE];
+
         [vc release];
+        [nc release];
         
         [places release];
     }    
@@ -113,6 +118,12 @@
 - (void) setPlaceFromMap:(OBAPlace*)place {
     if (self.delegate) {
         [self.delegate handleGeocoderPlace:place context:_context];
+    }
+}
+
+- (void) cancelPlaceSelection {
+    if (self.delegate) {
+        [self.delegate handleGeocoderCanceled];
     }
 }
 

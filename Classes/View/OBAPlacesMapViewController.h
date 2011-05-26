@@ -6,5 +6,6 @@
 
 @property (nonatomic,retain) id target;
 @property (nonatomic) SEL action;
+@property (nonatomic) SEL cancelAction;
 
 @end

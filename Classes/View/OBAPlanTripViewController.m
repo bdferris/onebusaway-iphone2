@@ -49,6 +49,9 @@ typedef enum {
         _appContext = [appContext retain];
         _optimizeFor = [appContext.modelDao defaultTripQueryOptimizeForType];
         _targetTime = [[OBATargetTime timeNow] retain];  
+
+        self.navigationItem.title = @"Plan Your Trip";
+        self.navigationItem.backBarButtonItem.title = @"Cancel";
         self.hidesBottomBarWhenPushed = TRUE;
     }
     return self;
@@ -150,10 +153,6 @@ typedef enum {
     
     [endLabel release];
     [startLabel release];
-    
-    self.navigationItem.title = @"Plan Your Trip";
-    self.navigationItem.backBarButtonItem.title = @"Cancel";
-    self.hidesBottomBarWhenPushed = TRUE;
     
     /**
      * We default to showing the current location in the start field
@@ -311,6 +310,10 @@ typedef enum {
 }
 
 -(void) handleGeocoderNoResultFound {
+    [_activityIndicator hide];
+}
+
+-(void) handleGeocoderCanceled {
     [_activityIndicator hide];
 }
 

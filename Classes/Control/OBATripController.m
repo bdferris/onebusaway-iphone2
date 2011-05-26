@@ -99,6 +99,7 @@ static const double kRegionExpansionRatio = 0.1;
         _itineraries = [[NSArray alloc] init];
         _currentAlarms = [[NSMutableArray alloc] init];
         _queryIndex = -1;
+        _currentStateIndex = -1;
     }
     return self;
 }
@@ -240,7 +241,7 @@ static const double kRegionExpansionRatio = 0.1;
 }
 
 - (BOOL) hasNextState {
-    return _currentStateIndex < [_currentStates count] - 1;
+    return 0 <= _currentStateIndex && _currentStateIndex < [_currentStates count] - 1;
 }
 
 - (void) moveToPrevState {
@@ -437,7 +438,7 @@ static const double kRegionExpansionRatio = 0.1;
 
 - (void) clearSelectedItinerary {
     _currentItinerary = [NSObject releaseOld:_currentItinerary retainNew:nil];
-    _currentStateIndex = 0;
+    _currentStateIndex = -1;
     
     [_currentStates removeAllObjects];
     

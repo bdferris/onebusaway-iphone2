@@ -6,6 +6,7 @@
 -(void) handleGeocoderPlace:(OBAPlace*)place context:(id)context;
 -(void) handleGeocoderError;
 -(void) handleGeocoderNoResultFound;
+-(void) handleGeocoderCanceled;
 @end
 
 @interface OBAGeocoderController : NSObject <OBAModelServiceDelegate> {

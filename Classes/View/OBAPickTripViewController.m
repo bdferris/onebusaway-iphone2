@@ -15,6 +15,7 @@
 
 - (void)dealloc
 {
+    [_tripStateTableViewCellFactory release];
     [super dealloc];
 }
 

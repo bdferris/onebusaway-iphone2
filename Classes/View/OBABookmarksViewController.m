@@ -407,6 +407,10 @@ forRowAtIndexPath:(NSIndexPath *)indexPath  {
     
 }
 
+-(void) handleGeocoderCanceled {
+    
+}
+
 @end
 
 

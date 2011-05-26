@@ -429,7 +429,8 @@
     
     self.refreshButton.enabled = TRUE;
     self.leftButton.enabled = tc.hasPreviousState;
-    self.currentLocationButton.enabled = tc.hasCurrentState;
+    // This is always true, because we allow you to center on your current location
+    self.currentLocationButton.enabled = TRUE;//tc.hasCurrentState;
     self.rightButton.enabled = tc.hasNextState;
     
     // We only need to update overlays and annotations if the itinerary has changed
@@ -528,6 +529,9 @@
     
     NSMutableArray * annotations = [NSMutableArray array];
     
+    if (! state)
+        return annotations;
+    
     if( ! state.placeFrom.isDroppedPin ) {
         OBAPlaceAnnotation * placeFromAnnotation = [[OBAPlaceAnnotation alloc] initWithPlace:state.placeFrom];
         [annotations addObject:placeFromAnnotation];
@@ -568,6 +572,10 @@
 - (NSArray*) overlaysForItinerary:(OBAItineraryV2*)itinerary {
     
     NSMutableArray * list = [NSMutableArray array];
+    
+    if (!itinerary)
+        return list;
+
     for( OBALegV2 * leg in itinerary.legs ) {
         if( leg.transitLeg ) {
             OBATransitLegV2 * transitLeg = leg.transitLeg;

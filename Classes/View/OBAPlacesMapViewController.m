@@ -7,11 +7,14 @@
 
 @synthesize target;
 @synthesize action;
+@synthesize cancelAction;
 
 - (id) initWithPlaces:(NSArray*)places {
     self = [super init];
     if( self ) {
         _places = [places retain];
+        self.navigationItem.title = @"Did you mean...";
+        self.navigationItem.backBarButtonItem.title = @"Cancel";
     }
     return self;
 }
@@ -29,6 +32,10 @@
     mapView.delegate = self;
     self.view = mapView;
     [mapView release];
+    
+    UIBarButtonItem * cancelItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(onCancel:)];
+    self.navigationItem.rightBarButtonItem = cancelItem;
+    [cancelItem release];
 }
 
 - (void) viewDidAppear:(BOOL)animated {
@@ -82,9 +89,17 @@
     if ([annotation isKindOfClass:[OBAPlaceAnnotation class]]) {
         OBAPlaceAnnotation * placeAnnotation = (OBAPlaceAnnotation*) annotation;
         OBAPlace * place = placeAnnotation.place;
+        [self dismissModalViewControllerAnimated:TRUE];
         if (self.target && self.action)
             [self.target performSelector:self.action withObject:place];
     }
+}
+
+-(IBAction) onCancel:(id)sender {
+    [self dismissModalViewControllerAnimated:TRUE];
+    if (self.target && self.cancelAction)
+        [self.target performSelector:self.cancelAction];
+
 }
 
 @end
