@@ -9,6 +9,7 @@
 #import "OBAPlaceDataSource.h"
 #import "OBAPlaceModel.h"
 #import "OBAPlace.h"
+#import "OBAPlacePresentation.h"
 
 
 @implementation OBAPlaceDataSource
@@ -44,9 +45,7 @@
     NSMutableArray * itemsForSection = [NSMutableArray array];
     
     for (OBAPlace *place in _placeModel.places) {
-        
-        TTTableItem *item = [TTTableTextItem itemWithText:place.name URL:nil];
-        item.userInfo = place;
+        TTTableItem *item = [OBAPlacePresentation getPlaceAsItem:place];
         [itemsForSection addObject:item];
     }
 

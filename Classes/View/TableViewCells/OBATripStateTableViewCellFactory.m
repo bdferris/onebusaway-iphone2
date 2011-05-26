@@ -87,10 +87,7 @@ typedef struct  {
 
 - (NSInteger) getNumberOfRowsForTripState:(OBATripState*)state {
 
-    OBALogDebug(@"getNumberOfRowsForTripState");
-    
     if( state == nil ) {
-        OBALogDebug(@"getNumberOfRowsForTripState: nil state");
         return 1;
     }
     
@@ -117,10 +114,7 @@ typedef struct  {
 
 - (UITableViewCell*) getCellForState:(OBATripState*)state indexPath:(NSIndexPath*)indexPath {
     
-    OBALogDebug(@"getCellForState");
-
     if( state == nil ) {
-        OBALogDebug(@"getCellForState: nil state");
         return [self createCellForPlanYourTrip];
     }
 

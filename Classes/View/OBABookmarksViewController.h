@@ -18,6 +18,10 @@
 #import "OBANavigationTargetAware.h"
 #import "OBAPlace.h"
 #import "OBACurrentTravelModeController.h"
+#import "OBAGeocoderController.h"
+
+#import <AddressBook/AddressBook.h>
+#import <AddressBookUI/AddressBookUI.h>
 
 
 @protocol OBABookmarksViewControllerDelegate <NSObject>
@@ -33,7 +37,8 @@ typedef enum {
 } OBABookmarksViewControllerMode;
 
 
-@interface OBABookmarksViewController : UITableViewController <OBACurrentTravelModeDelegate> {
+@interface OBABookmarksViewController : UITableViewController <OBACurrentTravelModeDelegate, ABPeoplePickerNavigationControllerDelegate, UINavigationControllerDelegate, OBAGeocoderControllerDelegate> {
+    
 	OBAApplicationContext * _appContext;
 	OBABookmarksViewControllerMode _mode;
     NSArray * _currentLocations;
@@ -43,6 +48,8 @@ typedef enum {
 	UIBarButtonItem * _bookmarkEditButton;
     UIBarButtonItem * _recentClearButton;
     UISegmentedControl * _segmented;
+    ABPeoplePickerNavigationController * _peoplePicker;
+    OBAGeocoderController * _geocoder;
 }
 
 + (void) showBookmarksViewControllerWithAppContext:(OBAApplicationContext*)appContext parent:(UINavigationController*)parent delegate:(id<OBABookmarksViewControllerDelegate>)delegate includeCurrentLocation:(BOOL)includeCurrentLocation;

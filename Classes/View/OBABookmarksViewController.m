@@ -19,9 +19,12 @@
 #import "OBAEditBookmarkViewController.h"
 #import "OBAPlace.h"
 #import "OBACurrentTravelModeState.h"
+#import "OBAPlacePresentation.h"
 
 
 @interface OBABookmarksViewController (Private)
+
+- (NSArray*) createToolbarItemsWithButtons:(UISegmentedControl*)segmented;
 
 - (UITableViewCell *)bookmarkCellForRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView;
 - (UITableViewCell *)recentCellForRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView;
@@ -71,6 +74,8 @@
     [_segmented release];
     [_bookmarkEditButton release];
     [_recentClearButton release];
+    [_peoplePicker release];
+    [_geocoder release];
     [super dealloc];
 }
 
@@ -105,6 +110,9 @@
 
 - (void) setMode:(OBABookmarksViewControllerMode)mode {
     
+    BOOL wasContacts = _mode == OBABookmarksViewControllerModeContacts;
+    BOOL isContacts = mode == OBABookmarksViewControllerModeContacts;
+    
     if( _mode == OBABookmarksViewControllerModeBookmarks && self.editing) {
         self.editing = FALSE;
         [self.tableView setEditing:FALSE animated:FALSE];
@@ -119,21 +127,33 @@
         case OBABookmarksViewControllerModeBookmarks: {
             self.navigationItem.title = @"Bookmarks";
             _segmented.selectedSegmentIndex = 0;
-            self.navigationItem.rightBarButtonItem = _bookmarkEditButton;
+            self.navigationItem.leftBarButtonItem = _bookmarkEditButton;
             break;
         }
         case OBABookmarksViewControllerModeRecent: {
             self.navigationItem.title = @"Recent";
-            _segmented.selectedSegmentIndex = 1;            
-            self.navigationItem.rightBarButtonItem = _recentClearButton;
+            _segmented.selectedSegmentIndex = 1;
+            self.navigationItem.leftBarButtonItem = _recentClearButton;
             break;
         }
         case OBABookmarksViewControllerModeContacts: {
             self.navigationItem.title = @"Contacts";
-            self.navigationItem.rightBarButtonItem = nil;
+            self.navigationItem.leftBarButtonItem = nil;
             _segmented.selectedSegmentIndex = 2;
+            
+            if (! wasContacts) {
+                [self.navigationController presentModalViewController:_peoplePicker animated:FALSE];
+            }
+            
             break;
         }
+    }
+    
+    /**
+     * If we were in Contacts mode, it means the PeoplePicker VC is currently being presented modally and we need to hide it.
+     */
+    if (wasContacts && !isContacts) {
+        [_peoplePicker dismissModalViewControllerAnimated:FALSE];
     }
     
     [self.tableView reloadData];
@@ -143,7 +163,7 @@
     [super viewDidLoad];
     
     UIBarButtonItem * cancelItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(onCancel:)];
-    self.navigationItem.leftBarButtonItem = cancelItem;
+    self.navigationItem.rightBarButtonItem = cancelItem;
     [cancelItem release];
 
     _bookmarkEditButton = [[UIBarButtonItem alloc] initWithTitle:@"Edit" style:UIBarButtonItemStyleBordered target:self action:@selector(onEditButton:)];
@@ -157,15 +177,17 @@
     [_segmented addTarget:self action:@selector(onBookmarkTypeChanged:) forControlEvents:UIControlEventValueChanged];
     [_segmented sizeToFit];
     
-    UIBarButtonItem * itemA = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
-    UIBarButtonItem * itemB = [[UIBarButtonItem alloc] initWithCustomView:_segmented];
-    UIBarButtonItem * itemC = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];    
+    self.toolbarItems = [self createToolbarItemsWithButtons:_segmented];
     
-    self.toolbarItems = [NSArray arrayWithObjects:itemA,itemB,itemC,nil];
-
-    [itemA release];
-    [itemB release];
-    [itemC release];
+    _peoplePicker = [[ABPeoplePickerNavigationController alloc] init];
+    _peoplePicker.peoplePickerDelegate = self;
+    _peoplePicker.delegate = self;
+    _peoplePicker.hidesBottomBarWhenPushed = FALSE;
+    [_peoplePicker setToolbarHidden:FALSE animated:FALSE];
+    _peoplePicker.displayedProperties = [NSArray arrayWithObject:[NSNumber numberWithInt:kABPersonAddressProperty]];
+    
+    _geocoder = [[OBAGeocoderController alloc] initWithAppContext:_appContext navigationController:self.navigationController];
+    _geocoder.delegate = self;
     
     self.mode = OBABookmarksViewControllerModeBookmarks;
 }
@@ -300,11 +322,111 @@ forRowAtIndexPath:(NSIndexPath *)indexPath  {
     
 }
 
+#pragma mark ABPeoplePickerNavigationControllerDelegate 
+
+// Called after the user has pressed cancel
+// The delegate is responsible for dismissing the peoplePicker
+- (void)peoplePickerNavigationControllerDidCancel:(ABPeoplePickerNavigationController *)peoplePicker {
+    [peoplePicker dismissModalViewControllerAnimated:FALSE];
+    [self dismissModalViewControllerAnimated:TRUE];
+}
+
+// Called after a person has been selected by the user.
+// Return YES if you want the person to be displayed.
+// Return NO  to do nothing (the delegate is responsible for dismissing the peoplePicker).
+- (BOOL)peoplePickerNavigationController:(ABPeoplePickerNavigationController *)peoplePicker shouldContinueAfterSelectingPerson:(ABRecordRef)person {
+    
+    return TRUE;
+}
+
+// Called after a value has been selected by the user.
+// Return YES if you want default action to be performed.
+// Return NO to do nothing (the delegate is responsible for dismissing the peoplePicker).
+- (BOOL)peoplePickerNavigationController:(ABPeoplePickerNavigationController *)peoplePicker shouldContinueAfterSelectingPerson:(ABRecordRef)person property:(ABPropertyID)property identifier:(ABMultiValueIdentifier)identifier {
+    
+    if (property == kABPersonAddressProperty) {
+        
+        ABMultiValueRef multi = ABRecordCopyValue(person, property);
+        NSArray *theArray = [(id)ABMultiValueCopyArrayOfAllValues(multi) autorelease];
+        
+        // Figure out which values we want and store the index.
+        const NSUInteger theIndex = ABMultiValueGetIndexForIdentifier(multi, identifier);
+        
+        NSDictionary *theDict = [theArray objectAtIndex:theIndex];
+        
+        OBAPlace * place = [OBAPlacePresentation getAddressBookPersonAsPlace:person withAddressRecord:theDict];
+        
+        [_geocoder geocodeAddress:place.address withContext:place];
+        
+        CFRelease(multi);
+    }
+    
+    [peoplePicker dismissModalViewControllerAnimated:FALSE];
+    [self dismissModalViewControllerAnimated:TRUE];
+
+    return FALSE;
+}
+
+#pragma mark UINavigationControllerDelegate
+
+- (void)navigationController:(UINavigationController *)navigationController willShowViewController:(UIViewController *)viewController animated:(BOOL)animated {
+
+    NSArray * items = [NSArray arrayWithObjects:@"Bookmarks",@"Recent",@"Contacts", nil];
+    
+    UISegmentedControl * segmented = [[UISegmentedControl alloc] initWithItems:items];
+    segmented.segmentedControlStyle = UISegmentedControlStyleBar;
+    segmented.selectedSegmentIndex = 2;
+    [segmented addTarget:self action:@selector(onBookmarkTypeChanged:) forControlEvents:UIControlEventValueChanged];
+    [segmented sizeToFit];
+
+    viewController.toolbarItems = [self createToolbarItemsWithButtons:segmented];
+    viewController.hidesBottomBarWhenPushed = FALSE;
+    [navigationController setToolbarHidden:FALSE animated:FALSE];
+    
+    [segmented release];
+}
+
+- (void)navigationController:(UINavigationController *)navigationController didShowViewController:(UIViewController *)viewController animated:(BOOL)animated {
+    
+    viewController.hidesBottomBarWhenPushed = FALSE;
+}
+
+#pragma mark OBAGeocoderControllerDelegate
+
+-(void) handleGeocoderPlace:(OBAPlace*)place context:(id)context {
+    OBAPlace * contact = (OBAPlace*)context;
+    contact.location = place.location;
+    [self.delegate placeBookmarkSelected:contact];
+}
+
+-(void) handleGeocoderError {
+    
+}
+
+-(void) handleGeocoderNoResultFound {
+    
+}
+
 @end
 
 
 
 @implementation OBABookmarksViewController (Private)
+
+- (NSArray*) createToolbarItemsWithButtons:(UISegmentedControl*)segmented {
+    
+    UIBarButtonItem * itemA = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
+    UIBarButtonItem * itemB = [[UIBarButtonItem alloc] initWithCustomView:segmented];
+    UIBarButtonItem * itemC = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];    
+    
+    NSArray * toolbarItems = [NSArray arrayWithObjects:itemA,itemB,itemC,nil];
+    
+    [itemA release];
+    [itemB release];
+    [itemC release];
+    
+    return toolbarItems;
+}
 
 - (UITableViewCell *)bookmarkCellForRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView {
 
@@ -356,8 +478,11 @@ forRowAtIndexPath:(NSIndexPath *)indexPath  {
     }
     
     OBAPlace * place = [_recents objectAtIndex:(indexPath.row - offset)];
-    UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView];
+    UITableViewCellStyle style = place.address != nil ? UITableViewCellStyleSubtitle : UITableViewCellStyleDefault;
+    UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView style:style];
     cell.textLabel.text = place.name;
+    if (place.address)
+        cell.detailTextLabel.text = place.address;
     cell.textLabel.textAlignment = UITextAlignmentLeft;		
     cell.accessoryType = UITableViewCellAccessoryNone;
     cell.selectionStyle = UITableViewCellSelectionStyleBlue;

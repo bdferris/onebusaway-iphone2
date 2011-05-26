@@ -4,6 +4,7 @@
 @implementation OBAPlace
 
 @synthesize name;
+@synthesize address;
 @synthesize location;
 @synthesize type;
 @synthesize stopIds;
@@ -12,6 +13,7 @@
     self = [super init];
 	if( self ) {
 		self.name =  [coder decodeObjectForKey:@"name"];
+        self.address = [coder decodeObjectForKey:@"address"];
         self.location = [coder decodeObjectForKey:@"location"];
         self.type = [coder decodeIntForKey:@"type"];
         self.stopIds = [coder decodeObjectForKey:@"stopIds"];
@@ -22,6 +24,7 @@
 + (OBAPlace*) placeWithPlace:(OBAPlace*)other {
     OBAPlace * place = [[[OBAPlace alloc] init] autorelease];
     place.name = other.name;
+    place.address = other.address;
     place.location = other.location;
     place.type = other.type;
     return place;
@@ -70,6 +73,7 @@
 
 - (void) dealloc {
     self.name = nil;
+    self.address = nil;
     self.location = nil;
     self.stopIds = nil;
     [super dealloc];
@@ -99,10 +103,15 @@
     return self.type == OBAPlaceTypeRecent;
 }
 
+- (BOOL) isContact {
+    return self.type == OBAPlaceTypeContact;
+}
+
 #pragma mark NSCoder Methods
 
 - (void) encodeWithCoder: (NSCoder *)coder {
 	[coder encodeObject:self.name forKey:@"name"];
+    [coder encodeObject:self.address forKey:@"address"];
     [coder encodeObject:self.location forKey:@"location"];
     [coder encodeInt:self.type forKey:@"type"];
     [coder encodeObject:self.stopIds forKey:@"stopIds"];

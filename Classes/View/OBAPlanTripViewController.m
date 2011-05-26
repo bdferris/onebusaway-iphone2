@@ -6,6 +6,7 @@
 #import "OBAFixedHeightPickerTextField.h"
 #import "OBAListSelectionViewController.h"
 #import "OBAPickTimeViewController.h"
+#import "OBAPlacePresentation.h"
 
 
 static const NSString * kContextPlaceStart = @"kContextPlaceStart";
@@ -14,8 +15,7 @@ static const NSString * kContextPlaceEnd = @"kContextPlaceEnd";
 typedef enum {
     OBASectionTypeNone,
     OBASectionTypeStartAndEnd,
-    OBASectionTypeOptimizeFor,
-    OBASectionTypeTime,
+    OBASectionTypeOptions,
     OBASectionTypePlanTrip
 } OBASectionType;
 
@@ -25,6 +25,9 @@ typedef enum {
 - (OBASectionType) getSectionTypeForSectionIndex:(NSInteger)sectionIndex;
 - (NSInteger) getSectionIndexForSectionType:(OBASectionType)sectionType;
 
+- (UITableViewCell *) optionsCellForRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView;
+- (void) didSelectOptionsRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView;
+
 - (void) refreshFromSourceQuery;
 
 - (BOOL) ensurePlacesAreSet;
@@ -33,9 +36,6 @@ typedef enum {
 
 - (TTPickerTextField*) getTextFieldForContext:(id)context;
 - (OBAPlace*) getPlaceForContext:(id)context;
-
-- (void) showLocationNotFound:(NSString*)locationName;
-- (void) showLocationLookupError:(NSString*)locationName;
 
 @end
 
@@ -48,7 +48,8 @@ typedef enum {
     if (self) {
         _appContext = [appContext retain];
         _optimizeFor = [appContext.modelDao defaultTripQueryOptimizeForType];
-        _targetTime = [[OBATargetTime timeNow] retain];        
+        _targetTime = [[OBATargetTime timeNow] retain];  
+        self.hidesBottomBarWhenPushed = TRUE;
     }
     return self;
 }
@@ -68,6 +69,9 @@ typedef enum {
     [_targetTime release];
     [_optimizeForLabels release];
     [_timeFormatter release];
+    
+    [_geocoder release];
+    [_activityIndicator release];
     
     [super dealloc];
 }
@@ -126,6 +130,7 @@ typedef enum {
     _startTextField.autocorrectionType = UITextAutocorrectionTypeNo;
     _startTextField.autocapitalizationType = UITextAutocapitalizationTypeNone;
     _startTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
+    _startTextField.delegate = self;
     
     _endTextField = [[OBAFixedHeightPickerTextField alloc] initWithFrame:CGRectMake(kCellMargin, 60, CGRectGetWidth(self.view.bounds) - 2 * kCellMargin, 40)];
     _endTextField.dataSource = [[[OBAPlaceDataSource alloc] initWithAppContext:_appContext] autorelease];;
@@ -138,7 +143,8 @@ typedef enum {
     _endTextField.autocorrectionType = UITextAutocorrectionTypeNo;
     _endTextField.autocapitalizationType = UITextAutocapitalizationTypeNone;
     _endTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
-
+    _endTextField.delegate = self;
+    
     [_startAndEndTableViewCell addSubview:_startTextField];
     [_startAndEndTableViewCell addSubview:_endTextField];
     
@@ -153,8 +159,7 @@ typedef enum {
      * We default to showing the current location in the start field
      */ 
     OBAPlace * place = [OBAPlace placeWithCurrentLocation];
-    TTTableItem *item = [TTTableTextItem itemWithText:place.name URL:nil];
-    item.userInfo = place;
+    TTTableItem *item = [OBAPlacePresentation getPlaceAsItem:place];
     [_startTextField removeAllCells];
     [_startTextField addCellWithObject:item];
     
@@ -163,6 +168,11 @@ typedef enum {
     _timeFormatter = [[NSDateFormatter alloc] init];
     [_timeFormatter setDateStyle:NSDateFormatterNoStyle];
     [_timeFormatter setTimeStyle:NSDateFormatterShortStyle];
+    
+    _geocoder = [[OBAGeocoderController alloc] initWithAppContext:_appContext navigationController:self.navigationController];
+    _geocoder.delegate = self;
+    
+    _activityIndicator = [[OBAModalActivityIndicator alloc] init];                          
     
     [self refreshFromSourceQuery];
 }
@@ -195,13 +205,13 @@ typedef enum {
     NSIndexPath * path = sender;
     _optimizeFor = path.row;
 
-    NSIndexSet * sections = [NSIndexSet indexSetWithIndex:[self getSectionIndexForSectionType:OBASectionTypeOptimizeFor]];
+    NSIndexSet * sections = [NSIndexSet indexSetWithIndex:[self getSectionIndexForSectionType:OBASectionTypeOptions]];
     [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationNone];
 }
 
 - (IBAction) onTargetTimeChanged:(id)sender {
     _targetTime = [NSObject releaseOld:_targetTime retainNew:sender];
-    NSIndexSet * sections = [NSIndexSet indexSetWithIndex:[self getSectionIndexForSectionType:OBASectionTypeTime]];
+    NSIndexSet * sections = [NSIndexSet indexSetWithIndex:[self getSectionIndexForSectionType:OBASectionTypeOptions]];
     [self.tableView reloadSections:sections withRowAnimation:UITableViewRowAnimationNone];
 }
 
@@ -218,10 +228,10 @@ typedef enum {
 
     switch (sectionType) {
         case OBASectionTypeStartAndEnd:
-        case OBASectionTypeOptimizeFor:
-        case OBASectionTypeTime:
         case OBASectionTypePlanTrip:
             return 1;
+        case OBASectionTypeOptions:
+            return 2;
         default:
             return 0;
     }
@@ -234,48 +244,8 @@ typedef enum {
     switch (sectionType) {
         case OBASectionTypeStartAndEnd:
             return _startAndEndTableViewCell;
-        case OBASectionTypeOptimizeFor: {
-            UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView];
-            switch (_optimizeFor) {
-                case OBATripQueryOptimizeForTypeDefault:
-                    cell.textLabel.text = @"Prefer best route";
-                    break;
-                case OBATripQueryOptimizeForTypeMinimizeTime:
-                    cell.textLabel.text = @"Prefer fastest route";
-                    break;
-                case OBATripQueryOptimizeForTypeMinimizeTransfers:
-                    cell.textLabel.text = @"Prefer fewer transfers";
-                    break;
-                case OBATripQueryOptimizeForTypeMinimizeWalking:
-                    cell.textLabel.text = @"Prefer less walking";
-                    break;
-            }
-            cell.selectionStyle = UITableViewCellSelectionStyleBlue;
-            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-            return cell;
-        }
-        case OBASectionTypeTime: {
-            
-            UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView];
-            
-            NSString * t = [_timeFormatter stringFromDate:_targetTime.time];
-            
-            switch(_targetTime.type) {
-                case OBATargetTimeTypeNow:
-                    cell.textLabel.text = @"Depart Now";
-                    break;
-                case OBATargetTimeTypeDepartBy:
-                    cell.textLabel.text = [NSString stringWithFormat:@"Depart at %@",t];
-                    break;
-                case OBATargetTimeTypeArriveBy:
-                    cell.textLabel.text = [NSString stringWithFormat:@"Arrive by %@",t];
-                    break;
-            }
-            
-            cell.selectionStyle = UITableViewCellSelectionStyleBlue;
-            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-            return cell;
-        }
+        case OBASectionTypeOptions:
+            return [self optionsCellForRowAtIndexPath:indexPath tableView:tableView];
         case OBASectionTypePlanTrip: {
             UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView cellId:@"Plan Trip"];
             cell.textLabel.text = @"Plan Trip";
@@ -300,32 +270,23 @@ typedef enum {
     return 44;
 }
 
+- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+    OBASectionType sectionType = [self getSectionTypeForSectionIndex:section];
+    if( sectionType == OBASectionTypeOptions )
+        return @"Options:";
+    return nil;
+}
+
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     OBASectionType sectionType = [self getSectionTypeForSectionIndex:indexPath.section];
 
     switch (sectionType) {
     
-        case OBASectionTypeOptimizeFor: {
-            NSIndexPath * p = [NSIndexPath indexPathForRow:_optimizeFor inSection:0];
-            OBAListSelectionViewController * vc = [[OBAListSelectionViewController alloc] initWithValues:_optimizeForLabels selectedIndex:p];
-            vc.exitOnSelection = TRUE;
-            vc.target = self;
-            vc.action = @selector(onOptimizeForChagned:);
-            [self.navigationController pushViewController:vc animated:TRUE];
-            [vc release];
+        case OBASectionTypeOptions: {
+            [self didSelectOptionsRowAtIndexPath:indexPath tableView:tableView];
             break;
         }
-            
-        case OBASectionTypeTime: {
-            OBAPickTimeViewController * vc = [OBAPickTimeViewController viewController];
-            vc.targetTime = _targetTime;
-            vc.target = self;
-            vc.action = @selector(onTargetTimeChanged:);
-            [self.navigationController pushViewController:vc animated:TRUE];
-            break;
-        }
-            
             
         case OBASectionTypePlanTrip:
             [self ensurePlacesAreSet];
@@ -336,64 +297,22 @@ typedef enum {
     }
 }
 
-#pragma mark OBAModelServiceDelegate
+#pragma mark OBAGeocoderControllerDelegate
 
-- (void)requestDidFinish:(id<OBAModelServiceRequest>)request withObject:(id)obj context:(id)context {
-    
-    if( context == kContextPlaceStart || context == kContextPlaceEnd ) {
-
-        NSArray * placemarks = obj;
-        
-        if( [placemarks count] == 0 ) {
-            TTPickerTextField * textField = [self getTextFieldForContext:context];
-            [self showLocationNotFound:textField.text];
-        }
-        else if( [placemarks count] == 1 ) {
-            OBAPlacemark * placemark = [placemarks objectAtIndex:0];
-            OBAPlace * place = [self getPlaceForContext:context];
-            place.location = [[[CLLocation alloc] initWithLatitude:placemark.coordinate.latitude longitude:placemark.coordinate.longitude] autorelease];
-            [self ensurePlacesAreSet];
-        }
-        else {
-
-            NSMutableArray * places = [[NSMutableArray alloc] init];
-            for( OBAPlacemark * placemark in placemarks ) {
-                OBAPlace * place = [OBAPlace placeWithName:placemark.address coordinate:placemark.coordinate];
-                [places addObject:place];
-            }
-            
-            OBAPlacesMapViewController * vc = [[OBAPlacesMapViewController alloc] initWithPlaces:places];
-            
-            vc.target = self;
-            vc.action = (context == kContextPlaceStart) ? @selector(setFromPlaceFromPlacemark:) : @selector(setToPlaceFromPlacemark:);
-            
-            [self.navigationController pushViewController:vc animated:TRUE];
-            [vc release];
-            
-            [places release];
-        }    
-    }
+-(void) handleGeocoderPlace:(OBAPlace*)place context:(id)context {
+    [_activityIndicator hide];
+    OBAPlace * currentPlace = [self getPlaceForContext:context];
+    currentPlace.location = place.location;
+    [self ensurePlacesAreSet];
 }
 
-- (void)requestDidFinish:(id<OBAModelServiceRequest>)request withCode:(NSInteger)code context:(id)context {
-    if( context == kContextPlaceStart || context == kContextPlaceEnd ) {
-        TTPickerTextField * textField = [self getTextFieldForContext:context];
-        [self showLocationLookupError:textField.text];
-    }
+-(void) handleGeocoderError {
+    [_activityIndicator hide];
 }
 
-- (void)requestDidFail:(id<OBAModelServiceRequest>)request withError:(NSError *)error context:(id)context {
-    if( context == kContextPlaceStart || context == kContextPlaceEnd ) {
-        TTPickerTextField * textField = [self getTextFieldForContext:context];
-        [self showLocationLookupError:textField.text];
-    }
+-(void) handleGeocoderNoResultFound {
+    [_activityIndicator hide];
 }
-
-- (void)request:(id<OBAModelServiceRequest>)request withProgress:(float)progress context:(id)context {
-
-}
-
-
 
 #pragma mark OBABookmarksViewControllerDelegate
 
@@ -402,13 +321,19 @@ typedef enum {
     TTPickerTextField * field = (_currentContext == OBAPlanTripViewControllerContextStartLabel) ? _startTextField : _endTextField;
     [field removeAllCells];
     
-    TTTableItem *item = [TTTableTextItem itemWithText:place.name URL:nil];
-    item.userInfo = place;
+    TTTableItem *item = [OBAPlacePresentation getPlaceAsItem:place];
     [field addCellWithObject:item];
 }
 
+#pragma mark UITextFieldDelegate
+
+- (void) textField:(UITextField*)field didAddCellAtIndex:(NSInteger)index {
+    [field resignFirstResponder];
+}
 
 @end
+
+
 
 @implementation OBAPlanTripViewController (Private)
 
@@ -418,11 +343,9 @@ typedef enum {
         case 0:
             return OBASectionTypeStartAndEnd;
         case 1:
-            return OBASectionTypeOptimizeFor;
+            return OBASectionTypePlanTrip;            
         case 2:
-            return OBASectionTypeTime;
-        case 3:
-            return OBASectionTypePlanTrip;
+            return OBASectionTypeOptions;
         default:
             return OBASectionTypeNone;
     }
@@ -432,14 +355,82 @@ typedef enum {
     switch (sectionType) {
         case OBASectionTypeStartAndEnd:
             return 0;
-        case OBASectionTypeOptimizeFor:
-            return 1;
-        case OBASectionTypeTime:
-            return 2;
         case OBASectionTypePlanTrip:
-            return 3;
+            return 1;
+        case OBASectionTypeOptions:
+            return 2;
         default:
             return -1;
+    }
+}
+
+- (UITableViewCell *) optionsCellForRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView {
+    
+    if( indexPath.row == 0 ) {
+        
+        UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView];
+        
+        NSString * t = [_timeFormatter stringFromDate:_targetTime.time];
+        
+        switch(_targetTime.type) {
+            case OBATargetTimeTypeNow:
+                cell.textLabel.text = @"Depart Now";
+                break;
+            case OBATargetTimeTypeDepartBy:
+                cell.textLabel.text = [NSString stringWithFormat:@"Depart at %@",t];
+                break;
+            case OBATargetTimeTypeArriveBy:
+                cell.textLabel.text = [NSString stringWithFormat:@"Arrive by %@",t];
+                break;
+        }
+        
+        cell.selectionStyle = UITableViewCellSelectionStyleBlue;
+        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        return cell;
+    }
+    
+    if( indexPath.row == 1 ) {
+        UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView];
+        switch (_optimizeFor) {
+            case OBATripQueryOptimizeForTypeDefault:
+                cell.textLabel.text = @"Prefer best route";
+                break;
+            case OBATripQueryOptimizeForTypeMinimizeTime:
+                cell.textLabel.text = @"Prefer fastest route";
+                break;
+            case OBATripQueryOptimizeForTypeMinimizeTransfers:
+                cell.textLabel.text = @"Prefer fewer transfers";
+                break;
+            case OBATripQueryOptimizeForTypeMinimizeWalking:
+                cell.textLabel.text = @"Prefer less walking";
+                break;
+        }
+        cell.selectionStyle = UITableViewCellSelectionStyleBlue;
+        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        return cell;
+    }
+    
+    return [UITableViewCell getOrCreateCellForTableView:tableView];
+}
+
+- (void) didSelectOptionsRowAtIndexPath:(NSIndexPath *)indexPath tableView:(UITableView *)tableView {
+    
+    if( indexPath.row == 0 ) {
+        OBAPickTimeViewController * vc = [OBAPickTimeViewController viewController];
+        vc.targetTime = _targetTime;
+        vc.target = self;
+        vc.action = @selector(onTargetTimeChanged:);
+        [self.navigationController pushViewController:vc animated:TRUE];
+    }
+    
+    if (indexPath.row == 1) {
+        NSIndexPath * p = [NSIndexPath indexPathForRow:_optimizeFor inSection:0];
+        OBAListSelectionViewController * vc = [[OBAListSelectionViewController alloc] initWithValues:_optimizeForLabels selectedIndex:p];
+        vc.exitOnSelection = TRUE;
+        vc.target = self;
+        vc.action = @selector(onOptimizeForChagned:);
+        [self.navigationController pushViewController:vc animated:TRUE];
+        [vc release];
     }
 }
 
@@ -454,22 +445,22 @@ typedef enum {
     
     if( placeFrom ) {        
         if( ! placeFrom.isPlain ) {
-            TTTableItem *item = [TTTableTextItem itemWithText:placeFrom.name URL:nil];
-            item.userInfo = placeFrom;
+            TTTableItem *item = [OBAPlacePresentation getPlaceAsItem:placeFrom];
             [_startTextField removeAllCells];
             [_startTextField addCellWithObject:item];
         } else {
             _startTextField.text = placeFrom.name;
+            [_startTextField showSearchResults:FALSE];
         }
     }
     if( placeTo ) {
         if( ! placeTo.isPlain ) {
-            TTTableItem *item = [TTTableTextItem itemWithText:placeTo.name URL:nil];
-            item.userInfo = placeTo;
+            TTTableItem *item = [OBAPlacePresentation getPlaceAsItem:placeTo];
             [_endTextField removeAllCells];
             [_endTextField addCellWithObject:item];
         } else {
             _endTextField.text = placeTo.name;
+            [_endTextField showSearchResults:FALSE];
         }
     }
     
@@ -516,6 +507,9 @@ typedef enum {
     }
     
     NSString * text = textField.text;
+
+    text = [text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    
     if( [text length] > 0 ) {
         if (! place) {
             place = [OBAPlace placeWithName:text];
@@ -538,8 +532,11 @@ typedef enum {
     }
     
     if (! place.location) {
-        OBAModelService * modelService = _appContext.modelService;
-        [modelService placemarksForAddress:place.name withDelegate:self withContext:context];
+        NSString * toGeocode = place.name;
+        if (place.address)
+            toGeocode = place.address;
+        [_geocoder geocodeAddress:toGeocode withContext:context];
+        [_activityIndicator show:self.view];
         return FALSE;
     }
     
@@ -574,8 +571,7 @@ typedef enum {
     [_startTextField removeAllCells];
     _startTextField.text = @"";
     
-    TTTableItem *item = [TTTableTextItem itemWithText:place.name URL:nil];
-    item.userInfo = place;
+    TTTableItem *item = [OBAPlacePresentation getPlaceAsItem:place];
     [_startTextField addCellWithObject:item];
     
     [self ensurePlacesAreSet];
@@ -589,31 +585,10 @@ typedef enum {
     [_endTextField removeAllCells];
     _endTextField.text = @"";
     
-    TTTableItem *item = [TTTableTextItem itemWithText:place.name URL:nil];
-    item.userInfo = place;
+    TTTableItem *item = [OBAPlacePresentation getPlaceAsItem:place];
     [_endTextField addCellWithObject:item];
     
     [self ensurePlacesAreSet];
-}
-
-- (void) showLocationNotFound:(NSString*)locationName {
-    UIAlertView * view = [[UIAlertView alloc] init];
-    view.title = @"Location Not Found";
-    view.message = [NSString stringWithFormat:@"We could not find a location for the specified place/address: %@", locationName];
-    [view addButtonWithTitle:@"Dismiss"];
-    view.cancelButtonIndex = 0;
-    [view show];
-    [view release];
-}
-
-- (void) showLocationLookupError:(NSString*)locationName {
-    UIAlertView * view = [[UIAlertView alloc] init];
-    view.title = @"Location Lookup Error";
-    view.message = [NSString stringWithFormat:@"There was a network/server lookup error for the specified place/address: %@", locationName];
-    [view addButtonWithTitle:@"Dismiss"];
-    view.cancelButtonIndex = 0;
-    [view show];
-    [view release];
 }
 
 @end

@@ -165,9 +165,9 @@ const static int kMaxEntriesInMostRecentList = 10;
 - (void) addRecentPlace:(OBAPlace*)place {
 
     /**
-     * Skip non-plain recent places
+     * We only record recent places for plain, dropped pin, and contact places
      */
-    if( ! place.isPlain)
+    if( ! (place.isPlain || place.isDroppedPin || place.isContact) )
         return;
     
     /**

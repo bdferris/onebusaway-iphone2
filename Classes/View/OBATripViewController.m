@@ -127,8 +127,6 @@
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     
-    OBALogDebug(@"viewWillAppear");
-    
     self.tripController.delegate = self;
     
     NSIndexPath * indexPath = [self.tableView indexPathForSelectedRow];
@@ -159,8 +157,6 @@
 - (void)viewWillDisappear:(BOOL)animated {    
 	[super viewWillDisappear:animated];
     
-    OBALogDebug(@"viewWillDisappear");
-
     self.tripController.delegate = nil;
     
     OBAModelDAO * modelDao = self.appContext.modelDao;
@@ -351,7 +347,6 @@
 #pragma mark OBATripControllerDelegate
 
 -(void) refreshingItineraries {
-    OBALogDebug(@"refreshingItineraries");
     self.refreshButton.enabled = FALSE;
     self.leftButton.enabled = FALSE;
     self.rightButton.enabled = FALSE;
@@ -360,8 +355,6 @@
 }
 
 -(void) refreshingItinerariesCompleted {
-    
-    OBALogDebug(@"refreshingItinerariesCompleted");
     
     self.refreshButton.enabled = TRUE;
     self.leftButton.enabled = TRUE;
@@ -399,8 +392,6 @@
 }
 
 -(void) refreshTripState:(OBATripState*)state {
-    
-    OBALogDebug(@"refreshTripState");
     
     if ( self.tripController.lastUpdate ) {
         NSString * t = [_timeFormatter stringFromDate:self.tripController.lastUpdate];
@@ -524,7 +515,6 @@
 @implementation OBATripViewController (Private)
 
 - (void) refreshUI {
-    OBALogDebug(@"refreshUI");
     [self.tableView reloadData];
 }
 

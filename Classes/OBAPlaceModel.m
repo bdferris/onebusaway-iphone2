@@ -8,7 +8,10 @@
 
 #import "OBAPlaceModel.h"
 #import "OBAPlace.h"
+#import "OBAPlacePresentation.h"
 
+
+#import <AddressBook/AddressBook.h>
 
 @interface OBAPlaceModel (Private)
 
@@ -56,6 +59,47 @@
             [_places addObject:place];
     }
     
+    ABAddressBookRef addressBook = ABAddressBookCreate();
+    
+    NSArray * people = (NSArray*) ABAddressBookCopyPeopleWithName(addressBook, (CFStringRef) text);
+    
+    if( (people != nil) && [people count] > 0 ) {
+        
+        for (CFIndex index=0; index < [people count]; index++) {
+
+            ABRecordRef person = (ABRecordRef)[people objectAtIndex:index];
+
+            CFStringRef firstName = ABRecordCopyValue(person, kABPersonFirstNameProperty);
+            CFStringRef lastName  = ABRecordCopyValue(person, kABPersonLastNameProperty);
+            
+            ABMultiValueRef multi = ABRecordCopyValue(person, kABPersonAddressProperty);
+            CFIndex count = ABMultiValueGetCount(multi);
+            
+            for(CFIndex i=0;i<count;i++) {
+                
+                NSDictionary * dict = (NSDictionary *) ABMultiValueCopyValueAtIndex(multi, i);
+
+                OBAPlace * place = [OBAPlacePresentation getAddressBookPersonAsPlace:person withAddressRecord:dict];
+                [_places addObject:place];
+                
+                CFRelease(dict);
+            }
+            
+            if (firstName != nil)
+                CFRelease(firstName);
+
+            if (lastName != nil)
+                CFRelease(lastName);
+            
+            CFRelease(multi);
+        }
+    }
+    
+    if (people != nil)
+        CFRelease(people);
+    
+    CFRelease(addressBook);
+        
     [_delegates perform:@selector(modelDidFinishLoad:) withObject:self];
 }
 

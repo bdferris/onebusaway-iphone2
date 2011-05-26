@@ -3,6 +3,8 @@
 #import "OBAPlace.h"
 #import "OBATargetTime.h"
 #import "OBABookmarksViewController.h"
+#import "OBAGeocoderController.h"
+#import "OBAModalActivityIndicator.h"
 #import "Three20UI/Three20UI.h"
 
 
@@ -13,7 +15,7 @@ typedef enum {
 } OBAPlanTripViewControllerContext;
 
 
-@interface OBAPlanTripViewController : UITableViewController <OBAModelServiceDelegate,OBAModelServiceDelegate,OBABookmarksViewControllerDelegate,UITextFieldDelegate> {
+@interface OBAPlanTripViewController : UITableViewController <OBAGeocoderControllerDelegate,OBABookmarksViewControllerDelegate,UITextFieldDelegate> {
     OBAApplicationContext * _appContext;
     OBAPlanTripViewControllerContext _currentContext;
     UITableViewCell * _startAndEndTableViewCell;
@@ -26,6 +28,8 @@ typedef enum {
     OBATargetTime * _targetTime;
     NSArray * _optimizeForLabels;
     NSDateFormatter * _timeFormatter;
+    OBAGeocoderController * _geocoder;
+    OBAModalActivityIndicator * _activityIndicator;
 }
 
 - (id) initWithAppContext:(OBAApplicationContext*)appContext;

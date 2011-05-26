@@ -148,8 +148,6 @@ static const double kRegionExpansionRatio = 0.1;
 
 - (void) planTripWithQuery:(OBATripQuery*)query {
     
-    OBALogDebug(@"planTripWithQuery");
-    
     [self clearRefreshTimer];
     _lastUpdate = [NSObject releaseOld:_lastUpdate retainNew:nil];
 
@@ -177,8 +175,6 @@ static const double kRegionExpansionRatio = 0.1;
 }
 
 - (void) refresh {
-    
-    OBALogDebug(@"refresh");
     
     [self clearRefreshTimer];
     [self clearQueryRequest];
@@ -327,8 +323,6 @@ static const double kRegionExpansionRatio = 0.1;
 #pragma mark OBAModelServiceDelegate
 
 - (void)requestDidFinish:(id<OBAModelServiceRequest>)request withObject:(id)obj context:(id)context {
-    
-    OBALogDebug(@"requestDidFinish");
     
     if( context == kCancelAlarm ) {
         return;
