@@ -7,31 +7,64 @@
 @synthesize placeTo;
 @synthesize itinerary;
 
-@synthesize showTripSummary;
-@synthesize noResultsFound;
-@synthesize startTime;
+@synthesize type;
+@synthesize itineraries;
+@synthesize selectedItineraryIndex;
+@synthesize showStartTime;
 @synthesize isLateStartTime;
 @synthesize walkToStop;
 @synthesize walkToPlace;
-@synthesize departure;
+@synthesize departures;
+@synthesize departureItineraries;
+@synthesize selectedDepartureIndex;
 @synthesize continuesAs;
 @synthesize ride;
-@synthesize arrival;
+@synthesize arrivals;
+@synthesize arrivalItineraries;
+@synthesize selectedArrivalIndex;
 
 @synthesize region;
+
+- (id) init {
+    self = [super init];
+    if (self) {
+        self.selectedItineraryIndex = NSNotFound;
+        self.selectedDepartureIndex = NSNotFound;
+        self.selectedArrivalIndex = NSNotFound;
+    }
+    return self;
+}
 
 - (void) dealloc {
     self.placeFrom = nil;
     self.placeTo = nil;
     self.itinerary = nil;
-    self.startTime = nil;
+    self.itineraries = nil;
     self.walkToStop = nil;
     self.walkToPlace = nil;
-    self.departure = nil;
+    self.departures = nil;
+    self.departureItineraries = nil;
     self.continuesAs = nil;
     self.ride = nil;
-    self.arrival = nil;
+    self.arrivals = nil;
+    self.arrivalItineraries = nil;
     [super dealloc];
+}
+
+- (BOOL) noResultsFound {
+    return self.type == OBATripStateTypeItineraries && [self.itineraries count] == 0;
+}
+
+- (OBATransitLegV2*) departure {
+    if (self.selectedDepartureIndex == NSNotFound)
+        return nil;
+    return [self.departures objectAtIndex:self.selectedDepartureIndex];
+}
+
+- (OBATransitLegV2*) arrival {
+    if (self.selectedArrivalIndex == NSNotFound)
+        return nil;
+    return [self.arrivals objectAtIndex:self.selectedArrivalIndex];
 }
 
 @end

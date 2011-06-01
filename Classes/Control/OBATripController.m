@@ -50,11 +50,15 @@ static const double kRegionExpansionRatio = 0.1;
 
 - (void) clearSelectedItinerary;
 - (void) selectItinerary:(OBAItineraryV2*)itinerary matchPreviousItinerary:(BOOL)matchPreviousItinerary;
+
+- (void) getAllDeparturesAtStop:(NSString*)stopId forTripState:(OBATripState*)tripState;
+- (void) getAllArrivalsAtStop:(NSString*)stopId forTripState:(OBATripState*)tripState;
+
 - (NSInteger) matchBestIndexForTripState:(OBATripState*)state;
 - (NSInteger) computeMatchScoreForTripStateA:(OBATripState*)stateA tripStateB:(OBATripState*)stateB;
 - (BOOL) checkEqualA:(NSString*)a b:(NSString*)b;
 - (OBATripState*) computeSummaryState;
-- (OBATripState*) createTripState;
+- (OBATripState*) createTripStateForType:(OBATripStateType)type;
 
 - (OBAAlarmRef*) getAlarmRefForType:(OBAAlarmType)alarmType tripState:(OBATripState*)tripState;
 - (OBAAlarmState*) getAlarmStateForRef:(OBAAlarmRef*)alarmRef;
@@ -160,6 +164,7 @@ static const double kRegionExpansionRatio = 0.1;
     _query = [NSObject releaseOld:_query retainNew:query];
     _itineraries = [NSObject releaseOld:_itineraries retainNew:nil];
     _currentItinerary = [NSObject releaseOld:_currentItinerary retainNew:nil];
+    _currentItineraryIndex = NSNotFound;
     [_currentStates removeAllObjects];
     _currentStateIndex = -1;
     [self cancelAllAlarms];
@@ -438,12 +443,12 @@ static const double kRegionExpansionRatio = 0.1;
 
 - (void) clearSelectedItinerary {
     _currentItinerary = [NSObject releaseOld:_currentItinerary retainNew:nil];
+    _currentItineraryIndex = NSNotFound;
     _currentStateIndex = -1;
     
     [_currentStates removeAllObjects];
     
-    OBATripState * state = [self createTripState];
-    state.noResultsFound = TRUE;
+    OBATripState * state = [self createTripStateForType:OBATripStateTypeItineraries];
     state.region = [self computeRegionForQuery];
     [_currentStates addObject:state];
     
@@ -461,6 +466,7 @@ static const double kRegionExpansionRatio = 0.1;
     }
     
     _currentItinerary = [NSObject releaseOld:_currentItinerary retainNew:itinerary];
+    _currentItineraryIndex = [_itineraries indexOfObject:itinerary];
     _currentStateIndex = 0;
     
     [_currentStates removeAllObjects];
@@ -478,10 +484,10 @@ static const double kRegionExpansionRatio = 0.1;
         
         if( [leg.mode isEqualToString:@"walk"] ) {
             
-            OBATripState * state = [self createTripState];
+            OBATripState * state = [self createTripStateForType:OBATripStateTypeWalk];
             
             if( index == 0 ) {
-                state.startTime = _currentItinerary.startTime;
+                state.showStartTime = TRUE;
                 BOOL a = _query.time.type == OBATargetTimeTypeNow;
                 NSDate * startTime = _currentItinerary.startTime;
                 NSDate * queryTime = [NSDate date];
@@ -496,7 +502,9 @@ static const double kRegionExpansionRatio = 0.1;
                 OBATransitLegV2 * transitLeg = nextLeg.transitLeg;
                 if( transitLeg.fromStopId ) {
                     state.walkToStop = transitLeg.fromStop;
-                    state.departure = transitLeg;
+                    state.departures = [NSArray arrayWithObject:transitLeg];
+                    state.departureItineraries = [NSArray arrayWithObject:itinerary];
+                    state.selectedDepartureIndex = 0;
                 }
             }
             
@@ -512,26 +520,28 @@ static const double kRegionExpansionRatio = 0.1;
             
             OBATransitLegV2 * transitLeg = leg.transitLeg;
             if( transitLeg.fromStopId ) {
-                OBATripState * departureState = [self createTripState];
-                departureState.departure = leg.transitLeg;
+                OBATripState * departureState = [self createTripStateForType:OBATripStateTypeDepartures];
+                [self getAllDeparturesAtStop:transitLeg.fromStopId forTripState:departureState];
+                departureState.selectedDepartureIndex = [departureState.departures indexOfObject:transitLeg];
                 departureState.region = [self computeRegionForStartOfLeg:leg];
                 [_currentStates addObject:departureState];
             }
             else {
-                OBATripState * continuesAsState = [self createTripState];
+                OBATripState * continuesAsState = [self createTripStateForType:OBATripStateTypeContinueAs];
                 continuesAsState.continuesAs = leg.transitLeg;
                 continuesAsState.region = [self computeRegionForStartOfLeg:leg];
                 [_currentStates addObject:continuesAsState];
             }
             
-            OBATripState * rideState = [self createTripState];
+            OBATripState * rideState = [self createTripStateForType:OBATripStateTypeRide];
             rideState.ride = leg.transitLeg;
             rideState.region = [self computeRegionForLeg:leg];
             [_currentStates addObject:rideState];
             
             if( transitLeg.toStopId ) {
-                OBATripState * arrivalState = [self createTripState];
-                arrivalState.arrival = leg.transitLeg;
+                OBATripState * arrivalState = [self createTripStateForType:OBATripStateTypeArrivals];
+                [self getAllArrivalsAtStop:transitLeg.toStopId forTripState:arrivalState];
+                arrivalState.selectedArrivalIndex = [arrivalState.arrivals indexOfObject:transitLeg];
                 arrivalState.region = [self computeRegionForEndOfLeg:leg];
                 [_currentStates addObject:arrivalState];
             }
@@ -551,6 +561,42 @@ static const double kRegionExpansionRatio = 0.1;
     [self updateAlarmsWithMatchPreviousItinerary:matchPreviousItinerary];
 }
 
+- (void) getAllDeparturesAtStop:(NSString*)stopId forTripState:(OBATripState*)tripState {
+    NSMutableArray * departures = [NSMutableArray array];
+    NSMutableArray * itineraries = [NSMutableArray array];
+    for (OBAItineraryV2 * itinerary in _itineraries ) {
+        for (OBALegV2 * leg in itinerary.legs ) {
+            if ([leg.mode isEqualToString:@"transit"]) {
+                OBATransitLegV2 * transitLeg = leg.transitLeg;
+                if ([stopId isEqualToString:transitLeg.fromStopId]) {
+                    [departures addObject:transitLeg];
+                    [itineraries addObject:itinerary];
+                }
+            }
+        }
+    }
+    tripState.departures = departures;
+    tripState.departureItineraries = itineraries;
+}
+
+- (void) getAllArrivalsAtStop:(NSString*)stopId forTripState:(OBATripState*)tripState {
+    NSMutableArray * arrivals = [NSMutableArray array];
+    NSMutableArray * itineraries = [NSMutableArray array];
+    for (OBAItineraryV2 * itinerary in _itineraries ) {
+        for (OBALegV2 * leg in itinerary.legs ) {
+            if ([leg.mode isEqualToString:@"transit"]) {
+                OBATransitLegV2 * transitLeg = leg.transitLeg;
+                if ([stopId isEqualToString:transitLeg.toStopId]) {
+                    [arrivals addObject:transitLeg];
+                    [itineraries addObject:itinerary];
+                }
+            }
+        }
+    }
+    tripState.arrivals = arrivals;
+    tripState.arrivalItineraries = itineraries;
+}
+
 - (NSInteger) matchBestIndexForTripState:(OBATripState*)state {
     NSInteger bestScore = 0;
     NSInteger bestIndex = 0;
@@ -567,20 +613,23 @@ static const double kRegionExpansionRatio = 0.1;
 }
 
 - (NSInteger) computeMatchScoreForTripStateA:(OBATripState*)stateA tripStateB:(OBATripState*)stateB {
+    
+    if (stateA.type != stateB.type)
+        return 0;
+    
     NSInteger score = 0;
     
-    if( stateA.showTripSummary == stateB.showTripSummary )
-        score += 1;
-    if( [self checkEqualA:stateA.walkToStop.stopId b:stateB.walkToStop.stopId] )
-        score += 1;
     if( stateA.walkToPlace == stateB.walkToPlace )
         score += 1;
+
     if( [self checkEqualA:stateA.departure.tripId b:stateB.departure.tripId] )
         score += 1;
+    
     if( [self checkEqualA:stateA.ride.tripId b:stateB.ride.tripId] )
         score += 1;
     if( [self checkEqualA:stateA.continuesAs.tripId b:stateB.continuesAs.tripId] )
         score += 1;
+    
     if( [self checkEqualA:stateA.arrival.tripId b:stateB.arrival.tripId] )
         score += 1;
     
@@ -597,18 +646,19 @@ static const double kRegionExpansionRatio = 0.1;
 
 
 - (OBATripState*) computeSummaryState {
-    OBATripState * state = [self createTripState];
-    state.showTripSummary = TRUE;
-    state.startTime = _currentItinerary.startTime;
+    OBATripState * state = [self createTripStateForType:OBATripStateTypeItineraries];
+    state.itineraries = _itineraries;
+    state.selectedItineraryIndex = _currentItineraryIndex;
     state.region = [self computeRegionForItinerary];
     return state;
 }
 
-- (OBATripState*) createTripState {
+- (OBATripState*) createTripStateForType:(OBATripStateType)type {
     OBATripState * state = [[[OBATripState alloc] init] autorelease];
     state.placeFrom = _query.placeFrom;
     state.placeTo = _query.placeTo;
     state.itinerary = _currentItinerary;
+    state.type = type;
     return state;
 }
                                 
@@ -673,11 +723,12 @@ static const double kRegionExpansionRatio = 0.1;
             return nil;
         }
         case OBAAlarmTypeDeparture: {
-            OBATransitLegV2 * departure = tripState.departure;
+            
+            OBATransitLegV2 * departure = [tripState.departures objectAtIndex:tripState.selectedDepartureIndex];
             return [[[OBAAlarmRef alloc] initWithType:alarmType instanceRef:departure.departureInstanceRef] autorelease];
         }
         case OBAAlarmTypeArrival: {
-            OBATransitLegV2 * arrival = tripState.arrival;
+            OBATransitLegV2 * arrival = [tripState.arrivals objectAtIndex:tripState.selectedArrivalIndex];
             return [[[OBAAlarmRef alloc] initWithType:alarmType instanceRef:arrival.arrivalInstanceRef] autorelease];
         }
         default:

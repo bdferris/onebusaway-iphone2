@@ -7,6 +7,8 @@
 //
 
 #import "OBATripStateTableViewCellFactory.h"
+#import "OBATripStateTableViewCells.h"
+#import "OBATripStateCellIndexPath.h"
 #import "OBATripSummaryTableViewCell.h"
 #import "OBAStartTripTableViewCell.h"
 #import "OBAWalkToLocationTableViewCell.h"
@@ -32,7 +34,7 @@ typedef struct  {
 
 @interface OBATripStateTableViewCellFactory (Private)
 
-- (OBATripStateCellType) getCellTypeForTripState:(OBATripState*)state indexPath:(NSIndexPath*)indexPath;
+- (OBATripStateCellIndexPath*) getCellIndexForTripState:(OBATripState*)state indexPath:(NSIndexPath*)indexPath;
 
 - (UITableViewCell*) createCellForPlanYourTrip;
 
@@ -40,7 +42,10 @@ typedef struct  {
 - (UITableViewCell*) createCellForWalkToPlace:(OBAPlace*)place;
 - (UITableViewCell*) createCellForVehicleRide:(OBATransitLegV2*)transitLeg;
 
+- (OBATimeStruct) getTimeForItineraryStart:(OBAItineraryV2*)itinerary;
 - (OBATimeStruct) getTimeForPredictedTime:(long long)predictedTime scheduledTime:(long long)scheduledTime;
+
+- (void) applyTime:(OBATimeStruct)t toTimeLabels:(id<OBAHasTimeLabels>)cell;
 - (NSString*) getMinutesLabelForTime:(OBATimeStruct)t;
 - (UIColor*) getMinutesColorForTime:(OBATimeStruct)t;
 - (NSString*) getStatusLabelForTransitLeg:(OBATransitLegV2*)transitLeg time:(OBATimeStruct)t;
@@ -92,22 +97,21 @@ typedef struct  {
     }
     
     NSInteger rows = 0;
-    if( state.showTripSummary )
-        rows++;
+    
     if( state.noResultsFound )
-        rows++;
-    if( state.startTime )
+        rows++;    
+    if (state.type == OBATripStateTypeItineraries)
+        rows += [state.itineraries count];
+    if( state.showStartTime )
         rows++;
     if( state.walkToStop )
         rows++;
     if( state.walkToPlace )
         rows++;
-    if( state.departure )
-        rows++;
+    rows += [state.departures count];
     if( state.ride )
         rows++;
-    if( state.arrival )
-        rows++;
+    rows += [state.arrivals count];
     
     return rows;
 }
@@ -118,11 +122,14 @@ typedef struct  {
         return [self createCellForPlanYourTrip];
     }
 
-    OBATripStateCellType cellType = [self getCellTypeForTripState:state indexPath:indexPath];
+    OBATripStateCellIndexPath * path = [self getCellIndexForTripState:state indexPath:indexPath];
 
-    switch (cellType) {
-        case OBATripStateCellTypeTripSummary:
-            return [self createCellForTripSummary:state.itinerary];
+    switch (path.type) {
+        case OBATripStateCellTypeItinerary: {
+            OBAItineraryV2 * itineray = [state.itineraries objectAtIndex:path.row];
+            BOOL selected = state.selectedItineraryIndex == path.row;
+            return [self createCellForItinerary:itineray selected:selected];                    
+        }
         case OBATripStateCellTypeNoResultsFound:
             return [self createCellForNoResultsFound];
         case OBATripStateCellTypeStartTime:
@@ -131,12 +138,20 @@ typedef struct  {
             return [self createCellForWalkToStop:state.walkToStop];
         case OBATripStateCellTypeWalkToPlace:
             return [self createCellForWalkToPlace:state.walkToPlace];
-        case OBATripStateCellTypeDeparture:
-            return [self createCellForVehicleDeparture:state.departure includeDetail:TRUE];
+        case OBATripStateCellTypeDeparture: {
+            OBATransitLegV2 * departure = [state.departures objectAtIndex:path.row];
+            OBAItineraryV2 * itinerary = [state.departureItineraries objectAtIndex:path.row];
+            BOOL selected = state.selectedDepartureIndex == path.row;
+            return [self createCellForVehicleDeparture:departure itinerary:itinerary includeDetail:TRUE selected:selected];
+        }
         case OBATripStateCellTypeRide:
             return [self createCellForVehicleRide:state.ride];
-        case OBATripStateCellTypeArrival:
-            return [self createCellForVehicleArrival:state.arrival includeDetail:TRUE];
+        case OBATripStateCellTypeArrival: {
+            OBATransitLegV2 * arrival = [state.arrivals objectAtIndex:path.row];
+            OBAItineraryV2 * itinerary = [state.arrivalItineraries objectAtIndex:path.row];
+            BOOL selected = state.selectedArrivalIndex == path.row;
+            return [self createCellForVehicleArrival:arrival itinerary:itinerary includeDetail:TRUE selected:selected];
+        }
         default:
             return [UITableViewCell getOrCreateCellForTableView:_tableView];
     }
@@ -151,13 +166,13 @@ typedef struct  {
         return;
     }
     
-    OBATripStateCellType cellType = [self getCellTypeForTripState:state indexPath:indexPath];
+    OBATripStateCellIndexPath * path = [self getCellIndexForTripState:state indexPath:indexPath];
     
-    switch (cellType) {
-        case OBATripStateCellTypeTripSummary: {
-            OBAPickTripViewController * vc = [[OBAPickTripViewController alloc] initWithAppContext:_appContext];
-            [_navigationController pushViewController:vc animated:TRUE];
-            [vc release];             
+    switch (path.type) {
+        case OBATripStateCellTypeItinerary: {
+            //OBAPickTripViewController * vc = [[OBAPickTripViewController alloc] initWithAppContext:_appContext];
+            //[_navigationController pushViewController:vc animated:TRUE];
+            //[vc release];             
             break;
         }
         case OBATripStateCellTypeNoResultsFound: {
@@ -171,7 +186,7 @@ typedef struct  {
         case OBATripStateCellTypeDeparture:
         case OBATripStateCellTypeArrival:
         {
-            OBAAlarmViewController * vc = [[OBAAlarmViewController alloc] initWithAppContext:_appContext tripState:state cellType:cellType ];
+            OBAAlarmViewController * vc = [[OBAAlarmViewController alloc] initWithAppContext:_appContext tripState:state cellType:path.type];
             [_navigationController pushViewController:vc animated:TRUE];
             [vc release];
         }
@@ -188,19 +203,21 @@ typedef struct  {
     return cell;
 }
 
-- (UITableViewCell*) createCellForTripSummary:(OBAItineraryV2*)itinerary {
+- (UITableViewCell*) createCellForItinerary:(OBAItineraryV2*)itinerary selected:(BOOL)selected {
     
     OBATripSummaryTableViewCell * cell = [self getOrCreateCellFromNibNamed:@"OBATripSummaryTableViewCell"];
     UIView * contentView = cell.contentView;
-    double x = 7;
+    double x = 45;
     BOOL hasTransitLeg = FALSE;
+    
+    OBAStopIconFactory * factory = _appContext.stopIconFactory;
+    NSMutableArray * routes = [[NSMutableArray alloc] init];
 
     for( OBALegV2 * leg in itinerary.legs ) {
         OBATransitLegV2 * transitLeg = leg.transitLeg;
         
         if( transitLeg && transitLeg.fromStop) {
             
-            OBAStopIconFactory * factory = _appContext.stopIconFactory;
             UIImage * img = [factory getModeIconForRoute:transitLeg.trip.route];
             UIImageView * imageView = [[UIImageView alloc] initWithImage:img];
             imageView.frame = CGRectMake(x, 7, CGRectGetWidth(imageView.frame)/2, CGRectGetHeight(imageView.frame)/2);            
@@ -217,6 +234,7 @@ typedef struct  {
             [label release];
             
             hasTransitLeg = TRUE;
+            [routes addObject:transitLeg.trip.route];
         }
     }
     
@@ -227,9 +245,18 @@ typedef struct  {
         [label sizeToFit];
         [contentView addSubview:label];
         [label release];
+        cell.modeImage.image = [factory getModeIconForRouteIconType:@"Walk" selected:selected];
+    }
+    else {
+        NSString * routeIconType = [factory getRouteIconTypeForRoutes:routes];
+        cell.modeImage.image = [factory getModeIconForRouteIconType:routeIconType selected:selected];
+        [routes release];
     }
     
-    NSString * startTime = [_timeFormatter stringFromDate:itinerary.startTime];
+    cell.selectionTarget = self;
+    cell.selectionAction = @selector(onItinerarySelection:);
+    cell.itinerary = itinerary;
+    
     NSString * endTime = [_timeFormatter stringFromDate:itinerary.endTime];
     NSTimeInterval interval = [itinerary.endTime timeIntervalSinceDate:itinerary.startTime];
     NSInteger mins = interval / 60;
@@ -243,14 +270,17 @@ typedef struct  {
         duration = [NSString stringWithFormat:@"%d mins",mins];
     }
     
-    cell.summaryLabel.text = [NSString stringWithFormat:@"%@ - %@ - %@", startTime, endTime, duration];
+    cell.summaryLabel.text = [NSString stringWithFormat:@"Arrive at %@ - %@", endTime, duration];
+    
+    OBATimeStruct t = [self getTimeForItineraryStart:itinerary];
+    [self applyTime:t toTimeLabels:cell];
     
     return cell;
 }
 
 - (UITableViewCell*) createCellForStartTrip:(OBATripState*)state includeDetail:(BOOL)includeDetail {
     
-    NSDate * startTime = state.startTime;
+    NSDate * startTime = state.itinerary.startTime;
     
     OBAStartTripTableViewCell * cell = [self getOrCreateCellFromNibNamed:@"OBAStartTripTableViewCell"];
     NSTimeInterval interval = [startTime timeIntervalSinceNow];
@@ -267,47 +297,45 @@ typedef struct  {
         cell.backgroundColor = [UIColor whiteColor];
     
     if( mins < -50 ) {
-        cell.timeLabel.text = [_timeFormatter stringFromDate:startTime];
         cell.statusLabel.text = @"Should've started your trip at:";
-        cell.minutesLabel.hidden = TRUE;
     }
     else if( -50 <= mins && mins < -1 ) {
-        cell.timeLabel.text = [NSString stringWithFormat:@"%d", mins];
         cell.statusLabel.text = @"Should've started your trip mins ago:";
-        cell.minutesLabel.hidden = FALSE;
     }
     else if( -1 <= mins && mins <= 1 ) {
-        cell.timeLabel.text = @"NOW";
         cell.statusLabel.text = @"Start your trip:";
-        cell.minutesLabel.hidden = TRUE;
     }
     else if( 1 < mins && mins <= 50 ) {
-        cell.timeLabel.text = [NSString stringWithFormat:@"%d", mins];
         cell.statusLabel.text = @"Start your trip in:";
-        cell.minutesLabel.hidden = FALSE;
     }
     else if( 50 < mins ) {
-        cell.timeLabel.text = [_timeFormatter stringFromDate:startTime];
         cell.statusLabel.text = @"Start your trip at:";
-        cell.minutesLabel.hidden = TRUE;
     }
+    
+    OBATimeStruct t = [self getTimeForItineraryStart:state.itinerary];
+    [self applyTime:t toTimeLabels:cell];
     
     return cell;
 }
 
-- (UITableViewCell*) createCellForVehicleDeparture:(OBATransitLegV2*)transitLeg includeDetail:(BOOL)includeDetail {
+- (UITableViewCell*) createCellForVehicleDeparture:(OBATransitLegV2*)transitLeg itinerary:(OBAItineraryV2*)itinerary includeDetail:(BOOL)includeDetail selected:(BOOL)selected {
     
     OBAVehicleDepartureTableViewCell * cell = [self getOrCreateCellFromNibNamed:@"OBAVehicleDepartureTableViewCell"];
-    
+
     OBATimeStruct t = [self getTimeForPredictedTime:transitLeg.predictedDepartureTime scheduledTime:transitLeg.scheduledDepartureTime];
+
+    OBAStopIconFactory * factory = _appContext.stopIconFactory;
+    cell.modeImage.image = [factory getModeIconForRoute:transitLeg.trip.route selected:selected];
     
 	cell.destinationLabel.text = [OBAPresentation getTripHeadsignForTransitLeg:transitLeg];
 	cell.routeLabel.text = [OBAPresentation getRouteShortNameForTransitLeg:transitLeg];
 	cell.statusLabel.text = [self getStatusLabelForTransitLeg:transitLeg time:t];
+
+    [self applyTime:t toTimeLabels:cell];
     
-    cell.timeLabel.text = [self getMinutesLabelForTime:t];
-    cell.timeLabel.textColor = [self getMinutesColorForTime:t];    
-    cell.minutesLabel.hidden = t.isNow;
+    cell.selectionTarget = self;
+    cell.selectionAction = @selector(onItinerarySelection:);
+    cell.itinerary = itinerary;
     
     if( includeDetail )
         cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
@@ -317,22 +345,28 @@ typedef struct  {
     return cell;
 }
 
-- (UITableViewCell*) createCellForVehicleArrival:(OBATransitLegV2*)transitLeg includeDetail:(BOOL)includeDetail {
+- (UITableViewCell*) createCellForVehicleArrival:(OBATransitLegV2*)transitLeg itinerary:(OBAItineraryV2*)itinerary includeDetail:(BOOL)includeDetail selected:(BOOL)selected {
     OBAVehicleArrivalTableViewCell * cell = [self getOrCreateCellFromNibNamed:@"OBAVehicleArrivalTableViewCell"];
     
     OBATimeStruct t = [self getTimeForPredictedTime:transitLeg.predictedArrivalTime scheduledTime:transitLeg.scheduledArrivalTime];
     
+    OBAStopIconFactory * factory = _appContext.stopIconFactory;
+    cell.modeImage.image = [factory getModeIconForRouteIconType:@"Walk" selected:selected];
+
 	cell.destinationLabel.text = transitLeg.toStop.name;
 	cell.statusLabel.text = [self getStatusLabelForTransitLeg:transitLeg time:t];
     
-    cell.timeLabel.text = [self getMinutesLabelForTime:t];
-    cell.timeLabel.textColor = [self getMinutesColorForTime:t];
-    cell.minutesLabel.hidden = t.isNow;
+    [self applyTime:t toTimeLabels:cell];
+    
+    cell.selectionTarget = self;
+    cell.selectionAction = @selector(onItinerarySelection:);
+    cell.itinerary = itinerary;
 	
     if( includeDetail )
         cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
     else
         cell.accessoryType = UITableViewCellAccessoryNone;
+    
 
     return cell;
 }
@@ -343,59 +377,60 @@ typedef struct  {
 
 @implementation OBATripStateTableViewCellFactory (Private)
 
-- (OBATripStateCellType) getCellTypeForTripState:(OBATripState*)state indexPath:(NSIndexPath*)indexPath {
+- (OBATripStateCellIndexPath*) getCellIndexForTripState:(OBATripState*)state indexPath:(NSIndexPath*)indexPath {
    
     NSInteger index = 0;
     
+    
     if( state.noResultsFound ) {
         if (indexPath.row == index )
-            return OBATripStateCellTypeNoResultsFound;
+            return [OBATripStateCellIndexPath indexPathWithType:OBATripStateCellTypeNoResultsFound];
         index++;
     }
     
-    if( state.showTripSummary ) {
-        if( indexPath.row == index )
-            return OBATripStateCellTypeTripSummary;
-        index++;
+    if (state.type == OBATripStateTypeItineraries) {
+        NSUInteger row = indexPath.row - index;
+        if( row < [state.itineraries count] )
+           return [OBATripStateCellIndexPath indexPathWithType:OBATripStateCellTypeItinerary row:row];
+        index += [state.itineraries count];
     }
+
     
-    if( state.startTime ) {
+    if( state.showStartTime ) {
         if( indexPath.row == index )
-            return OBATripStateCellTypeStartTime;
+            return [OBATripStateCellIndexPath indexPathWithType:OBATripStateCellTypeStartTime];
         index++;
     }
     
     if( state.walkToStop ) {
         if( indexPath.row == index )
-            return OBATripStateCellTypeWalkToStop;
+            return [OBATripStateCellIndexPath indexPathWithType:OBATripStateCellTypeWalkToStop];
         index++;
     }
     
     if( state.walkToPlace ) {
         if( indexPath.row == index )
-            return OBATripStateCellTypeWalkToPlace;
+            return [OBATripStateCellIndexPath indexPathWithType:OBATripStateCellTypeWalkToPlace];
         index++;
     }
     
-    if( state.departure ) {
-        if( indexPath.row == index )
-            return OBATripStateCellTypeDeparture;
-        index++;
-    }
+    NSUInteger departureIndex = indexPath.row - index;
+    if( departureIndex < [state.departures count] )
+        return [OBATripStateCellIndexPath indexPathWithType:OBATripStateCellTypeDeparture row:departureIndex];
+    index += [state.departures count];
     
     if( state.ride ) {
         if( indexPath.row == index )
-            return OBATripStateCellTypeRide;
+            return [OBATripStateCellIndexPath indexPathWithType:OBATripStateCellTypeRide];
         index++;
     }
     
-    if( state.arrival ) {
-        if( indexPath.row == index )
-            return OBATripStateCellTypeArrival;
-        index++;
-    }
+    NSUInteger arrivalIndex = indexPath.row - index;
+    if( arrivalIndex < [state.arrivals count] )
+        return [OBATripStateCellIndexPath indexPathWithType:OBATripStateCellTypeArrival row:arrivalIndex];
+    index += [state.arrivals count];
     
-    return OBATripStateCellTypeNone;
+    return [OBATripStateCellIndexPath indexPathWithType:OBATripStateCellTypeNone];
 }
 
 - (UITableViewCell*) createCellForPlanYourTrip {
@@ -433,6 +468,34 @@ typedef struct  {
     return cell;
 }
 
+- (OBATimeStruct) getTimeForItineraryStart:(OBAItineraryV2*)itinerary {
+
+    OBATransitLegV2 * departure = nil;
+    for (OBALegV2 * leg in itinerary.legs ) {
+        if (leg.transitLeg) {
+            departure = leg.transitLeg;
+            break;
+        }
+    }
+    
+    NSDate * predictedTime = nil;
+    NSDate * scheduledTime = nil;
+
+    if (departure && departure.fromStopId && departure.predictedDepartureTime > 0) {
+        NSTimeInterval delta = (departure.scheduledDepartureTime - departure.predictedDepartureTime) / 1000;
+        predictedTime = itinerary.startTime;
+        scheduledTime = [NSDate dateWithTimeInterval:delta sinceDate:predictedTime];
+    }
+    else {
+        scheduledTime = itinerary.startTime;
+    }
+    
+    long long predicted = [predictedTime timeIntervalSince1970] * 1000;
+    long long scheduled = [scheduledTime timeIntervalSince1970] * 1000;
+
+    return [self getTimeForPredictedTime:predicted scheduledTime:scheduled];
+}
+
 - (OBATimeStruct) getTimeForPredictedTime:(long long)predictedTime scheduledTime:(long long)scheduledTime {
     
     long long bestTime = scheduledTime;
@@ -450,6 +513,12 @@ typedef struct  {
     t.minutes = minutes;
     t.isNow = isNow;
     return t;
+}
+
+- (void) applyTime:(OBATimeStruct)t toTimeLabels:(id<OBAHasTimeLabels>)cell {
+    cell.timeLabel.text = [self getMinutesLabelForTime:t];
+    cell.timeLabel.textColor = [self getMinutesColorForTime:t];    
+    cell.minutesLabel.hidden = t.isNow;
 }
 
 - (NSString*) getMinutesLabelForTime:(OBATimeStruct)t {
@@ -478,9 +547,6 @@ typedef struct  {
 }
 
 - (NSString*) getDepartureStatusLabelForTransitLeg:(OBATransitLegV2*)transitLeg time:(OBATimeStruct)t {
-
-
-	
     return [self getStatusLabelForTransitLeg:transitLeg time:t];
 }
 
@@ -548,6 +614,13 @@ typedef struct  {
 	}
 	
 	return cell;
+}
+
+- (void) onItinerarySelection:(id)sender {
+    id<OBAHasItinerarySelectionButton> source = sender;
+    if (source.itinerary) {
+        [_appContext.tripController selectItinerary:source.itinerary];
+    }
 }
 
 @end

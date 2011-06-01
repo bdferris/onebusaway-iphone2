@@ -21,6 +21,7 @@
     id<OBAModelServiceRequest> _queryRequest;
     NSArray * _itineraries;
     NSDate * _lastUpdate;
+    NSInteger _currentItineraryIndex;
     OBAItineraryV2 * _currentItinerary;
     NSMutableArray * _currentStates;
     NSInteger _currentStateIndex;

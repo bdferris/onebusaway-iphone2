@@ -79,7 +79,7 @@
     }
     else {
         OBAItineraryV2 * itinerary = [itineraries objectAtIndex:indexPath.row];
-        return [_tripStateTableViewCellFactory createCellForTripSummary:itinerary];
+        return [_tripStateTableViewCellFactory createCellForItinerary:itinerary selected:FALSE];
     }
 }
 

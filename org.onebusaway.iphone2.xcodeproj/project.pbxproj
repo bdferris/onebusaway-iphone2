@@ -242,6 +242,17 @@
 		D6B23BEF12AAC5D5000C17FD /* OBAAgenciesListViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D6B23BEE12AAC5D5000C17FD /* OBAAgenciesListViewController.m */; };
 		D6CEA0610F8D0EDF009DBD66 /* OBAModelDAOUserPreferencesImpl.m in Sources */ = {isa = PBXBuildFile; fileRef = D6CEA0600F8D0EDF009DBD66 /* OBAModelDAOUserPreferencesImpl.m */; };
 		D6CFB1421032229F00005000 /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = D6CFB1411032229F00005000 /* Default.png */; };
+		D6E1157B1395CDBD00A75FDF /* OBATripStateCellIndexPath.m in Sources */ = {isa = PBXBuildFile; fileRef = D6E1157A1395CDBD00A75FDF /* OBATripStateCellIndexPath.m */; };
+		D6E1158713969AA000A75FDF /* Mode-LightRail-Selected@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D6E1157D13969AA000A75FDF /* Mode-LightRail-Selected@2x.png */; };
+		D6E1158813969AA000A75FDF /* Mode-Rail-Selected.png in Resources */ = {isa = PBXBuildFile; fileRef = D6E1157E13969AA000A75FDF /* Mode-Rail-Selected.png */; };
+		D6E1158913969AA000A75FDF /* Mode-Rail-Selected@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D6E1157F13969AA000A75FDF /* Mode-Rail-Selected@2x.png */; };
+		D6E1158A13969AA000A75FDF /* Mode-Bus-Selected.png in Resources */ = {isa = PBXBuildFile; fileRef = D6E1158013969AA000A75FDF /* Mode-Bus-Selected.png */; };
+		D6E1158B13969AA000A75FDF /* Mode-Bus-Selected@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D6E1158113969AA000A75FDF /* Mode-Bus-Selected@2x.png */; };
+		D6E1158C13969AA000A75FDF /* Mode-Ferry-Selected.png in Resources */ = {isa = PBXBuildFile; fileRef = D6E1158213969AA000A75FDF /* Mode-Ferry-Selected.png */; };
+		D6E1158D13969AA000A75FDF /* Mode-Ferry-Selected@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D6E1158313969AA000A75FDF /* Mode-Ferry-Selected@2x.png */; };
+		D6E1158E13969AA000A75FDF /* Mode-LightRail-Selected.png in Resources */ = {isa = PBXBuildFile; fileRef = D6E1158413969AA000A75FDF /* Mode-LightRail-Selected.png */; };
+		D6E1158F13969AA000A75FDF /* Mode-Walk-Selected.png in Resources */ = {isa = PBXBuildFile; fileRef = D6E1158513969AA000A75FDF /* Mode-Walk-Selected.png */; };
+		D6E1159013969AA000A75FDF /* Mode-Walk-Selected@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D6E1158613969AA000A75FDF /* Mode-Walk-Selected@2x.png */; };
 		D6E884EA121C3F1400C53386 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = D6E884E9121C3F1400C53386 /* Settings.bundle */; };
 		D6EC893F134BCAC500A9B16C /* OBATargetTime.m in Sources */ = {isa = PBXBuildFile; fileRef = D6EC893E134BCAC500A9B16C /* OBATargetTime.m */; };
 		D6EC894A134BDD0D00A9B16C /* OBATripQuery.m in Sources */ = {isa = PBXBuildFile; fileRef = D6EC8949134BDD0D00A9B16C /* OBATripQuery.m */; };
@@ -913,6 +924,19 @@
 		D6CEA05F0F8D0EDF009DBD66 /* OBAModelDAOUserPreferencesImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBAModelDAOUserPreferencesImpl.h; path = Control/OBAModelDAOUserPreferencesImpl.h; sourceTree = "<group>"; };
 		D6CEA0600F8D0EDF009DBD66 /* OBAModelDAOUserPreferencesImpl.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBAModelDAOUserPreferencesImpl.m; path = Control/OBAModelDAOUserPreferencesImpl.m; sourceTree = "<group>"; };
 		D6CFB1411032229F00005000 /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Default.png; path = Resources/Default.png; sourceTree = "<group>"; };
+		D6E115791395CDBD00A75FDF /* OBATripStateCellIndexPath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBATripStateCellIndexPath.h; path = View/TableViewCells/OBATripStateCellIndexPath.h; sourceTree = "<group>"; };
+		D6E1157A1395CDBD00A75FDF /* OBATripStateCellIndexPath.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBATripStateCellIndexPath.m; path = View/TableViewCells/OBATripStateCellIndexPath.m; sourceTree = "<group>"; };
+		D6E1157C13960F3800A75FDF /* OBATripStateTableViewCells.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBATripStateTableViewCells.h; path = View/TableViewCells/OBATripStateTableViewCells.h; sourceTree = "<group>"; };
+		D6E1157D13969AA000A75FDF /* Mode-LightRail-Selected@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Mode-LightRail-Selected@2x.png"; sourceTree = "<group>"; };
+		D6E1157E13969AA000A75FDF /* Mode-Rail-Selected.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Mode-Rail-Selected.png"; sourceTree = "<group>"; };
+		D6E1157F13969AA000A75FDF /* Mode-Rail-Selected@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Mode-Rail-Selected@2x.png"; sourceTree = "<group>"; };
+		D6E1158013969AA000A75FDF /* Mode-Bus-Selected.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Mode-Bus-Selected.png"; sourceTree = "<group>"; };
+		D6E1158113969AA000A75FDF /* Mode-Bus-Selected@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Mode-Bus-Selected@2x.png"; sourceTree = "<group>"; };
+		D6E1158213969AA000A75FDF /* Mode-Ferry-Selected.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Mode-Ferry-Selected.png"; sourceTree = "<group>"; };
+		D6E1158313969AA000A75FDF /* Mode-Ferry-Selected@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Mode-Ferry-Selected@2x.png"; sourceTree = "<group>"; };
+		D6E1158413969AA000A75FDF /* Mode-LightRail-Selected.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Mode-LightRail-Selected.png"; sourceTree = "<group>"; };
+		D6E1158513969AA000A75FDF /* Mode-Walk-Selected.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Mode-Walk-Selected.png"; sourceTree = "<group>"; };
+		D6E1158613969AA000A75FDF /* Mode-Walk-Selected@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Mode-Walk-Selected@2x.png"; sourceTree = "<group>"; };
 		D6E884E9121C3F1400C53386 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		D6EC893D134BCAC500A9B16C /* OBATargetTime.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBATargetTime.h; path = Model/OBATargetTime.h; sourceTree = "<group>"; };
 		D6EC893E134BCAC500A9B16C /* OBATargetTime.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBATargetTime.m; path = Model/OBATargetTime.m; sourceTree = "<group>"; };
@@ -1711,6 +1735,7 @@
 				D63227E112A826480070B799 /* OBASearchTableViewCell.m */,
 				D63227E012A826480070B799 /* OBAStopTableViewCell.h */,
 				D63227DF12A826480070B799 /* OBAStopTableViewCell.m */,
+				D6E1157C13960F3800A75FDF /* OBATripStateTableViewCells.h */,
 				D606CC441346489F00A353D8 /* OBATripStateTableViewCellFactory.h */,
 				D606CC451346489F00A353D8 /* OBATripStateTableViewCellFactory.m */,
 				D690BAF013466BFC00CD12EF /* OBATripSummaryTableViewCell.h */,
@@ -1725,6 +1750,8 @@
 				D69DDEA21346F9C800EDD847 /* OBAVehicleRideTableViewCell.m */,
 				D69DDEA41346FE0E00EDD847 /* OBAVehicleArrivalTableViewCell.h */,
 				D69DDEA51346FE0F00EDD847 /* OBAVehicleArrivalTableViewCell.m */,
+				D6E115791395CDBD00A75FDF /* OBATripStateCellIndexPath.h */,
+				D6E1157A1395CDBD00A75FDF /* OBATripStateCellIndexPath.m */,
 			);
 			name = TableViewCells;
 			sourceTree = "<group>";
@@ -2038,14 +2065,24 @@
 				D6F0FA0E1341261900AAA7EE /* MagnifyingGlass@2x.png */,
 				D606CC2E13463CD300A353D8 /* Mode-Bus.png */,
 				D606CC2F13463CD300A353D8 /* Mode-Bus@2x.png */,
+				D6E1158013969AA000A75FDF /* Mode-Bus-Selected.png */,
+				D6E1158113969AA000A75FDF /* Mode-Bus-Selected@2x.png */,
 				D606CC3013463CD300A353D8 /* Mode-Ferry.png */,
 				D606CC3113463CD300A353D8 /* Mode-Ferry@2x.png */,
+				D6E1158213969AA000A75FDF /* Mode-Ferry-Selected.png */,
+				D6E1158313969AA000A75FDF /* Mode-Ferry-Selected@2x.png */,
 				D606CC3213463CD300A353D8 /* Mode-LightRail.png */,
 				D606CC3313463CD300A353D8 /* Mode-LightRail@2x.png */,
+				D6E1158413969AA000A75FDF /* Mode-LightRail-Selected.png */,
+				D6E1157D13969AA000A75FDF /* Mode-LightRail-Selected@2x.png */,
 				D606CC3413463CD300A353D8 /* Mode-Rail.png */,
 				D606CC3513463CD300A353D8 /* Mode-Rail@2x.png */,
+				D6E1157E13969AA000A75FDF /* Mode-Rail-Selected.png */,
+				D6E1157F13969AA000A75FDF /* Mode-Rail-Selected@2x.png */,
 				D606CC3613463CD300A353D8 /* Mode-Walk.png */,
 				D606CC3713463CD300A353D8 /* Mode-Walk@2x.png */,
+				D6E1158513969AA000A75FDF /* Mode-Walk-Selected.png */,
+				D6E1158613969AA000A75FDF /* Mode-Walk-Selected@2x.png */,
 				D65D42601342F32400F940B1 /* RightArrow.png */,
 				D65D42611342F32400F940B1 /* RightArrow@2x.png */,
 				D6F0FA101341261900AAA7EE /* SegmentedControl-CrossHairs.png */,
@@ -2493,6 +2530,16 @@
 				D69DDE9E1346E9A700EDD847 /* OBAVehicleArrivalTableViewCell.xib in Resources */,
 				D69DDEA01346F66C00EDD847 /* OBAVehicleRideTableViewCell.xib in Resources */,
 				D63FC24D13859438008827E1 /* OBAPickTimeViewController.xib in Resources */,
+				D6E1158713969AA000A75FDF /* Mode-LightRail-Selected@2x.png in Resources */,
+				D6E1158813969AA000A75FDF /* Mode-Rail-Selected.png in Resources */,
+				D6E1158913969AA000A75FDF /* Mode-Rail-Selected@2x.png in Resources */,
+				D6E1158A13969AA000A75FDF /* Mode-Bus-Selected.png in Resources */,
+				D6E1158B13969AA000A75FDF /* Mode-Bus-Selected@2x.png in Resources */,
+				D6E1158C13969AA000A75FDF /* Mode-Ferry-Selected.png in Resources */,
+				D6E1158D13969AA000A75FDF /* Mode-Ferry-Selected@2x.png in Resources */,
+				D6E1158E13969AA000A75FDF /* Mode-LightRail-Selected.png in Resources */,
+				D6E1158F13969AA000A75FDF /* Mode-Walk-Selected.png in Resources */,
+				D6E1159013969AA000A75FDF /* Mode-Walk-Selected@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2684,6 +2731,7 @@
 				D6836B211385C2520099D110 /* OBAPickTimeViewController.m in Sources */,
 				D68F3C76138C09370087160A /* OBAGeocoderController.m in Sources */,
 				D6AA496C138C63AC00E62A34 /* OBAPlacePresentation.m in Sources */,
+				D6E1157B1395CDBD00A75FDF /* OBATripStateCellIndexPath.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

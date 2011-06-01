@@ -1,15 +1,7 @@
-//
-//  OBAStartTripTableViewCell.h
-//  org.onebusaway.iphone2
-//
-//  Created by Brian Ferris on 4/1/11.
-//  Copyright 2011 __MyCompanyName__. All rights reserved.
-//
-
-#import <Foundation/Foundation.h>
+#import "OBATripStateTableViewCells.h"
 
 
-@interface OBAStartTripTableViewCell : UITableViewCell {
+@interface OBAStartTripTableViewCell : UITableViewCell <OBAHasTimeLabels> {
     
 }
 

@@ -15,6 +15,7 @@
 			<string>IBUITableViewCell</string>
 			<string>IBUIImageView</string>
 			<string>IBUILabel</string>
+			<string>IBUIButton</string>
 			<string>IBProxyObject</string>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
@@ -60,6 +61,35 @@
 								<object class="NSCustomResource" key="IBUIImage">
 									<string key="NSClassName">NSImage</string>
 									<string key="NSResourceName">Mode-Bus.png</string>
+								</object>
+							</object>
+							<object class="IBUIButton" id="681355069">
+								<reference key="NSNextResponder" ref="697731231"/>
+								<int key="NSvFlags">292</int>
+								<string key="NSFrameSize">{45, 44}</string>
+								<reference key="NSSuperview" ref="697731231"/>
+								<reference key="NSWindow"/>
+								<reference key="NSNextKeyView" ref="368442595"/>
+								<bool key="IBUIOpaque">NO</bool>
+								<string key="targetRuntimeIdentifier">IBCocoaTouchFramework</string>
+								<int key="IBUIContentHorizontalAlignment">0</int>
+								<int key="IBUIContentVerticalAlignment">0</int>
+								<object class="NSFont" key="IBUIFont">
+									<string key="NSName">Helvetica-Bold</string>
+									<double key="NSSize">15</double>
+									<int key="NSfFlags">16</int>
+								</object>
+								<object class="NSColor" key="IBUIHighlightedTitleColor" id="1016487756">
+									<int key="NSColorSpace">3</int>
+									<bytes key="NSWhite">MQA</bytes>
+								</object>
+								<object class="NSColor" key="IBUINormalTitleColor">
+									<int key="NSColorSpace">1</int>
+									<bytes key="NSRGB">MC4xOTYwNzg0MzQ2IDAuMzA5ODAzOTMyOSAwLjUyMTU2ODY1NgA</bytes>
+								</object>
+								<object class="NSColor" key="IBUINormalTitleShadowColor">
+									<int key="NSColorSpace">3</int>
+									<bytes key="NSWhite">MC41AA</bytes>
 								</object>
 							</object>
 							<object class="IBUILabel" id="1032037650">
@@ -134,7 +164,7 @@
 							<object class="IBUILabel" id="252955799">
 								<reference key="NSNextResponder" ref="697731231"/>
 								<int key="NSvFlags">289</int>
-								<string key="NSFrame">{{240, 0}, {60, 38}}</string>
+								<string key="NSFrame">{{240, 0}, {60, 44}}</string>
 								<reference key="NSSuperview" ref="697731231"/>
 								<reference key="NSWindow"/>
 								<reference key="NSNextKeyView" ref="968383990"/>
@@ -153,7 +183,7 @@
 							<object class="IBUILabel" id="968383990">
 								<reference key="NSNextResponder" ref="697731231"/>
 								<int key="NSvFlags">289</int>
-								<string key="NSFrame">{{240, 30}, {60, 12}}</string>
+								<string key="NSFrame">{{240, 31}, {60, 12}}</string>
 								<reference key="NSSuperview" ref="697731231"/>
 								<reference key="NSWindow"/>
 								<reference key="NSNextKeyView"/>
@@ -165,10 +195,7 @@
 								<string key="IBUIText">mins</string>
 								<reference key="IBUIFont" ref="52302918"/>
 								<reference key="IBUITextColor" ref="91170281"/>
-								<object class="NSColor" key="IBUIHighlightedColor">
-									<int key="NSColorSpace">3</int>
-									<bytes key="NSWhite">MQA</bytes>
-								</object>
+								<reference key="IBUIHighlightedColor" ref="1016487756"/>
 								<int key="IBUIBaselineAdjustment">1</int>
 								<float key="IBUIMinimumFontSize">10</float>
 								<int key="IBUITextAlignment">1</int>
@@ -177,7 +204,7 @@
 						<string key="NSFrameSize">{300, 44}</string>
 						<reference key="NSSuperview" ref="88188791"/>
 						<reference key="NSWindow"/>
-						<reference key="NSNextKeyView" ref="368442595"/>
+						<reference key="NSNextKeyView" ref="681355069"/>
 						<object class="NSColor" key="IBUIBackgroundColor">
 							<int key="NSColorSpace">3</int>
 							<bytes key="NSWhite">MCAwAA</bytes>
@@ -254,6 +281,23 @@
 					</object>
 					<int key="connectionID">17</int>
 				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBCocoaTouchOutletConnection" key="connection">
+						<string key="label">itinerarySelectionButton</string>
+						<reference key="source" ref="88188791"/>
+						<reference key="destination" ref="681355069"/>
+					</object>
+					<int key="connectionID">19</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBCocoaTouchEventConnection" key="connection">
+						<string key="label">onItinerarySelectionButton:</string>
+						<reference key="source" ref="681355069"/>
+						<reference key="destination" ref="88188791"/>
+						<int key="IBEventType">7</int>
+					</object>
+					<int key="connectionID">20</int>
+				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
 				<object class="NSArray" key="orderedObjects">
@@ -286,6 +330,7 @@
 							<reference ref="60191926"/>
 							<reference ref="252955799"/>
 							<reference ref="968383990"/>
+							<reference ref="681355069"/>
 						</object>
 						<reference key="parent" ref="0"/>
 					</object>
@@ -325,6 +370,12 @@
 						<reference key="parent" ref="88188791"/>
 						<string key="objectName">MinutesLabel</string>
 					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">18</int>
+						<reference key="object" ref="681355069"/>
+						<reference key="parent" ref="88188791"/>
+						<string key="objectName">ItinerarySelectionButton</string>
+					</object>
 				</object>
 			</object>
 			<object class="NSMutableDictionary" key="flattenedProperties">
@@ -336,6 +387,7 @@
 					<string>10.IBViewBoundsToFrameTransform</string>
 					<string>11.CustomClassName</string>
 					<string>11.IBPluginDependency</string>
+					<string>18.IBPluginDependency</string>
 					<string>3.IBPluginDependency</string>
 					<string>4.IBPluginDependency</string>
 					<string>4.IBViewBoundsToFrameTransform</string>
@@ -353,6 +405,7 @@
 						<bytes key="NSTransformStruct">AUNxAABBCAAAA</bytes>
 					</object>
 					<string>OBAVehicleDepartureTableViewCell</string>
+					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
 					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
 					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
 					<string>com.apple.InterfaceBuilder.IBCocoaTouchPlugin</string>
@@ -378,7 +431,7 @@
 				<reference key="dict.values" ref="0"/>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">17</int>
+			<int key="maxID">20</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -386,11 +439,23 @@
 				<object class="IBPartialClassDescription">
 					<string key="className">OBAVehicleDepartureTableViewCell</string>
 					<string key="superclassName">UITableViewCell</string>
+					<object class="NSMutableDictionary" key="actions">
+						<string key="NS.key.0">onItinerarySelectionButton:</string>
+						<string key="NS.object.0">id</string>
+					</object>
+					<object class="NSMutableDictionary" key="actionInfosByName">
+						<string key="NS.key.0">onItinerarySelectionButton:</string>
+						<object class="IBActionInfo" key="NS.object.0">
+							<string key="name">onItinerarySelectionButton:</string>
+							<string key="candidateClassName">id</string>
+						</object>
+					</object>
 					<object class="NSMutableDictionary" key="outlets">
 						<bool key="EncodedWithXMLCoder">YES</bool>
 						<object class="NSArray" key="dict.sortedKeys">
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<string>destinationLabel</string>
+							<string>itinerarySelectionButton</string>
 							<string>minutesLabel</string>
 							<string>modeImage</string>
 							<string>routeLabel</string>
@@ -400,6 +465,7 @@
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<string>UILabel</string>
+							<string>UIButton</string>
 							<string>UILabel</string>
 							<string>UIImageView</string>
 							<string>UILabel</string>
@@ -412,6 +478,7 @@
 						<object class="NSArray" key="dict.sortedKeys">
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<string>destinationLabel</string>
+							<string>itinerarySelectionButton</string>
 							<string>minutesLabel</string>
 							<string>modeImage</string>
 							<string>routeLabel</string>
@@ -423,6 +490,10 @@
 							<object class="IBToOneOutletInfo">
 								<string key="name">destinationLabel</string>
 								<string key="candidateClassName">UILabel</string>
+							</object>
+							<object class="IBToOneOutletInfo">
+								<string key="name">itinerarySelectionButton</string>
+								<string key="candidateClassName">UIButton</string>
 							</object>
 							<object class="IBToOneOutletInfo">
 								<string key="name">minutesLabel</string>

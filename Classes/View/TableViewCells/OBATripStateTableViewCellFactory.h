@@ -1,19 +1,6 @@
 #import "OBAApplicationContext.h"
 #import "OBATripState.h"
-
-
-
-typedef enum {
-    OBATripStateCellTypeTripSummary,
-    OBATripStateCellTypeNoResultsFound,
-    OBATripStateCellTypeStartTime,
-    OBATripStateCellTypeWalkToStop,
-    OBATripStateCellTypeWalkToPlace,
-    OBATripStateCellTypeDeparture,
-    OBATripStateCellTypeRide,
-    OBATripStateCellTypeArrival,
-    OBATripStateCellTypeNone
-} OBATripStateCellType;
+#import "OBATripStateCellIndexPath.h"
 
 
 @interface OBATripStateTableViewCellFactory : NSObject {
@@ -31,9 +18,9 @@ typedef enum {
 - (void) didSelectRowForState:(OBATripState*)state indexPath:(NSIndexPath*)indexPath;
 
 - (UITableViewCell*) createCellForNoResultsFound;
-- (UITableViewCell*) createCellForTripSummary:(OBAItineraryV2*)itinerary;
+- (UITableViewCell*) createCellForItinerary:(OBAItineraryV2*)itinerary selected:(BOOL)selected;
 - (UITableViewCell*) createCellForStartTrip:(OBATripState*)state includeDetail:(BOOL)includeDetail;
-- (UITableViewCell*) createCellForVehicleDeparture:(OBATransitLegV2*)transitLeg includeDetail:(BOOL)includeDetail;
-- (UITableViewCell*) createCellForVehicleArrival:(OBATransitLegV2*)transitLeg includeDetail:(BOOL)includeDetail;
+- (UITableViewCell*) createCellForVehicleDeparture:(OBATransitLegV2*)transitLeg itinerary:(OBAItineraryV2*)itinerary includeDetail:(BOOL)includeDetail selected:(BOOL)selected;
+- (UITableViewCell*) createCellForVehicleArrival:(OBATransitLegV2*)transitLeg itinerary:(OBAItineraryV2*)itinerary includeDetail:(BOOL)includeDetail selected:(BOOL)selected;
 
 @end

@@ -171,9 +171,9 @@ static const NSInteger kAlarmTimeOffsetValues[] = {0,1,2,3,4,5,6,7,8,9,10,15,20,
         case OBATripStateCellTypeStartTime:
             return [_cellFactory createCellForStartTrip:_tripState includeDetail:FALSE];
         case OBATripStateCellTypeDeparture:
-            return [_cellFactory createCellForVehicleDeparture:_tripState.departure includeDetail:FALSE];
+            return [_cellFactory createCellForVehicleDeparture:_tripState.departure itinerary:nil includeDetail:FALSE selected:FALSE];
         case OBATripStateCellTypeArrival:
-            return [_cellFactory createCellForVehicleArrival:_tripState.arrival includeDetail:FALSE];
+            return [_cellFactory createCellForVehicleArrival:_tripState.arrival itinerary:nil includeDetail:FALSE selected:FALSE];
         default:
             break;
     }
