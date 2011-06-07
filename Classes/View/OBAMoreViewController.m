@@ -8,6 +8,7 @@
 
 #import "OBAMoreViewController.h"
 #import "IASKAppSettingsViewController.h"
+#import "OBAReportProblemWithPlannedTripViewController.h"
 
 
 @implementation OBAMoreViewController
@@ -77,26 +78,55 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return 1;
+    return 2;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView cellId:@"Cell"];
-    cell.textLabel.text = @"Settings";
-    cell.imageView.image = [UIImage imageNamed:@"Settings.png"];
-    cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-    return cell;
+    switch (indexPath.row) {
+        case 0: {
+            UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView cellId:@"Cell"];
+            cell.textLabel.text = @"Settings";
+            cell.imageView.image = [UIImage imageNamed:@"Gear.png"];
+            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+            return cell;
+        }
+        case 1: {
+            UITableViewCell * cell = [UITableViewCell getOrCreateCellForTableView:tableView cellId:@"Cell"];
+            cell.textLabel.text = @"Report a problem";
+            cell.imageView.image = [UIImage imageNamed:@"AlertGrayscale.png"];
+            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+            return cell;
+        }
+    
+        default:
+            break;
+    }
+
+    return [UITableViewCell getOrCreateCellForTableView:tableView cellId:@"Cell"];
 }
 
 #pragma mark - Table view delegate
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    IASKAppSettingsViewController * vc = [[IASKAppSettingsViewController alloc] init];
-    vc.delegate = _appContext;
-    [self.navigationController pushViewController:vc animated:TRUE];
-    [vc release];
+    switch (indexPath.row) {
+        case 0: {
+            IASKAppSettingsViewController * vc = [[IASKAppSettingsViewController alloc] init];
+            vc.delegate = _appContext;
+            [self.navigationController pushViewController:vc animated:TRUE];
+            [vc release];
+            break;
+        }
+        case 1: {
+            OBAReportProblemWithPlannedTripViewController * vc = [[OBAReportProblemWithPlannedTripViewController alloc] initWithApplicationContext:_appContext];
+            [self.navigationController pushViewController:vc animated:TRUE];
+            [vc release];         
+            break;
+        }
+        default:
+            break;
+    }
 }
 
 @end

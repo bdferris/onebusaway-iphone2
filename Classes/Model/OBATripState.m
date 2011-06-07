@@ -1,4 +1,5 @@
 #import "OBATripState.h"
+#import "OBAPresentation.h"
 
 
 @implementation OBATripState
@@ -67,6 +68,27 @@
     if (self.selectedArrivalIndex == NSNotFound)
         return nil;
     return [self.arrivals objectAtIndex:self.selectedArrivalIndex];
+}
+
+- (NSString*) description {
+    NSMutableString * d = [NSMutableString string];
+    [d appendString:@"OBATripState("];
+    if (self.itineraries)
+        [d appendFormat:@"itineraries=%d",[self.itineraries count]];
+    if (self.walkToStop)
+        [d appendFormat:@"walkToStop=%@",self.walkToStop.stopId];
+    if (self.walkToPlace)
+        [d appendFormat:@"walkToPlace=%@",[self.walkToPlace description]];
+    if (self.stop)
+        [d appendFormat:@"stop=%@",stop.stopId];
+    if (self.departures)
+        [d appendFormat:@"departures=%d",[self.departures count]];
+    if (self.ride)
+        [d appendFormat:@"ride=%@ - %@",[OBAPresentation getRouteShortNameForTransitLeg:self.ride], [OBAPresentation getTripHeadsignForTransitLeg:self.ride]];
+    if (self.arrivals)
+        [d appendFormat:@"arrivals=%d",[self.arrivals count]];
+    [d appendString:@")"];
+    return d;
 }
 
 @end

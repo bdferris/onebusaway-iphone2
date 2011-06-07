@@ -60,7 +60,8 @@ static const NSInteger kLookaheadTime = 3*60;
 
 - (NSInteger) matchBestIndexForTripState:(OBATripState*)state;
 - (NSInteger) computeMatchScoreForTripStateA:(OBATripState*)stateA tripStateB:(OBATripState*)stateB;
-- (BOOL) checkEqualA:(NSString*)a b:(NSString*)b;
+- (NSInteger) compareReferenceA:(id)a referenceB:(id)b;
+- (NSInteger) compareStringA:(NSString*)a stringB:(NSString*)b;
 - (OBATripState*) computeSummaryState;
 - (OBATripState*) createTripStateForType:(OBATripStateType)type;
 
@@ -652,16 +653,23 @@ static const NSInteger kLookaheadTime = 3*60;
 }
 
 - (NSInteger) matchBestIndexForTripState:(OBATripState*)state {
+    
+    NSLog(@"matchBestIndexForTripState: %@", [state description]);
+    
     NSInteger bestScore = 0;
-    NSInteger bestIndex = 0;
+    NSInteger bestIndex = 1; // We default to current view if no match is found
+
     for (NSUInteger index=0; index<[_currentStates count]; index++) {
         OBATripState * cState = [_currentStates objectAtIndex:index];
         NSInteger score = [self computeMatchScoreForTripStateA:state tripStateB:cState];
+        NSLog(@"  score=%d state=%@",score,[cState description]);
         if( score > bestScore ) {
             bestScore = score;
             bestIndex = index;
         }
     }
+    
+    NSLog(@"bestScore=%d bestIndex=%d",bestScore,bestIndex);
     
     return bestIndex;
 }
@@ -673,21 +681,36 @@ static const NSInteger kLookaheadTime = 3*60;
     
     NSInteger score = 0;
     
-    if( stateA.walkToPlace == stateB.walkToPlace )
-        score += 1;
-
-    if( [self checkEqualA:stateA.departure.tripId b:stateB.departure.tripId] )
-        score += 1;
+    score += ((stateA.itineraries != nil) ^ (stateB.itineraries != nil)) ? -1 : 1;
     
-    if( [self checkEqualA:stateA.ride.tripId b:stateB.ride.tripId] )
-        score += 1;
-    if( [self checkEqualA:stateA.continuesAs.tripId b:stateB.continuesAs.tripId] )
-        score += 1;
+    score += [self compareReferenceA:stateA.walkToPlace referenceB:stateB.walkToPlace];
+    score += [self compareReferenceA:stateA.walkToStop.stopId referenceB:stateB.walkToStop.stopId];
     
-    if( [self checkEqualA:stateA.arrival.tripId b:stateB.arrival.tripId] )
-        score += 1;
+    score += [self compareReferenceA:stateA.stop.stopId referenceB:stateB.stop.stopId];
+    
+    score += [self compareStringA:stateA.departure.tripId stringB:stateB.departure.tripId];
+    score += [self compareStringA:stateA.ride.tripId stringB:stateB.ride.tripId];
+    score += [self compareStringA:stateA.continuesAs.tripId stringB:stateB.continuesAs.tripId];
+    score += [self compareStringA:stateA.arrival.tripId stringB:stateB.arrival.tripId];
     
     return score;
+}
+
+- (NSInteger) compareReferenceA:(id)a referenceB:(id)b {
+    if (a == nil && b == nil) {
+        return 0;
+    }
+    return a == b ? 1 : -1;
+}
+
+- (NSInteger) compareStringA:(NSString*)a stringB:(NSString*)b {
+    if ( a == nil && b == nil )
+        return 0;
+    if ((a == nil && b != nil) && (a != nil && b == nil) ) {
+        return -1;
+    }
+    return [a isEqualToString:b] ? 1 : -1;
+    
 }
 
 - (BOOL) checkEqualA:(NSString*)a b:(NSString*)b {
