@@ -170,6 +170,7 @@ typedef enum {
     
     _geocoder = [[OBAGeocoderController alloc] initWithAppContext:_appContext navigationController:self.navigationController];
     _geocoder.delegate = self;
+    _geocoder.includeGooglePlaces = TRUE;
     
     _activityIndicator = [[OBAModalActivityIndicator alloc] init];                          
     

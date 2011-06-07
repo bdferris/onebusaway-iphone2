@@ -9,6 +9,7 @@
     #import <CoreLocation/CoreLocation.h>
 	#import <MapKit/MapKit.h>
     #import "Three20UI/Three20UI.h"
+    #import "OBACommon.h"
     #import "OBAUIKit.h"
 #endif
 

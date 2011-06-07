@@ -14,12 +14,14 @@
     UINavigationController * _navigationController;
     NSString * _address;
     id _context;
-    id<OBAModelServiceRequest> _modelRequest;    
+    id<OBAModelServiceRequest> _modelRequest;
+    NSMutableArray * _places;
 }
 
 - (id) initWithAppContext:(OBAApplicationContext*)appContext navigationController:(UINavigationController*)navigationController;
 
 @property (nonatomic,retain) id<OBAGeocoderControllerDelegate> delegate;
+@property (nonatomic) BOOL includeGooglePlaces;
 
 - (void) geocodeAddress:(NSString*)address withContext:(id)context;
 

@@ -14,6 +14,7 @@
 @synthesize isLateStartTime;
 @synthesize walkToStop;
 @synthesize walkToPlace;
+@synthesize stop;
 @synthesize departures;
 @synthesize departureItineraries;
 @synthesize selectedDepartureIndex;
@@ -42,6 +43,7 @@
     self.itineraries = nil;
     self.walkToStop = nil;
     self.walkToPlace = nil;
+    self.stop = nil;
     self.departures = nil;
     self.departureItineraries = nil;
     self.continuesAs = nil;

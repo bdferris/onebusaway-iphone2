@@ -165,6 +165,12 @@ static const NSUInteger kTagSettingsView = 3;
 	_modelService.googleMapsJsonDataSource = googleMapsJsonDataSource;
 	[googleMapsJsonDataSource release];
 	[googleMapsDataSourceConfig release];
+    
+    OBADataSourceConfig * googlePlacesDataSourceConfig = [[OBADataSourceConfig alloc] initWithUrl:@"https://maps.googleapis.com" args:@"key=AIzaSyB9rQ2mJ-Z8j00mUcl6TlyBmmfc7f8Sz0U"];
+	OBAJsonDataSource * googlePlacesJsonDataSource = [[OBAJsonDataSource alloc] initWithConfig:googlePlacesDataSourceConfig];
+	_modelService.googlePlacesJsonDataSource = googlePlacesJsonDataSource;
+	[googlePlacesJsonDataSource release];
+	[googlePlacesDataSourceConfig release];
 	
 	[userDefaults setObject:appVersion forKey:@"oba_application_version"];
     

@@ -13,6 +13,7 @@
     
 }
 
+@property (nonatomic,retain) IBOutlet UIImageView * locationImage;
 @property (nonatomic,retain) IBOutlet UILabel * destinationLabel;
 @property (nonatomic,retain) IBOutlet UILabel * destinationDetailLabel;
 

@@ -27,6 +27,7 @@ static const NSInteger kAlarmTimeOffsetValues[] = {0,1,2,3,4,5,6,7,8,9,10,15,20,
         _cellType = cellType;
         
         switch (cellType) {
+            case OBATripStateCellTypeItinerary:
             case OBATripStateCellTypeStartTime:
                 _alarmType = OBAAlarmTypeStart;
                 break;
@@ -167,7 +168,8 @@ static const NSInteger kAlarmTimeOffsetValues[] = {0,1,2,3,4,5,6,7,8,9,10,15,20,
 
 - (UITableViewCell*) createTitleCellForIndexPath:(NSIndexPath*)indexPath tableView:(UITableView*)tableView {
 
-    switch (_cellType) {                
+    switch (_cellType) {
+        case OBATripStateCellTypeItinerary:
         case OBATripStateCellTypeStartTime:
             return [_cellFactory createCellForStartTrip:_tripState includeDetail:FALSE];
         case OBATripStateCellTypeDeparture:

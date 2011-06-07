@@ -4,6 +4,7 @@ typedef enum {
     OBATripStateCellTypeStartTime,
     OBATripStateCellTypeWalkToStop,
     OBATripStateCellTypeWalkToPlace,
+    OBATripStateCellTypeStop,
     OBATripStateCellTypeDeparture,
     OBATripStateCellTypeRide,
     OBATripStateCellTypeArrival,

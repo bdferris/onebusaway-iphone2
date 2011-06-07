@@ -11,10 +11,12 @@
 
 @implementation OBAWalkToLocationTableViewCell
 
+@synthesize locationImage;
 @synthesize destinationLabel;
 @synthesize destinationDetailLabel;
 
 - (void) dealloc {
+    self.locationImage = nil;
     self.destinationLabel = nil;
     self.destinationDetailLabel = nil;
     [super dealloc];

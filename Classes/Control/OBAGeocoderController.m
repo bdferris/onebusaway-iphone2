@@ -11,9 +11,19 @@
 
 
 
+static const NSString * kAddressContext = @"ADDRESS";
+static const NSString * kPlaceContext = @"PLACE";
+
+
 @interface OBAGeocoderController (Private)
 
 - (void) clearPendingRequest;
+- (void) submitPlacesRequest;
+
+- (void) processAddresses:(NSArray*)placemarks;
+- (void) processPlaces:(OBAPlacemarks*)placemarks;
+- (void) notifyDelegateOfPlaces;
+
 - (void) showLocationNotFound:(NSString*)locationName;
 - (void) showLocationLookupError:(NSString*)locationName;
 
@@ -22,12 +32,14 @@
 @implementation OBAGeocoderController
 
 @synthesize delegate;
+@synthesize includeGooglePlaces;
 
 - (id) initWithAppContext:(OBAApplicationContext*)appContext navigationController:(UINavigationController*)navigationController {
     self = [super init];
     if (self) {
         _appContext = [appContext retain];
         _navigationController = [navigationController retain];
+        _places = [[NSMutableArray alloc] init];
     }
     return self;
 }
@@ -38,6 +50,7 @@
     [_navigationController release];
     [_address release];
     [_context release];
+    [_places release];
     self.delegate = nil;
     [super dealloc];
 }
@@ -46,49 +59,29 @@
     [self clearPendingRequest];
     _address = [NSObject releaseOld:_address retainNew:address];
     _context = [NSObject releaseOld:_context retainNew:context];
-    _modelRequest = [[_appContext.modelService placemarksForAddress:address withDelegate:self withContext:nil] retain];
+    [_places removeAllObjects];
+    _modelRequest = [[_appContext.modelService placemarksForAddress:address withDelegate:self withContext:kAddressContext] retain];
 }
 
 #pragma mark OBAModelServiceDelegate
 
 - (void)requestDidFinish:(id<OBAModelServiceRequest>)request withObject:(id)obj context:(id)context {
     
-    NSArray * placemarks = obj;
+    if (context == kAddressContext) {
+        [self processAddresses:obj];
+        if( self.includeGooglePlaces ) {
+            /**
+             * We need to make sure this occurs outside the requestDidFinish: context, since we'll be clearing the previous request
+             */
+            [self performSelector:@selector(submitPlacesRequest) withObject:nil afterDelay:0.01];
+            return;
+        }
+    }
+    else if (context == kPlaceContext) {
+        [self processPlaces:obj];
+    }
     
-    if( [placemarks count] == 0 ) {
-        if (self.delegate) {
-            [self showLocationNotFound:_address];
-            [self.delegate handleGeocoderNoResultFound];
-        }
-    }
-    else if( [placemarks count] == 1 ) {
-        OBAPlacemark * placemark = [placemarks objectAtIndex:0];
-        if (self.delegate) {
-            OBAPlace * place = [OBAPlace placeWithName:placemark.address coordinate:placemark.coordinate];
-            [self.delegate handleGeocoderPlace:place context:_context];
-        }
-    }
-    else {
-        
-        NSMutableArray * places = [[NSMutableArray alloc] init];
-        for( OBAPlacemark * placemark in placemarks ) {
-            OBAPlace * place = [OBAPlace placeWithName:placemark.address coordinate:placemark.coordinate];
-            [places addObject:place];
-        }
-        
-        OBAPlacesMapViewController * vc = [[OBAPlacesMapViewController alloc] initWithPlaces:places];
-        vc.target = self;
-        vc.action = @selector(setPlaceFromMap:);
-        vc.cancelAction = @selector(cancelPlaceSelection);
-        
-        UINavigationController * nc =[[UINavigationController alloc] initWithRootViewController:vc];
-        [_navigationController presentModalViewController:nc animated:TRUE];
-
-        [vc release];
-        [nc release];
-        
-        [places release];
-    }    
+    [self notifyDelegateOfPlaces];
 }
 
 - (void)requestDidFinish:(id<OBAModelServiceRequest>)request withCode:(NSInteger)code context:(id)context {
@@ -135,6 +128,60 @@
     }
 }
 
+- (void) submitPlacesRequest {
+    [self clearPendingRequest];
+    _modelRequest = [[_appContext.modelService placemarksForPlace:_address withDelegate:self withContext:kPlaceContext] retain];
+
+}
+
+- (void) processAddresses:(NSArray*)placemarks {
+
+    for( OBAPlacemark * placemark in placemarks ) {
+        OBAPlace * place = [OBAPlace placeWithName:placemark.address coordinate:placemark.coordinate];
+        [_places addObject:place];
+    }
+}
+
+- (void) processPlaces:(OBAPlacemarks*)placemarks {
+
+    for( OBAPlacemark * placemark in placemarks.placemarks ) {
+        OBAPlace * place = [[OBAPlace alloc] init];
+        place.name = placemark.name;
+        place.address = placemark.address;
+        place.location = placemark.location;
+        [_places addObject:place];
+        [place release];
+    }
+}
+
+- (void) notifyDelegateOfPlaces {
+    
+    if (! self.delegate)
+        return;
+
+    if( [_places count] == 0 ) {
+        return;
+        [self showLocationNotFound:_address];
+        [self.delegate handleGeocoderNoResultFound];
+    }
+    else if( [_places count] == 1 ) {
+        OBAPlace * place = [_places objectAtIndex:0];
+        [self.delegate handleGeocoderPlace:place context:_context];
+    }
+    else {
+        
+        OBAPlacesMapViewController * vc = [[OBAPlacesMapViewController alloc] initWithPlaces:_places];
+        vc.target = self;
+        vc.action = @selector(setPlaceFromMap:);
+        vc.cancelAction = @selector(cancelPlaceSelection);
+        
+        UINavigationController * nc =[[UINavigationController alloc] initWithRootViewController:vc];
+        [_navigationController presentModalViewController:nc animated:TRUE];
+        
+        [vc release];
+        [nc release];
+    }  
+}
 
 - (void) showLocationNotFound:(NSString*)locationName {
     UIAlertView * view = [[UIAlertView alloc] init];

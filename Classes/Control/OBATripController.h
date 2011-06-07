@@ -35,7 +35,9 @@
 @property (nonatomic,retain) id<OBATripControllerDelegate> delegate;
 
 - (void) planTripWithQuery:(OBATripQuery*)query;
+- (void) clearQuery;
 - (void) selectItinerary:(OBAItineraryV2*)itinerary;
+- (void) selectItinerary:(OBAItineraryV2*)itinerary matchPreviousItinerary:(BOOL)matchPreviousItinerary;
 - (void) refresh;
 
 @property (nonatomic,readonly) NSInteger queryIndex;

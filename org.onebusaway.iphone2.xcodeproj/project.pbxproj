@@ -116,6 +116,7 @@
 		D62254D30F8BBB5A00F139BA /* OBAModelDAO.m in Sources */ = {isa = PBXBuildFile; fileRef = D62254D10F8BBB5A00F139BA /* OBAModelDAO.m */; };
 		D62255AB0F8BCA8F00F139BA /* libsqlite3.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = D62255AA0F8BCA8F00F139BA /* libsqlite3.0.dylib */; };
 		D62255D00F8BCBF100F139BA /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D62255CF0F8BCBF100F139BA /* QuartzCore.framework */; };
+		D627B6581399318E00BC58D6 /* OBAPlacemarks.m in Sources */ = {isa = PBXBuildFile; fileRef = D627B6571399318E00BC58D6 /* OBAPlacemarks.m */; };
 		D62BF97A1343C5BA00667501 /* OBAPlaceDataSource.m in Sources */ = {isa = PBXBuildFile; fileRef = D62BF9791343C5BA00667501 /* OBAPlaceDataSource.m */; };
 		D62BF97D1343C72000667501 /* OBAPlaceModel.m in Sources */ = {isa = PBXBuildFile; fileRef = D62BF97C1343C72000667501 /* OBAPlaceModel.m */; };
 		D62BF98D13445B2900667501 /* OBAFixedHeightPickerTextField.m in Sources */ = {isa = PBXBuildFile; fileRef = D62BF98C13445B2900667501 /* OBAFixedHeightPickerTextField.m */; };
@@ -706,6 +707,8 @@
 		D62255AA0F8BCA8F00F139BA /* libsqlite3.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.0.dylib; path = usr/lib/libsqlite3.0.dylib; sourceTree = SDKROOT; };
 		D62255C80F8BCB9C00F139BA /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
 		D62255CF0F8BCBF100F139BA /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		D627B6561399318E00BC58D6 /* OBAPlacemarks.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OBAPlacemarks.h; sourceTree = "<group>"; };
+		D627B6571399318E00BC58D6 /* OBAPlacemarks.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OBAPlacemarks.m; sourceTree = "<group>"; };
 		D62BF9781343C5BA00667501 /* OBAPlaceDataSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBAPlaceDataSource.h; path = Control/OBAPlaceDataSource.h; sourceTree = "<group>"; };
 		D62BF9791343C5BA00667501 /* OBAPlaceDataSource.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBAPlaceDataSource.m; path = Control/OBAPlaceDataSource.m; sourceTree = "<group>"; };
 		D62BF97B1343C72000667501 /* OBAPlaceModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OBAPlaceModel.h; sourceTree = "<group>"; };
@@ -1940,6 +1943,8 @@
 				D6F0F9871341243D00AAA7EE /* V2 */,
 				D647A3C51342320D0045A7CB /* OBAPlacemark.h */,
 				D647A3C61342320D0045A7CB /* OBAPlacemark.m */,
+				D627B6561399318E00BC58D6 /* OBAPlacemarks.h */,
+				D627B6571399318E00BC58D6 /* OBAPlacemarks.m */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -2732,6 +2737,7 @@
 				D68F3C76138C09370087160A /* OBAGeocoderController.m in Sources */,
 				D6AA496C138C63AC00E62A34 /* OBAPlacePresentation.m in Sources */,
 				D6E1157B1395CDBD00A75FDF /* OBATripStateCellIndexPath.m in Sources */,
+				D627B6581399318E00BC58D6 /* OBAPlacemarks.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

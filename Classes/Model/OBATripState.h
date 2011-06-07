@@ -1,6 +1,7 @@
 #import "OBAItineraryV2.h"
 #import "OBAPlace.h"
 
+
 typedef enum {    
     OBATripStateTypeItineraries,
     OBATripStateTypeWalk,
@@ -29,6 +30,8 @@ typedef enum {
 @property (nonatomic) BOOL isLateStartTime;
 @property (nonatomic,retain) OBAStopV2 * walkToStop;
 @property (nonatomic,retain) OBAPlace * walkToPlace;
+
+@property (nonatomic,retain) OBAStopV2 * stop;
 
 @property (nonatomic,retain) NSArray * departures;
 @property (nonatomic,retain) NSArray * departureItineraries;

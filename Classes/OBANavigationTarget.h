@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-//#import <Foundation/Foundation.h>
-#import "OBACommon.h"
-
 
 @interface OBANavigationTarget : NSObject <NSCoding> {
 	OBANavigationTargetType _target;

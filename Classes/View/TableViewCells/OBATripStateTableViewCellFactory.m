@@ -40,6 +40,7 @@ typedef struct  {
 
 - (UITableViewCell*) createCellForWalkToStop:(OBAStopV2*)stop;
 - (UITableViewCell*) createCellForWalkToPlace:(OBAPlace*)place;
+- (UITableViewCell*) createCellForStop:(OBAStopV2*)stop;
 - (UITableViewCell*) createCellForVehicleRide:(OBATransitLegV2*)transitLeg;
 
 - (OBATimeStruct) getTimeForItineraryStart:(OBAItineraryV2*)itinerary;
@@ -108,6 +109,8 @@ typedef struct  {
         rows++;
     if( state.walkToPlace )
         rows++;
+    if (state.stop)
+        rows++;
     rows += [state.departures count];
     if( state.ride )
         rows++;
@@ -138,6 +141,8 @@ typedef struct  {
             return [self createCellForWalkToStop:state.walkToStop];
         case OBATripStateCellTypeWalkToPlace:
             return [self createCellForWalkToPlace:state.walkToPlace];
+        case OBATripStateCellTypeStop:
+            return [self createCellForStop:state.stop];
         case OBATripStateCellTypeDeparture: {
             OBATransitLegV2 * departure = [state.departures objectAtIndex:path.row];
             OBAItineraryV2 * itinerary = [state.departureItineraries objectAtIndex:path.row];
@@ -169,12 +174,6 @@ typedef struct  {
     OBATripStateCellIndexPath * path = [self getCellIndexForTripState:state indexPath:indexPath];
     
     switch (path.type) {
-        case OBATripStateCellTypeItinerary: {
-            //OBAPickTripViewController * vc = [[OBAPickTripViewController alloc] initWithAppContext:_appContext];
-            //[_navigationController pushViewController:vc animated:TRUE];
-            //[vc release];             
-            break;
-        }
         case OBATripStateCellTypeNoResultsFound: {
             OBAPlanTripViewController * vc = [[OBAPlanTripViewController alloc] initWithAppContext:_appContext];
             [vc setTripQuery:_appContext.tripController.query];
@@ -182,6 +181,7 @@ typedef struct  {
             [vc release];
             break;
         }
+        case OBATripStateCellTypeItinerary:
         case OBATripStateCellTypeStartTime:
         case OBATripStateCellTypeDeparture:
         case OBATripStateCellTypeArrival:
@@ -353,7 +353,7 @@ typedef struct  {
     OBAStopIconFactory * factory = _appContext.stopIconFactory;
     cell.modeImage.image = [factory getModeIconForRouteIconType:@"Walk" selected:selected];
 
-	cell.destinationLabel.text = transitLeg.toStop.name;
+	cell.destinationLabel.text = [OBAPresentation getTripHeadsignForTransitLeg:transitLeg];
 	cell.statusLabel.text = [self getStatusLabelForTransitLeg:transitLeg time:t];
     
     [self applyTime:t toTimeLabels:cell];
@@ -414,6 +414,12 @@ typedef struct  {
         index++;
     }
     
+    if (state.stop) {
+        if (indexPath.row == index)
+            return [OBATripStateCellIndexPath indexPathWithType:OBATripStateCellTypeStop];
+        index++;
+    }
+    
     NSUInteger departureIndex = indexPath.row - index;
     if( departureIndex < [state.departures count] )
         return [OBATripStateCellIndexPath indexPathWithType:OBATripStateCellTypeDeparture row:departureIndex];
@@ -457,6 +463,24 @@ typedef struct  {
     cell.destinationDetailLabel.text = @"";
     return cell;
 }
+
+- (UITableViewCell*) createCellForStop:(OBAStopV2*)stop {
+    OBAWalkToLocationTableViewCell * cell = [self getOrCreateCellFromNibNamed:@"OBAWalkToLocationTableViewCell"];
+    cell.destinationLabel.text = stop.name;
+    NSMutableString * details = [NSMutableString stringWithFormat:@"Stop # %@", stop.code];
+    if( stop.direction ) {
+        NSString * label = [_directions objectForKey:stop.direction];
+        if( label ) {
+            [details appendFormat:@" - %@ bound",label];
+        }
+    }
+    cell.destinationDetailLabel.text = details;
+    
+    OBAStopIconFactory * factory = _appContext.stopIconFactory;
+    cell.locationImage.image = [factory getIconForStop:stop includeDirection:FALSE];
+    return cell;
+}
+
 
 - (UITableViewCell*) createCellForVehicleRide:(OBATransitLegV2*)transitLeg {
     OBAVehicleRideTableViewCell * cell = [self getOrCreateCellFromNibNamed:@"OBAVehicleRideTableViewCell"];
@@ -619,7 +643,7 @@ typedef struct  {
 - (void) onItinerarySelection:(id)sender {
     id<OBAHasItinerarySelectionButton> source = sender;
     if (source.itinerary) {
-        [_appContext.tripController selectItinerary:source.itinerary];
+        [_appContext.tripController selectItinerary:source.itinerary matchPreviousItinerary:TRUE];
     }
 }
 
