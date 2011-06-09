@@ -471,6 +471,8 @@ typedef enum {
     if( time ) {
         _targetTime = [NSObject releaseOld:_targetTime retainNew:time];
     }
+    
+    _optimizeFor = _sourceQuery.optimizeFor;
 }
 
 - (BOOL) ensurePlacesAreSet {

@@ -10,7 +10,7 @@
 
 static const NSString * kCancelAlarm = @"cancelAlarm";
 static const NSInteger kRefreshInterval = 30;
-static const double kRegionExpansionRatio = 0.1;
+static const double kRegionExpansionRatio = 0.25;
 static const double kSnapDistanceToStop = 100;
 static const NSTimeInterval kExpiredQueryThreshold = 60 * 60;
 static const NSInteger kLookaheadTime = 3*60;

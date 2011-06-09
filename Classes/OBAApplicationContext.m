@@ -311,7 +311,6 @@ static const NSUInteger kTagSettingsView = 3;
 
 - (void)settingsViewControllerDidEnd:(IASKAppSettingsViewController*)sender {
 	[self refreshSettings];
-    [self.navController popViewControllerAnimated:TRUE];
 }
 
 @end

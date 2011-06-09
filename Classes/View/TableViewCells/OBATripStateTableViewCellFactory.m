@@ -286,10 +286,14 @@ typedef struct  {
     NSTimeInterval interval = [startTime timeIntervalSinceNow];
     NSInteger mins = interval / 60;
     
-    if( includeDetail )
+    if( includeDetail ) {
         cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-    else
+        cell.selectionStyle = UITableViewCellSelectionStyleBlue;
+    }
+    else {
         cell.accessoryType = UITableViewCellAccessoryNone;
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    }
     
     if( state.isLateStartTime )
         cell.backgroundColor = [UIColor yellowColor];
