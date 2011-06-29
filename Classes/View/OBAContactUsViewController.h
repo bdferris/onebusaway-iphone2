@@ -16,9 +16,8 @@
 
 
 #import "OBAApplicationContext.h"
-#import "OBANavigationTargetAware.h"
 
-@interface OBAContactUsViewController : UITableViewController <OBANavigationTargetAware> {
+@interface OBAContactUsViewController : UITableViewController {
 	OBAApplicationContext * _appContext;
 }
 

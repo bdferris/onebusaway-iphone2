@@ -205,12 +205,13 @@
 		D69DDEA01346F66C00EDD847 /* OBAVehicleRideTableViewCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = D69DDE9F1346F66C00EDD847 /* OBAVehicleRideTableViewCell.xib */; };
 		D69DDEA31346F9C800EDD847 /* OBAVehicleRideTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = D69DDEA21346F9C800EDD847 /* OBAVehicleRideTableViewCell.m */; };
 		D69DDEA61346FE0F00EDD847 /* OBAVehicleArrivalTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = D69DDEA51346FE0F00EDD847 /* OBAVehicleArrivalTableViewCell.m */; };
+		D6A45B3313BB0D5A0032BFEF /* OBACoordinateBounds.m in Sources */ = {isa = PBXBuildFile; fileRef = D6A45B3113BB0D5A0032BFEF /* OBACoordinateBounds.m */; };
+		D6A45B3613BB7BF70032BFEF /* OBACommonV2.m in Sources */ = {isa = PBXBuildFile; fileRef = D6A45B3513BB7BF70032BFEF /* OBACommonV2.m */; };
 		D6A7322F1344DB1200A34718 /* OBATripPolyline.m in Sources */ = {isa = PBXBuildFile; fileRef = D6A7322E1344DB1200A34718 /* OBATripPolyline.m */; };
 		D6A732341344DB4B00A34718 /* OBAGenericAnnotation.m in Sources */ = {isa = PBXBuildFile; fileRef = D6A732311344DB4B00A34718 /* OBAGenericAnnotation.m */; };
 		D6A732381344DC7200A34718 /* OBAPlaceAnnotation.m in Sources */ = {isa = PBXBuildFile; fileRef = D6A732371344DC7200A34718 /* OBAPlaceAnnotation.m */; };
 		D6A7323B1344DE5700A34718 /* OBAPlaceAnnotationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D6A7323A1344DE5700A34718 /* OBAPlaceAnnotationViewController.m */; };
 		D6A8C2A50FDF311F001B46E1 /* OBANavigationTargetAnnotation.m in Sources */ = {isa = PBXBuildFile; fileRef = D6A8C2A40FDF311F001B46E1 /* OBANavigationTargetAnnotation.m */; };
-		D6A8C5270FE048C0001B46E1 /* OBACoordinateBounds.m in Sources */ = {isa = PBXBuildFile; fileRef = D6A8C5260FE048C0001B46E1 /* OBACoordinateBounds.m */; };
 		D6AA496C138C63AC00E62A34 /* OBAPlacePresentation.m in Sources */ = {isa = PBXBuildFile; fileRef = D6AA496B138C63AC00E62A34 /* OBAPlacePresentation.m */; };
 		D6B004E3132A09C0006A9AC9 /* IASKAppSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D6B004DE132A09C0006A9AC9 /* IASKAppSettingsViewController.m */; };
 		D6B004E4132A09C0006A9AC9 /* IASKAppSettingsWebViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D6B004E0132A09C0006A9AC9 /* IASKAppSettingsWebViewController.m */; };
@@ -857,6 +858,10 @@
 		D69DDEA21346F9C800EDD847 /* OBAVehicleRideTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBAVehicleRideTableViewCell.m; path = View/TableViewCells/OBAVehicleRideTableViewCell.m; sourceTree = "<group>"; };
 		D69DDEA41346FE0E00EDD847 /* OBAVehicleArrivalTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBAVehicleArrivalTableViewCell.h; path = View/TableViewCells/OBAVehicleArrivalTableViewCell.h; sourceTree = "<group>"; };
 		D69DDEA51346FE0F00EDD847 /* OBAVehicleArrivalTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBAVehicleArrivalTableViewCell.m; path = View/TableViewCells/OBAVehicleArrivalTableViewCell.m; sourceTree = "<group>"; };
+		D6A45B3113BB0D5A0032BFEF /* OBACoordinateBounds.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OBACoordinateBounds.m; sourceTree = "<group>"; };
+		D6A45B3213BB0D5A0032BFEF /* OBACoordinateBounds.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OBACoordinateBounds.h; sourceTree = "<group>"; };
+		D6A45B3413BB7BF70032BFEF /* OBACommonV2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OBACommonV2.h; sourceTree = "<group>"; };
+		D6A45B3513BB7BF70032BFEF /* OBACommonV2.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OBACommonV2.m; sourceTree = "<group>"; };
 		D6A7322D1344DB1200A34718 /* OBATripPolyline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OBATripPolyline.h; sourceTree = "<group>"; };
 		D6A7322E1344DB1200A34718 /* OBATripPolyline.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OBATripPolyline.m; sourceTree = "<group>"; };
 		D6A732301344DB4B00A34718 /* OBAGenericAnnotation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OBAGenericAnnotation.h; sourceTree = "<group>"; };
@@ -867,8 +872,6 @@
 		D6A7323A1344DE5700A34718 /* OBAPlaceAnnotationViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBAPlaceAnnotationViewController.m; path = View/OBAPlaceAnnotationViewController.m; sourceTree = "<group>"; };
 		D6A8C2A30FDF311F001B46E1 /* OBANavigationTargetAnnotation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBANavigationTargetAnnotation.h; path = Model/OBANavigationTargetAnnotation.h; sourceTree = "<group>"; };
 		D6A8C2A40FDF311F001B46E1 /* OBANavigationTargetAnnotation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBANavigationTargetAnnotation.m; path = Model/OBANavigationTargetAnnotation.m; sourceTree = "<group>"; };
-		D6A8C5250FE048C0001B46E1 /* OBACoordinateBounds.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBACoordinateBounds.h; path = Model/OBACoordinateBounds.h; sourceTree = "<group>"; };
-		D6A8C5260FE048C0001B46E1 /* OBACoordinateBounds.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBACoordinateBounds.m; path = Model/OBACoordinateBounds.m; sourceTree = "<group>"; };
 		D6AA496A138C63AC00E62A34 /* OBAPlacePresentation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OBAPlacePresentation.h; path = View/OBAPlacePresentation.h; sourceTree = "<group>"; };
 		D6AA496B138C63AC00E62A34 /* OBAPlacePresentation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OBAPlacePresentation.m; path = View/OBAPlacePresentation.m; sourceTree = "<group>"; };
 		D6B004DD132A09C0006A9AC9 /* IASKAppSettingsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IASKAppSettingsViewController.h; path = Libraries/InAppSettingsKit/Controllers/IASKAppSettingsViewController.h; sourceTree = "<group>"; };
@@ -1185,6 +1188,8 @@
 				D65BA1CF0FDDC74D006A9568 /* OBANavigationTargetAware.h */,
 				D4B7158A11F82D3700D0A9CB /* UIDeviceExtensions.h */,
 				D4B7158B11F82D3700D0A9CB /* UIDeviceExtensions.m */,
+				D6A45B3413BB7BF70032BFEF /* OBACommonV2.h */,
+				D6A45B3513BB7BF70032BFEF /* OBACommonV2.m */,
 			);
 			path = Classes;
 			sourceTree = "<group>";
@@ -1323,8 +1328,6 @@
 				D65B9F1A0FDD7BBF006A9568 /* OBANavigationTarget.m */,
 				D6A8C2A30FDF311F001B46E1 /* OBANavigationTargetAnnotation.h */,
 				D6A8C2A40FDF311F001B46E1 /* OBANavigationTargetAnnotation.m */,
-				D6A8C5250FE048C0001B46E1 /* OBACoordinateBounds.h */,
-				D6A8C5260FE048C0001B46E1 /* OBACoordinateBounds.m */,
 				D61EE8AC13285AB6001F8FEC /* OBAServiceAlertsModel.h */,
 				D61EE8AD13285AB6001F8FEC /* OBAServiceAlertsModel.m */,
 			);
@@ -1941,6 +1944,8 @@
 			isa = PBXGroup;
 			children = (
 				D6F0F9871341243D00AAA7EE /* V2 */,
+				D6A45B3213BB0D5A0032BFEF /* OBACoordinateBounds.h */,
+				D6A45B3113BB0D5A0032BFEF /* OBACoordinateBounds.m */,
 				D647A3C51342320D0045A7CB /* OBAPlacemark.h */,
 				D647A3C61342320D0045A7CB /* OBAPlacemark.m */,
 				D627B6561399318E00BC58D6 /* OBAPlacemarks.h */,
@@ -2562,7 +2567,6 @@
 				D68CDC350FCB53F000EE6BDF /* OBABookmarksViewController.m in Sources */,
 				D65B9F1B0FDD7BBF006A9568 /* OBANavigationTarget.m in Sources */,
 				D6A8C2A50FDF311F001B46E1 /* OBANavigationTargetAnnotation.m in Sources */,
-				D6A8C5270FE048C0001B46E1 /* OBACoordinateBounds.m in Sources */,
 				D6FE15021023D68500143C1B /* OBAEntityManager.m in Sources */,
 				D63C82B710D62D1700B297C4 /* OBAContactUsViewController.m in Sources */,
 				D63C82F210D6327900B297C4 /* OBANetworkErrorAlertViewDelegate.m in Sources */,
@@ -2738,6 +2742,8 @@
 				D6AA496C138C63AC00E62A34 /* OBAPlacePresentation.m in Sources */,
 				D6E1157B1395CDBD00A75FDF /* OBATripStateCellIndexPath.m in Sources */,
 				D627B6581399318E00BC58D6 /* OBAPlacemarks.m in Sources */,
+				D6A45B3313BB0D5A0032BFEF /* OBACoordinateBounds.m in Sources */,
+				D6A45B3613BB7BF70032BFEF /* OBACommonV2.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

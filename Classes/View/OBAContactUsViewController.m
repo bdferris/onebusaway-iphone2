@@ -132,11 +132,5 @@
 	}
 }
 
-#pragma mark OBANavigationTargetAware
-
-- (OBANavigationTarget*) navigationTarget {
-	return [OBANavigationTarget target:OBANavigationTargetTypeContactUs];
-}
-
 @end
 

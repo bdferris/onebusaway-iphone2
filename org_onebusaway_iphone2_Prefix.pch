@@ -9,8 +9,9 @@
     #import <CoreLocation/CoreLocation.h>
 	#import <MapKit/MapKit.h>
     #import "Three20UI/Three20UI.h"
-    #import "OBACommon.h"
     #import "OBAUIKit.h"
+    #import "OBACommon.h"
+    #import "OBACommonV2.h"
 #endif
 
 #define LOG NO

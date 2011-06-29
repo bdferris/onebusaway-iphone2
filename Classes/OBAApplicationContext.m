@@ -24,7 +24,6 @@
 #import <SystemConfiguration/SystemConfiguration.h>
 
 #import "OBAApplicationContext.h"
-#import "OBANavigationTargetAware.h"
 #import "OBALogger.h"
 
 #import "OBAStopIconFactory.h"
