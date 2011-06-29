@@ -27,7 +27,7 @@
 {
     self = [super initWithNibName:@"OBAPickTimeViewController" bundle:nil];
     if (self) {
-
+        self.datePicker.hidden = TRUE;
     }
     return self;
 }
@@ -52,9 +52,11 @@
         case 1:
         case 2:
             datePickerControl.enabled = TRUE;
+            datePickerControl.hidden = FALSE;
             break;
         default:
             datePickerControl.enabled = FALSE;
+            datePickerControl.hidden = TRUE;
             break;
     }
 }
